@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>es.karmadev</groupId>
+    <artifactId>LockLogin</artifactId>
+    <version>2.0.0</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>LockLoginAPI</module>
+        <module>LockLoginCommon</module>
+        <module>LockLoginSpigot</module>
+    </modules>
+
+    <name>LockLogin</name>
+    <description>
+        LockLogin is an advanced login plugin, one of the most secure available,
+        with tons of features. It has a lot of customization options to not say
+        almost everything is customizable. Regular updates and one of the bests
+        discord supports ( according to spigotmc reviews ). LockLogin is a plugin
+        always open to new feature requests, and bug reports. More than a plugin,
+        a plugin you can contribute indirectly; A community plugin for the plugin community.
+    </description>
+    <url>https://github.com/KarmaConfigs/LockLoginReborn</url>
+
+    <licenses>
+        <license>
+            <name>RedDo GPL 1.2</name>
+            <url>https://locklogin.eu/license</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Karma Dev</name>
+            <email>karmaconfigs@gmail.com</email>
+            <organization>RedDo</organization>
+            <organizationUrl>https://discord.gg/jRFfsdxnJR</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/KarmaDeb/LockLoginReborn.git</connection>
+        <developerConnection>scm:git:ssh://github.com:KarmaDeb/LockLoginReborn.git</developerConnection>
+        <url>http://github.com/KarmaDeb/LockLoginReborn/tree/master</url>
+        <tag>1.13.40</tag>
+    </scm>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <project.karmaapi>1.3.4-SNAPSHOT</project.karmaapi>
+    </properties>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+
+        <resources>
+            <resource>
+                <!-- Certificate should not be filtered, as it would make it invalid -->
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>yggdrasil_session_pubkey.der</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>yggdrasil_session_pubkey.der</exclude>
+                </excludes>
+                <!--Replace variables-->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>bungeecord-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spigot and BungeeCord -->
+            <dependency>
+                <groupId>org.spigotmc</groupId>
+                <artifactId>spigot-api</artifactId>
+                <version>1.19.3-R0.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>1.19-R0.1-SNAPSHOT</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>1.19-R0.1-SNAPSHOT</version>
+                <type>javadoc</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Project internal -->
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>23.0.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.26</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- KarmaAPI -->
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Common</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Bukkit</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>ml.karmaconfigs</groupId>
+                <artifactId>KarmaAPI-Bungee</artifactId>
+                <version>${project.karmaapi}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- !SELF! -->
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginAPI</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginCommon</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginSpigot</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>

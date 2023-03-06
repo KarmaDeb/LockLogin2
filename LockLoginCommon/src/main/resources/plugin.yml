@@ -1,0 +1,15 @@
+name: "${project.parent.name}"
+version: "${project.parent.version}"
+description: "${project.parent.description}"
+author: "KarmaDev"
+website: "https://karmadev.es/"
+main: es.karmadev.locklogin.spigot.LockLoginSpigot
+database: true
+api-version: 1.13
+depend:
+  - KarmaAPI
+
+softdepend:
+  - PlaceholderAPI
+  - ProtocolLib
+  - floodgate
