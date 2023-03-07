@@ -17,6 +17,13 @@ public interface LockLoginDependency {
     String name();
 
     /**
+     * Get the dependency version
+     *
+     * @return the dependency version
+     */
+    DependencyVersion version();
+
+    /**
      * Get the dependency file
      *
      * @return the dependency file
@@ -43,4 +50,11 @@ public interface LockLoginDependency {
      * @return the dependency download URL
      */
     URL downloadURL();
+
+    /**
+     * Get if the dependency is a plugin
+     *
+     * @return if the dependenc is a plugin
+     */
+    boolean isPlugin();
 }

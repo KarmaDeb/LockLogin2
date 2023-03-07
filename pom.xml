@@ -54,7 +54,35 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <project.karmaapi>1.3.4-SNAPSHOT</project.karmaapi>
+        <locklogin.version.type>beta</locklogin.version.type>
+
+        <locklogin.update.id>wu</locklogin.update.id>
+        <locklogin.update.name>WebUpdate</locklogin.update.name>
+
+        <locklogin.manager>v9</locklogin.manager>
+
+        <locklogin.repository.version>v2</locklogin.repository.version>
+
+        <locklogin.checksum.generate>false</locklogin.checksum.generate>
+        <locklogin.checksum.print>false</locklogin.checksum.print>
+        <locklogin.checksum.version>v5</locklogin.checksum.version>
+
+        <locklogin.karmaapi.version>1.3.4-SNAPSHOT</locklogin.karmaapi.version>
+        <locklogin.karmaapi.platform>1.3.4-8</locklogin.karmaapi.platform>
+
+        <socket.io.version>2.1.0</socket.io.version>
+
+        <log4j.core.version>2.19.0</log4j.core.version>
+        <log4j.web.version>2.19.0</log4j.web.version>
+
+        <google.guava.version>31.1-jre</google.guava.version>
+        <google.auth.version>1.5.0</google.auth.version>
+
+        <apache.commons.version>1.15</apache.commons.version>
+
+        <placeholder.api.version>2.10.9</placeholder.api.version>
+        <protocol.lib.version>4.8.0</protocol.lib.version>
+        <floodgate.version>2.2.0-SNAPSHOT</floodgate.version>
     </properties>
 
     <build>
@@ -133,19 +161,19 @@
             <dependency>
                 <groupId>ml.karmaconfigs</groupId>
                 <artifactId>KarmaAPI-Common</artifactId>
-                <version>${project.karmaapi}</version>
+                <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>ml.karmaconfigs</groupId>
                 <artifactId>KarmaAPI-Bukkit</artifactId>
-                <version>${project.karmaapi}</version>
+                <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>ml.karmaconfigs</groupId>
                 <artifactId>KarmaAPI-Bungee</artifactId>
-                <version>${project.karmaapi}</version>
+                <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -166,6 +194,14 @@
                 <groupId>es.karmadev</groupId>
                 <artifactId>LockLoginSpigot</artifactId>
                 <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Google stuff -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.9.1</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

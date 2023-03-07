@@ -1,9 +1,15 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.user.account.AccountFactory;
+import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.session.SessionFactory;
+import es.karmadev.locklogin.api.user.session.UserSession;
 
 import java.nio.file.Path;
 
@@ -48,6 +54,52 @@ public interface LockLogin {
      * @return the plugin hasher
      */
     LockLoginHasher hasher();
+
+    /**
+     * Get the plugin configuration
+     *
+     * @return the plugin configuration
+     */
+    Configuration configuration();
+
+    /**
+     * Get the plugin messages
+     *
+     * @return the plugin messages
+     */
+    Messages messages();
+
+    /**
+     * Get the plugin account factory
+     *
+     * @param original retrieve the plugin default
+     *                 account factory
+     * @return the plugin account factory
+     */
+    AccountFactory<? extends UserAccount> getAccountFactory(final boolean original);
+
+    /**
+     * Get the plugin session factory
+     *
+     * @param original retrieve the plugin default
+     *                 session factory
+     * @return the plugin session factory
+     */
+    SessionFactory<? extends UserSession> getSessionFactory(final boolean original);
+
+    /**
+     * Define the plugin account factory
+     *
+     * @param factory the account factory
+     */
+    void setAccountFactory(final AccountFactory<? extends UserAccount> factory);
+
+    /**
+     * Define the plugin session factory
+     *
+     * @param factory the account session factory
+     */
+    void setSessionFactory(final SessionFactory<? extends UserSession> factory);
 
     /**
      * Print a message

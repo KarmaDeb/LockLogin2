@@ -1,0 +1,150 @@
+{
+  "id": "${locklogin.update.id}",
+  "update": "${locklogin.version.type}",
+  "dependencies": [
+    {
+      "id": "apache_commons",
+      "name": "Apache Commons",
+      "file": "ApacheCommons.jar",
+      "version": {
+        "project": "${apache.commons.version}",
+        "required": "${apache.commons.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "google_authenticator",
+      "name": "Google Authenticator",
+      "file": "GooglaAuthenticator.jar",
+      "version": {
+        "project": "${google.auth.version}",
+        "required": "${google.auth.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "google_guava",
+      "name": "Google Guava",
+      "file": "GoogleGuava.jar",
+      "version": {
+        "project": "${google.guava.version}",
+        "required": "${google.guava.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "log4j_core",
+      "name": "Log4J",
+      "file": "Log4J.jar",
+      "version": {
+        "project": "${log4j.core.version}",
+        "required": "${log4j.core.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "log4j_web",
+      "name": "Log4J Web",
+      "file": "Log4JWeb.jar",
+      "version": {
+        "project": "${log4j.web.version}",
+        "required": "${log4j.web.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "socket_io",
+      "name": "Socket IO",
+      "file": "SocketIO.jar",
+      "version": {
+        "project": "${socket.io.version}",
+        "required": "${socket.io.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+
+    {
+      "id": "karma_api",
+      "name": "KarmaAPI",
+      "file": "KarmaAPI.jar",
+      "version": {
+        "project": "${locklogin.karmaapi.version}",
+        "required": "${locklogin.karmaapi.platform}"
+      },
+      "download": [],
+      "plugin": true
+    },
+    {
+      "id": "placeholder_api",
+      "name": "PlaceholderAPI",
+      "file": "PlaceholderAPI.jar",
+      "version": {
+        "project": "${placeholder.api.version}",
+        "required": "${placeholder.api.version}"
+      },
+      "download": [],
+      "plugin": true
+    },
+    {
+      "id": "protocol_lib",
+      "name": "ProtocolLib",
+      "file": "ProtocolLib.jar",
+      "version": {
+        "project": "${protocol.lib.version}",
+        "required": "${protocol.lib.version}"
+      },
+      "download": [],
+      "plugin": true
+    },
+    {
+      "id": "floodgate",
+      "name": "floodgate",
+      "file": "floodgate.jar",
+      "version": {
+        "project": "${floodgate.version}",
+        "required": "${floodgate.version}"
+      },
+      "download": [],
+      "plugin": true
+    }
+  ],
+  "version": {
+    "name": "${project.parent.version}",
+    "check": [
+      "https://karmadev.es/locklogin/version/",
+      "https://backup.karmadev.es/locklogin/version",
+      "https://github.io/karmadeb/updates/locklogin/version/"
+    ],
+    "download": []
+  }
+}

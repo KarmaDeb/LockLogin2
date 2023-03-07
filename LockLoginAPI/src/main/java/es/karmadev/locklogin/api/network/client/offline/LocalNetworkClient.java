@@ -5,8 +5,7 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.event.ClientEvent;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
-import es.karmadev.locklogin.api.user.UserAccount;
-import es.karmadev.locklogin.api.user.session.SessionField;
+import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
 import java.util.UUID;
