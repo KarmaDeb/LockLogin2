@@ -7,6 +7,7 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Plugin network
@@ -98,4 +99,12 @@ public interface PluginNetwork {
      * @return the servers
      */
     Collection<NetworkServer> getServers();
+
+    /**
+     * Save data, this will store all the created
+     * accounts into database
+     *
+     * @return if the data was able to be stored
+     */
+    CompletableFuture<Boolean> saveData();
 }
