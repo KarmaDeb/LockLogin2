@@ -1,8 +1,13 @@
 package es.karmadev.locklogin.common.protection;
 
+import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.security.virtual.VirtualID;
+import es.karmadev.locklogin.common.protection.virtual.CVirtualId;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.Collections;
@@ -13,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CPluginHasher implements LockLoginHasher {
 
     private final Set<PluginHash> hashes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final VirtualID virtualID = new CVirtualId();
 
     /**
      * Register a new hash method
@@ -53,6 +59,19 @@ public class CPluginHasher implements LockLoginHasher {
     public PluginHash getMethod(final String name) {
         Optional<PluginHash> result = hashes.stream().filter((stored) -> stored.name().equals(name)).findFirst();
         return result.orElse(null);
+    }
+
+    /**
+     * Get the plugin virtual ID
+     *
+     * @return the plugin virtual ID
+     */
+    @Override
+    public VirtualID virtualID() throws SecurityException {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+
+        return virtualID;
     }
 
     public final static String SHA_512 = "sha512";

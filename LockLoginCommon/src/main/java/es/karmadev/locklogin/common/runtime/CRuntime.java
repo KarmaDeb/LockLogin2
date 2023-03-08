@@ -10,6 +10,7 @@ import ml.karmaconfigs.api.common.string.StringUtils;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSource;
 
 public class CRuntime extends LockLoginRuntime {
 
@@ -110,7 +111,10 @@ public class CRuntime extends LockLoginRuntime {
             loader = loader.substring(1);
         }
 
-        String server = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource().getLocation().getFile();
+        CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
+        if (source == null) return;
+
+        String server = source.getLocation().getFile();
         if (server.startsWith("/")) {
             server = server.substring(1);
         }

@@ -9,6 +9,7 @@ import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
@@ -22,7 +23,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class JsonDependency implements LockLoginDependency {
 
     private final JsonObject object;
@@ -30,6 +31,8 @@ public class JsonDependency implements LockLoginDependency {
     private final Checksum generated_checksum = new Checksum();
 
     private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    private boolean installed = false;
 
     /**
      * Get the dependency name
@@ -39,6 +42,17 @@ public class JsonDependency implements LockLoginDependency {
     @Override
     public String name() {
         return object.get("name").getAsString();
+    }
+
+    /**
+     * Get the class to test with if
+     * the dependency exists
+     *
+     * @return the dependency test class
+     */
+    @Override
+    public String testClass() {
+        return object.get("test").getAsString();
     }
 
     /**
@@ -132,5 +146,23 @@ public class JsonDependency implements LockLoginDependency {
     @Override
     public boolean isPlugin() {
         return object.get("plugin").getAsBoolean();
+    }
+
+    /**
+     * Get if the dependency is installed
+     *
+     * @return if the dependency is installed
+     */
+    @Override
+    public boolean needsInstallation() {
+        return installed;
+    }
+
+    /**
+     * Mark the dependency as installed
+     */
+    @Override
+    public void assertInstalled() {
+        installed = true;
     }
 }

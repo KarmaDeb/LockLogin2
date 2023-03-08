@@ -30,36 +30,38 @@ public class CDependencyManager implements DependencyManager {
     @Override
     public void append(final LockLoginDependency dependency) {
         if (dependencies.stream().noneMatch((stored) -> stored.name().equals(dependency.name()))) {
-            LockLogin plugin = CurrentPlugin.getPlugin();
+            if (dependency.needsInstallation()) {
+                LockLogin plugin = CurrentPlugin.getPlugin();
 
-            DependencyChecksum generated = dependency.generateChecksum();
-            DependencyChecksum loaded = dependency.checksum();
+                DependencyChecksum generated = dependency.generateChecksum();
+                DependencyChecksum loaded = dependency.checksum();
 
-            boolean download = false;
-            if (generated == null || loaded == null) {
-                download = !Files.exists(dependency.file());
-            } else {
-                download = !generated.matches(loaded);
-            }
-
-            if (download) {
-                plugin.info("Dependency {0} is not downloaded. Downloading it...", dependency.name());
-
-                URL url = dependency.downloadURL();
-                if (url == null) {
-                    plugin.err("Cannot download dependency {0} because its download URL is not valid", dependency.name());
-                    return;
+                boolean download = false;
+                if (generated == null || loaded == null) {
+                    download = !Files.exists(dependency.file());
+                } else {
+                    download = !generated.matches(loaded);
                 }
 
-                ResourceDownloader downloader = new ResourceDownloader(dependency.file(), url);
-                downloader.download();
+                if (download) {
+                    plugin.info("Dependency {0} is not downloaded. Downloading it...", dependency.name());
+
+                    URL url = dependency.downloadURL();
+                    if (url == null) {
+                        plugin.err("Cannot download dependency {0} because its download URL is not valid", dependency.name());
+                        return;
+                    }
+
+                    ResourceDownloader downloader = new ResourceDownloader(dependency.file(), url);
+                    downloader.download();
+                }
+
+                BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().getClass().getClassLoader());
+                loader.add(dependency.file());
+                dependencies.add(dependency);
+
+                plugin.info("Loaded dependency {0}", dependency.name());
             }
-
-            BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().getClass().getClassLoader());
-            loader.add(dependency.file());
-            dependencies.add(dependency);
-
-            plugin.info("Loaded dependency {0}", dependency.name());
         }
     }
 
