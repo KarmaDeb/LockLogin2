@@ -1,16 +1,19 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 
 /**
@@ -25,6 +28,16 @@ public interface LockLogin {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     Object plugin() throws SecurityException;
+
+    /**
+     * Load an internal plugin file
+     *
+     * @param name the internal file name
+     * @return the file
+     * @throws SecurityException if the accessor is not the
+     * plugin himself
+     */
+    InputStream load(final String name) throws SecurityException;
 
     /**
      * Get the plugin working directory
@@ -76,7 +89,7 @@ public interface LockLogin {
      *                 account factory
      * @return the plugin account factory
      */
-    AccountFactory<? extends UserAccount> getAccountFactory(final boolean original);
+    AccountFactory<UserAccount> getAccountFactory(final boolean original);
 
     /**
      * Get the plugin session factory
@@ -85,21 +98,37 @@ public interface LockLogin {
      *                 session factory
      * @return the plugin session factory
      */
-    SessionFactory<? extends UserSession> getSessionFactory(final boolean original);
+    SessionFactory<UserSession> getSessionFactory(final boolean original);
+
+    /**
+     * Get the plugin user factory
+     *
+     * @param original retrieve the plugin default
+     *                 user factory
+     * @return the plugin user factory
+     */
+    UserFactory<LocalNetworkClient> getUserFactory(final boolean original);
 
     /**
      * Define the plugin account factory
      *
      * @param factory the account factory
      */
-    void setAccountFactory(final AccountFactory<? extends UserAccount> factory);
+    void setAccountFactory(final AccountFactory<UserAccount> factory);
 
     /**
      * Define the plugin session factory
      *
      * @param factory the account session factory
      */
-    void setSessionFactory(final SessionFactory<? extends UserSession> factory);
+    void setSessionFactory(final SessionFactory<UserSession> factory);
+
+    /**
+     * Define the plugin user factory
+     *
+     * @param factory the user factory
+     */
+    void setUserFactory(final UserFactory<LocalNetworkClient> factory);
 
     /**
      * Print a message
@@ -124,4 +153,33 @@ public interface LockLogin {
      * @param replaces the message replaces
      */
     void err(final String message, final Object... replaces);
+
+    /**
+     * Log something that is just informative
+     *
+     * @param message the log message
+     */
+    void logInfo(final String message);
+
+    /**
+     * Log something that is important
+     *
+     * @param message the log message
+     */
+    void logWarn(final String message);
+
+    /**
+     * Log something that went wrong
+     *
+     * @param message the log message
+     */
+    void logErr(final String message);
+
+    /**
+     * Log an error
+     *
+     * @param error the error
+     * @param message the message
+     */
+    void log(final Throwable error, final String message);
 }

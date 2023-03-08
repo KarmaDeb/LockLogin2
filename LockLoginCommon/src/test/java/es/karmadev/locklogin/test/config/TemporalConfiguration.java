@@ -1,20 +1,21 @@
-package es.karmadev.locklogin.api.plugin.file;
+package es.karmadev.locklogin.test.config;
 
+import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
+import es.karmadev.locklogin.test.config.section.EncSection;
 
-import java.io.Serializable;
-
-/**
- * LockLogin configuration
- */
-public interface Configuration {
+public class TemporalConfiguration implements Configuration {
 
     /**
      * Get the plugin proxy configuration
      *
      * @return the plugin proxy configuration
      */
-    ProxyConfiguration proxy();
+    @Override
+    public ProxyConfiguration proxy() {
+        return null;
+    }
 
     /**
      * Get the server name at the
@@ -22,7 +23,10 @@ public interface Configuration {
      *
      * @return the server name
      */
-    String server();
+    @Override
+    public String server() {
+        return null;
+    }
 
     /**
      * Get if the bedrock players should be
@@ -31,28 +35,40 @@ public interface Configuration {
      * @return if bedrock clients are able to
      * bypass login
      */
-    boolean bedrockLogin();
+    @Override
+    public boolean bedrockLogin() {
+        return false;
+    }
 
     /**
      * Get the plugin secret key
      *
      * @return the plugin secret key
      */
-    String secretKey();
+    @Override
+    public String secretKey() {
+        return "WiYuVyZz4oZDcFlK61pbMXQ+X4cpn2SXA2qcumoQJfk=";
+    }
 
     /**
      * Get the plugin statistics configuration
      *
      * @return the plugin statistics configuration
      */
-    StatisticsConfiguration statistics();
+    @Override
+    public StatisticsConfiguration statistics() {
+        return null;
+    }
 
     /**
      * Get the plugin backup configuration
      *
      * @return the plugin backup configuration
      */
-    BackupConfiguration backup();
+    @Override
+    public BackupConfiguration backup() {
+        return null;
+    }
 
     /**
      * Get if the plugin overwrites the
@@ -60,28 +76,40 @@ public interface Configuration {
      *
      * @return if the plugin overwrites the MOTD
      */
-    boolean overwriteMotd();
+    @Override
+    public boolean overwriteMotd() {
+        return false;
+    }
 
     /**
      * Get the plugin registration configuration
      *
      * @return the plugin register configuration
      */
-    RegisterConfiguration register();
+    @Override
+    public RegisterConfiguration register() {
+        return null;
+    }
 
     /**
      * Get the plugin login configuration
      *
      * @return the plugin login configuration
      */
-    LoginConfiguration login();
+    @Override
+    public LoginConfiguration login() {
+        return null;
+    }
 
     /**
      * Get the plugin sessions configuration
      *
      * @return the plugin session configuration
      */
-    SessionConfiguration session();
+    @Override
+    public SessionConfiguration session() {
+        return null;
+    }
 
     /**
      * Get if the plugin verifies IP addresses
@@ -89,7 +117,10 @@ public interface Configuration {
      * @return if the plugin validates IP
      * addresses
      */
-    boolean verifyIpAddress();
+    @Override
+    public boolean verifyIpAddress() {
+        return false;
+    }
 
     /**
      * Get if the plugin verifies UUIDs
@@ -97,7 +128,10 @@ public interface Configuration {
      * @return if the plugin validates
      * UUIDs
      */
-    boolean verifyUniqueIDs();
+    @Override
+    public boolean verifyUniqueIDs() {
+        return false;
+    }
 
     /**
      * Get if the plugin should hide
@@ -107,47 +141,68 @@ public interface Configuration {
      * @return if the plugin should
      * hide unlogged clients
      */
-    boolean hideNonLogged();
+    @Override
+    public boolean hideNonLogged() {
+        return false;
+    }
 
     /**
      * Get the plugin captcha configuration
      *
      * @return the plugin captcha configuration
      */
-    CaptchaConfiguration captcha();
+    @Override
+    public CaptchaConfiguration captcha() {
+        return null;
+    }
 
     /**
      * Get the plugin encryption configuration
      *
      * @return the plugin encryption configuration
      */
-    EncryptionConfiguration encryption();
+    @Override
+    public EncryptionConfiguration encryption() {
+        return new EncSection();
+    }
 
     /**
      * Get the plugin permission configuration
      *
      * @return the plugin permission configuration
      */
-    PermissionConfiguration permission();
+    @Override
+    public PermissionConfiguration permission() {
+        return null;
+    }
 
     /**
      * Get the plugin password configuration
      *
      * @return the plugin password configuration
      */
-    PasswordConfiguration password();
+    @Override
+    public PasswordConfiguration password() {
+        return null;
+    }
 
     /**
      * Serialize the configuration
      *
      * @return the serialized configuration
      */
-    String serialize();
+    @Override
+    public String serialize() {
+        return null;
+    }
 
     /**
      * Load the configuration
      *
      * @param serialized the serialized configuration
      */
-    void load(final String serialized);
+    @Override
+    public void load(String serialized) {
+
+    }
 }

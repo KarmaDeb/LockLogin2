@@ -8,27 +8,30 @@ import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
-import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.common.user.SQLPooling;
+import es.karmadev.locklogin.common.user.SQLiteDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.UUID;
 
 public class CAccount implements UserAccount {
 
     private final int id;
-    private final SQLPooling pool;
+    private final int account_id;
+    private final SQLiteDriver pool;
 
     /**
      * Initialize the account
      *
-     * @param id the account id
+     * @param user_id the client id
+     * @param account_id the account id
      * @param pool the account pool
      */
-    public CAccount(final int id, final SQLPooling pool) {
-        this.id = id;
+    public CAccount(final int user_id, final int account_id, final SQLiteDriver pool) {
+        this.id = user_id;
+        this.account_id = account_id;
         this.pool = pool;
     }
 
@@ -65,13 +68,14 @@ public class CAccount implements UserAccount {
     @Override
     public String name() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `name` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getString("name");
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `name` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    return result.getString("name");
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -92,8 +96,9 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `name` = '" + name + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `user` SET `name` = '" + name + "' WHERE `id` = " + id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -109,13 +114,14 @@ public class CAccount implements UserAccount {
     @Override
     public UUID uniqueId() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `uuid` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return UUID.fromString(result.getString("uuid"));
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `uuid` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    return UUID.fromString(result.getString("uuid"));
+                }
             }
         } catch (SQLException | IllegalArgumentException ex) {
             ex.printStackTrace();
@@ -136,8 +142,9 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `uuid` = '" + uuid.toString() + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `user` SET `uuid` = '" + uuid.toString() + "' WHERE `id` = " + id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -153,14 +160,15 @@ public class CAccount implements UserAccount {
     @Override
     public HashResult password() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `password` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                String password = result.getString("password");
-                return StringUtils.loadUnsafe(password);
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `password` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    String password = result.getString("password");
+                    return StringUtils.loadUnsafe(password);
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -182,15 +190,16 @@ public class CAccount implements UserAccount {
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
-        PluginHash hash = hasher.getMethod(configuration.encryption().passwordAlgorithm());
+        PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(password);
         String result = StringUtils.serialize(rs);
 
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `password` = '" + result + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `account` SET `password` = '" + result + "' WHERE `id` = " + account_id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -206,14 +215,15 @@ public class CAccount implements UserAccount {
     @Override
     public HashResult pin() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `pin` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                String pin = result.getString("pin");
-                return StringUtils.loadUnsafe(pin);
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `pin` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    String pin = result.getString("pin");
+                    return StringUtils.loadUnsafe(pin);
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -235,15 +245,16 @@ public class CAccount implements UserAccount {
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
-        PluginHash hash = hasher.getMethod(configuration.encryption().pinAlgorithm());
+        PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(pin);
         String result = StringUtils.serialize(rs);
 
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `pin` = '" + result + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `account` SET `pin` = '" + result + "' WHERE `id` = " + account_id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -259,13 +270,14 @@ public class CAccount implements UserAccount {
     @Override
     public String _2FA() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `2fa_token` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getString("2fa_token");
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `2fa_token` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    return result.getString("2fa_token");
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -286,8 +298,9 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `2fa_token` = '" + token + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `account` SET `2fa_token` = '" + token + "' WHERE `id` = " + account_id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -303,14 +316,15 @@ public class CAccount implements UserAccount {
     @Override
     public HashResult panic() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `panic` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                String panic = result.getString("panic");
-                return StringUtils.loadUnsafe(panic);
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `panic` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    String panic = result.getString("panic");
+                    return StringUtils.loadUnsafe(panic);
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -332,15 +346,16 @@ public class CAccount implements UserAccount {
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
-        PluginHash hash = hasher.getMethod(configuration.encryption().passwordAlgorithm());
+        PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(token);
         String result = StringUtils.serialize(rs);
 
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `panic` = '" + result + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `account` SET `panic` = '" + result + "' WHERE `id` = " + account_id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -358,8 +373,9 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
+            connection = pool.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `users` SET `2fa` = " + status + " WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `account` SET `2fa` = " + status + " WHERE `id` = " + account_id);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
@@ -375,13 +391,14 @@ public class CAccount implements UserAccount {
     @Override
     public boolean has2FA() {
         Connection connection = null;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            statement = connection.prepareStatement("SELECT `2fa` FROM `users` WHERE `id` = " + id);
-            ResultSet result = statement.executeQuery();
-
-            if (result.next()) {
-                return result.getBoolean("2fa");
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `2fa` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    return result.getBoolean("2fa");
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -390,5 +407,32 @@ public class CAccount implements UserAccount {
         }
 
         return false;
+    }
+
+    /**
+     * Get when the account was created
+     *
+     * @return the account creation date
+     */
+    @Override
+    public Instant creation() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `created_at` FROM `account` WHERE `id` = " + account_id)) {
+                if (result.next()) {
+                    long millis = result.getLong("created_at");
+                    return Instant.ofEpochMilli(millis);
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+
+        return Instant.now();
     }
 }

@@ -2,6 +2,8 @@ package es.karmadev.locklogin.api.security;
 
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.security.virtual.VirtualID;
+import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 
 /**
  * LockLogin hasher
@@ -31,4 +33,11 @@ public interface LockLoginHasher {
      * @return the hashing method
      */
     PluginHash getMethod(final String name);
+
+    /**
+     * Get the plugin virtual ID
+     *
+     * @return the plugin virtual ID
+     */
+    VirtualID virtualID() throws SecurityException;
 }

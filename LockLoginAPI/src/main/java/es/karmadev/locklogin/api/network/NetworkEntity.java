@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.api.network;
 
 import java.net.InetSocketAddress;
+import java.time.Instant;
 
 /**
  * Network entity
@@ -21,5 +22,10 @@ public interface NetworkEntity {
      */
     InetSocketAddress address();
 
-
+    /**
+     * Get when the entity was created
+     *
+     * @return the entity creation date
+     */
+    Instant creation();
 }

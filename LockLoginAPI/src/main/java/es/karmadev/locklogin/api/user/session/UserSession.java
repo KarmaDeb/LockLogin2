@@ -2,6 +2,8 @@ package es.karmadev.locklogin.api.user.session;
 
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 
+import java.time.Instant;
+
 /**
  * User session
  */
@@ -31,8 +33,10 @@ public interface UserSession {
 
     /**
      * Perform captcha login for this session
+     *
+     * @param status the login status
      */
-    void captchaLogin();
+    void captchaLogin(final boolean status);
 
     /**
      * Get if the session is logged
@@ -43,8 +47,10 @@ public interface UserSession {
 
     /**
      * Perform login for this session
+     *
+     * @param status the login status
      */
-    void login();
+    void login(final boolean status);
 
     /**
      * Get if the session is pin logged
@@ -55,8 +61,10 @@ public interface UserSession {
 
     /**
      * Perform pin login for this session
+     *
+     * @param status the login status
      */
-    void pinLogin();
+    void pinLogin(final boolean status);
 
     /**
      * Get if the session is 2fa logged
@@ -67,8 +75,38 @@ public interface UserSession {
 
     /**
      * Perform 2fa login for this session
+     *
+     * @param status the login status
      */
-    void _2faLogin();
+    void _2faLogin(final boolean status);
+
+    /**
+     * Set the captcha code
+     *
+     * @param captcha the captcha code
+     */
+    void setCaptcha(final String captcha);
+
+    /**
+     * Get the session captcha
+     *
+     * @return the session captcha
+     */
+    String captcha();
+
+    /**
+     * Get if the session is persistent
+     *
+     * @return if the session is persistent
+     */
+    boolean isPersistent();
+
+    /**
+     * Set the session persistence
+     *
+     * @param status persistence status
+     */
+    void persistent(final boolean status);
 
     /**
      * Append a field to this session
@@ -85,4 +123,11 @@ public interface UserSession {
      * @param <T> the field type
      */
     <T> SessionField<T> fetch(final String key);
+
+    /**
+     * Get when the session was created
+     *
+     * @return the session creation date
+     */
+    Instant creation();
 }

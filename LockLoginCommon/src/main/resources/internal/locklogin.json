@@ -6,6 +6,7 @@
       "id": "apache_commons",
       "name": "Apache Commons",
       "file": "ApacheCommons.jar",
+      "test": "${apache.commons.test}",
       "version": {
         "project": "${apache.commons.version}",
         "required": "${apache.commons.version}"
@@ -21,6 +22,7 @@
       "id": "google_authenticator",
       "name": "Google Authenticator",
       "file": "GooglaAuthenticator.jar",
+      "test": "${google.auth.test}",
       "version": {
         "project": "${google.auth.version}",
         "required": "${google.auth.version}"
@@ -36,6 +38,7 @@
       "id": "google_guava",
       "name": "Google Guava",
       "file": "GoogleGuava.jar",
+      "test": "${google.guava.test}",
       "version": {
         "project": "${google.guava.version}",
         "required": "${google.guava.version}"
@@ -51,6 +54,7 @@
       "id": "log4j_core",
       "name": "Log4J",
       "file": "Log4J.jar",
+      "test": "${log4j.core.test}",
       "version": {
         "project": "${log4j.core.version}",
         "required": "${log4j.core.version}"
@@ -66,6 +70,7 @@
       "id": "log4j_web",
       "name": "Log4J Web",
       "file": "Log4JWeb.jar",
+      "test": "${log4j.web.test}",
       "version": {
         "project": "${log4j.web.version}",
         "required": "${log4j.web.version}"
@@ -81,9 +86,26 @@
       "id": "socket_io",
       "name": "Socket IO",
       "file": "SocketIO.jar",
+      "test": "${socket.io.test}",
       "version": {
         "project": "${socket.io.version}",
         "required": "${socket.io.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "hikari_cp",
+      "name": "HikariCP",
+      "file": "HikariCP.jar",
+      "test": "${hikari.cp.test}",
+      "version": {
+        "project": "${hikari.cp.version}",
+        "requred": "${hikari.cp.version}"
       },
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
@@ -97,6 +119,7 @@
       "id": "karma_api",
       "name": "KarmaAPI",
       "file": "KarmaAPI.jar",
+      "test": "",
       "version": {
         "project": "${locklogin.karmaapi.version}",
         "required": "${locklogin.karmaapi.platform}"
@@ -108,6 +131,7 @@
       "id": "placeholder_api",
       "name": "PlaceholderAPI",
       "file": "PlaceholderAPI.jar",
+      "test": "",
       "version": {
         "project": "${placeholder.api.version}",
         "required": "${placeholder.api.version}"
@@ -119,6 +143,7 @@
       "id": "protocol_lib",
       "name": "ProtocolLib",
       "file": "ProtocolLib.jar",
+      "test": "",
       "version": {
         "project": "${protocol.lib.version}",
         "required": "${protocol.lib.version}"
@@ -130,6 +155,7 @@
       "id": "floodgate",
       "name": "floodgate",
       "file": "floodgate.jar",
+      "test": "",
       "version": {
         "project": "${floodgate.version}",
         "required": "${floodgate.version}"

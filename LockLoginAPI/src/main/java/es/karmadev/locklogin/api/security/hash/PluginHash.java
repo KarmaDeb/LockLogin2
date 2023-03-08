@@ -26,6 +26,14 @@ public abstract class PluginHash implements Serializable {
     public abstract HashResult hash(final String input);
 
     /**
+     * Get if the provided hash result needs a rehash
+     *
+     * @param result the hash result
+     * @return if the hahs needs a rehash
+     */
+    public abstract boolean needsRehash(final HashResult result);
+
+    /**
      * Verify a hash
      *
      * @param input the input to verify with
@@ -41,7 +49,11 @@ public abstract class PluginHash implements Serializable {
      * @return the result
      */
     protected final String base64(final String input) {
-        return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+        if (isBase64(input)) {
+            return new String(Base64.getDecoder().decode(input.getBytes(StandardCharsets.UTF_8)));
+        } else {
+            return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -150,4 +151,11 @@ public interface UserAccount {
         HashResult value = panic();
         return !StringUtils.isNullOrEmpty(value);
     }
+
+    /**
+     * Get when the account was created
+     *
+     * @return the account creation date
+     */
+    Instant creation();
 }

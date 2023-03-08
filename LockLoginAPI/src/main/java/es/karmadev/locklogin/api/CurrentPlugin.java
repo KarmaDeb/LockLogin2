@@ -16,7 +16,7 @@ public final class CurrentPlugin {
      */
     protected static void initialize(final LockLogin instace) throws SecurityException {
         if (plugin != null) throw new SecurityException("Cannot redefine plugin instance!");
-        if (instace.runtime() != null) throw new SecurityException();
+        if (instace.runtime() == null) throw new SecurityException();
 
         instace.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
         plugin = instace;

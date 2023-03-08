@@ -7,6 +7,7 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -162,5 +163,16 @@ public class CPluginNetwork implements PluginNetwork {
     @Override
     public Collection<NetworkServer> getServers() {
         return new ArrayList<>(servers);
+    }
+
+    /**
+     * Save data, this will store all the created
+     * accounts into database
+     *
+     * @return if the data was able to be stored
+     */
+    @Override
+    public CompletableFuture<Boolean> saveData() {
+        return null;
     }
 }

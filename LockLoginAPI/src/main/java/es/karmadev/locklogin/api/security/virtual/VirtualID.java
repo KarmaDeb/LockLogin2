@@ -14,9 +14,13 @@ public interface VirtualID {
     VirtualizedInput virtualize(final String input);
 
     /**
-     * Un-virtualize the input
+     * Virtualize the input
      *
-     * @return the raw input
+     * @param input the input to virtualize
+     * @param refference the refferences to force
+     * @return the vritualized input
+     *
+     * @throws IllegalStateException if the input doesn't match the refferences length
      */
-    String resolve(VirtualizedInput input);
+    VirtualizedInput virtualize(final String input, final int[] refference) throws IllegalStateException;
 }
