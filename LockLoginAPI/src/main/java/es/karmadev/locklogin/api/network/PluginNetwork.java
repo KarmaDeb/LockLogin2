@@ -99,12 +99,4 @@ public interface PluginNetwork {
      * @return the servers
      */
     Collection<NetworkServer> getServers();
-
-    /**
-     * Save data, this will store all the created
-     * accounts into database
-     *
-     * @return if the data was able to be stored
-     */
-    CompletableFuture<Boolean> saveData();
 }

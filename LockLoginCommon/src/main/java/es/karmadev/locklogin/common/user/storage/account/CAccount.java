@@ -8,8 +8,9 @@ import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
+import es.karmadev.locklogin.common.SQLiteDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.*;
@@ -33,6 +34,40 @@ public class CAccount implements UserAccount {
         this.id = user_id;
         this.account_id = account_id;
         this.pool = pool;
+    }
+
+    public void writeHashField(final AccountField field, final HashResult result) {
+
+    }
+
+    public void writeBooleanValue(final AccountField field, final boolean value) {
+
+    }
+
+    public void writeStringValue(final AccountField field, final String value) {
+        String target = null;
+        String table = null;
+        int use_id = -1;
+        if (field.equals(AccountField.USERNAME) || field.equals(AccountField.UNIQUEID)) {
+            table = "user";
+            use_id = account_id;
+
+            switch (field) {
+                case USERNAME:
+                    table = "name";
+                    break;
+                case UNIQUEID:
+                    table = "uuid";
+                    break;
+            }
+        }
+        if (field.equals(AccountField.TOKEN_2FA)) {
+            //The only compatible  
+        }
+
+        if (!StringUtils.areNullOrEmpty(true, field, table) && use_id > -1) {
+
+        }
     }
 
     /**

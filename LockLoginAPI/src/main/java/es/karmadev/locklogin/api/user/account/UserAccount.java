@@ -182,6 +182,17 @@ public interface UserAccount extends Cached {
     }
 
     /**
+     * Get if the account has a valid 2fa token
+     * set
+     *
+     * @return if the account has a valid 2fa token set
+     */
+    default boolean _2faSet() {
+        String token = _2FA();
+        return !StringUtils.isNullOrEmpty(token);
+    }
+
+    /**
      * Get if the account is protected
      *
      * @return if the account is protected

@@ -1,26 +1,35 @@
 package es.karmadev.locklogin.test;
 
+import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.lang.LanguagePack;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.license.License;
+import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
+import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.CPluginNetwork;
+import es.karmadev.locklogin.common.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.protection.CPluginHasher;
 import es.karmadev.locklogin.common.runtime.CRuntime;
+import es.karmadev.locklogin.common.server.CServerFactory;
 import es.karmadev.locklogin.common.user.CUserFactory;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
+import es.karmadev.locklogin.common.SQLiteDriver;
 import es.karmadev.locklogin.common.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.test.config.TemporalConfiguration;
+import es.karmadev.locklogin.common.web.license.CLicenseProvider;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -31,17 +40,23 @@ import java.nio.file.Path;
 
 public class TestLockLogin implements LockLogin, KarmaSource {
 
-    public final LockLoginRuntime runtime = new CRuntime();
-    public final CPluginNetwork network = new CPluginNetwork();
-    public final LockLoginHasher hasher;
-
     public final SQLiteDriver sqlite = new SQLiteDriver();
+    public final LockLoginRuntime runtime = new CRuntime();
+    public final CPluginNetwork network = new CPluginNetwork(sqlite);
     public final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
     public final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
     public final CUserFactory default_user_factory = new CUserFactory(sqlite);
+    public final CServerFactory default_server_factory = new CServerFactory(sqlite);
+    public final CLicenseProvider license_provider = new CLicenseProvider();
     public AccountFactory<UserAccount> account_factory = null;
     public SessionFactory<UserSession> session_factory = null;
     public UserFactory<LocalNetworkClient> user_factory = null;
+    public ServerFactory<NetworkServer> server_factory = null;
+
+    public License license = null;
+
+    public final LockLoginHasher hasher;
+    private final Configuration configuration;
 
     public TestLockLogin() {
         APISource.addProvider(this);
@@ -57,6 +72,7 @@ public class TestLockLogin implements LockLogin, KarmaSource {
         }
 
         hasher = new CPluginHasher();
+        configuration = new CPluginConfiguration();
     }
 
     /**
@@ -69,6 +85,27 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     public Object plugin() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return this;
+    }
+
+    /**
+     * Get if the plugin is running in
+     * BungeeCord mode
+     *
+     * @return if the plugin is in bungee mode
+     */
+    @Override
+    public boolean bungeeMode() {
+        return false;
+    }
+
+    /**
+     * Get the plugin build type
+     *
+     * @return the plugin build
+     */
+    @Override
+    public BuildType build() {
+        return null;
     }
 
     /**
@@ -133,16 +170,16 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public Configuration configuration() {
-        return new TemporalConfiguration();
+        return configuration;
     }
 
     /**
-     * Get the plugin messages
+     * Get the plugin language
      *
-     * @return the plugin messages
+     * @return the plugin language
      */
     @Override
-    public Messages messages() {
+    public LanguagePack lang() {
         return null;
     }
 
@@ -183,6 +220,60 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
+     * Get the plugin server factory
+     *
+     * @param original retrieve the plugin default
+     *                 server factory
+     * @return the plugin server factory
+     */
+    @Override
+    public ServerFactory<NetworkServer> getServerFactory(final boolean original) {
+        return (ServerFactory<NetworkServer>) (original ? default_server_factory : (server_factory != null ? server_factory : default_server_factory));
+    }
+
+    /**
+     * Get a backup service
+     *
+     * @param name the service name
+     * @return the backup service
+     */
+    @Override
+    public BackupService getBackupService(final String name) {
+        return null;
+    }
+
+    /**
+     * Get the license provider
+     *
+     * @return the license provider
+     */
+    @Override
+    public LicenseProvider licenseProvider() {
+        return license_provider;
+    }
+
+    /**
+     * Get the current license
+     *
+     * @return the license
+     */
+    @Override
+    public License license() {
+        return license;
+    }
+
+    /**
+     * Updates the plugin license
+     *
+     * @param new_license the new plugin license
+     * @throws SecurityException if the action was not performed by the plugin
+     */
+    @Override
+    public void updateLicense(final License new_license) throws SecurityException {
+        license = new_license;
+    }
+
+    /**
      * Define the plugin account factory
      *
      * @param factory the account factory
@@ -210,6 +301,27 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public void setUserFactory(final UserFactory<LocalNetworkClient> factory) {
         user_factory = factory;
+    }
+
+    /**
+     * Define the plugin server factory
+     *
+     * @param factory the server factory
+     */
+    @Override
+    public void setServerFactory(final ServerFactory<NetworkServer> factory) {
+        server_factory = factory;
+    }
+
+    /**
+     * Register a backup service
+     *
+     * @param name    the service name
+     * @param service the backup service
+     */
+    @Override
+    public void registerBackupService(final String name, final BackupService service) {
+
     }
 
     /**
@@ -336,5 +448,17 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public String updateURL() {
         return null;
+    }
+
+    /**
+     * Get the authors using a custom separator
+     *
+     * @param firstSeparator if the first object should have separator
+     * @param separator      the separator
+     * @return the authors using the separator options
+     */
+    @Override
+    public String authors(boolean firstSeparator, String separator) {
+        return KarmaSource.super.authors(firstSeparator, separator);
     }
 }

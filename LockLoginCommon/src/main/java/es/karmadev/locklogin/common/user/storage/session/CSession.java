@@ -1,18 +1,10 @@
 package es.karmadev.locklogin.common.user.storage.session;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import es.karmadev.locklogin.api.security.LockLoginHasher;
-import es.karmadev.locklogin.api.security.hash.HashResult;
-import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
-import ml.karmaconfigs.api.common.string.StringUtils;
+import es.karmadev.locklogin.common.SQLiteDriver;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -20,7 +12,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CSession implements UserSession {

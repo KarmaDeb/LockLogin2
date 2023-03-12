@@ -1,10 +1,8 @@
 package es.karmadev.locklogin.common.user.storage.session;
 
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
-import es.karmadev.locklogin.common.user.storage.account.CAccount;
+import es.karmadev.locklogin.common.SQLiteDriver;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

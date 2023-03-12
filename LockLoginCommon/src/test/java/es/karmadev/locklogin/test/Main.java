@@ -2,7 +2,12 @@ package es.karmadev.locklogin.test;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.api.network.server.ServerFactory;
+import es.karmadev.locklogin.api.plugin.license.License;
+import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -12,7 +17,12 @@ import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.protection.type.*;
 import ml.karmaconfigs.api.common.string.random.RandomString;
+import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
+import java.net.InetSocketAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class Main {
@@ -31,19 +41,11 @@ public class Main {
         plugin.hasher().registerMethod(new Argon2D());
         plugin.hasher().registerMethod(new Argon2ID());
 
-        UserFactory<LocalNetworkClient> clientFactory = plugin.getUserFactory(false);
-        AccountFactory<UserAccount> accountFactory = plugin.getAccountFactory(false);
-        SessionFactory<UserSession> sessionFactory = plugin.getSessionFactory(false);
-        CurrentPlugin.getPlugin().warn("Using    user factory: {0}", clientFactory.getClass().getCanonicalName());
-        CurrentPlugin.getPlugin().warn("Using account factory: {0}", accountFactory.getClass().getCanonicalName());
-        CurrentPlugin.getPlugin().warn("Using session factory: {0}", sessionFactory.getClass().getCanonicalName());
-
-        LocalNetworkClient created = clientFactory.create("KarmaDev", UUID.nameUUIDFromBytes(("OfflinePlayer:KarmaDev").getBytes()));
-        UserAccount account = accountFactory.create(created);
-        UserSession session = sessionFactory.create(created);
+        /* client = plugin.network().getEntity(1);
+        UserSession session = client.session();
 
         session.captchaLogin(false);
-        session.login(false);
+        session.login(true);
         session.pinLogin(false);
         session._2faLogin(false);
         session.persistent(false);
@@ -52,12 +54,29 @@ public class Main {
         account.setPin("test");
         account.set2FA("test");
         account.setPanic("test");
-        account.set2FA(true);
+        account.set2FA(true);*/
 
-        HashResult rs = account.password();
-        System.out.println(rs.hasher().name());
-        System.out.println(rs.hasher().verify("test", rs));
-        System.out.println(rs.hasher().verify("test2", rs));
-        System.out.println(rs.hasher().verify("tEst", rs));
+        Path license = Paths.get("D:\\Documentos\\TestUnits\\Minecraft\\Proxy\\auth\\plugins\\LockLogin\\cache\\license.dat");
+        LicenseProvider provider = plugin.licenseProvider();
+        License data = provider.load(license);
+        if (data == null) {
+            data = provider.update(license);
+            if (data != null) {
+                plugin.info("Updated license automatically");
+                data.forceInstall();
+            }
+        }
+        plugin.updateLicense(data);
+
+        String[] fields = provider.update(data);
+        if (fields.length > 0) {
+            plugin.warn("Detected {0} changes on the license. The license has been updated automatically; The changes included:", fields.length);
+            for (String field : fields) {
+                plugin.info(field);
+            }
+        }
+
+        System.out.println(plugin.license().version());
+        System.out.println(plugin.license().owner().name());
     }
 }

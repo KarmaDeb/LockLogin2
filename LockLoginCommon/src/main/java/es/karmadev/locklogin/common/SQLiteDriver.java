@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.common.user;
+package es.karmadev.locklogin.common;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -48,7 +48,7 @@ public final class SQLiteDriver {
             boolean acc_create = statement.execute("CREATE TABLE IF NOT EXISTS `account` ('id' INTEGER NOT NULL, 'password' TEXT, 'pin' TEXT, '2fa_token' TEXT, 'panic' TEXT, '2fa' BOOLEAN, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))");
             boolean sess_create = statement.execute("CREATE TABLE IF NOT EXISTS `session` ('id' INTEGER NOT NULL, 'captcha_login' BOOLEAN, 'pass_login' BOOLEAN, 'pin_login' BOOLEAN, '2fa_login' BOOLEAN, 'persistence' BOOLEAN, 'captcha' TEXT, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))");
             boolean serv_create = statement.execute("CREATE TABLE IF NOT EXISTS `server` ('id' INTEGER NOT NULL, 'name' TEXT, 'address' TEXT, 'port' INTEGER, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))");
-            boolean user_create = statement.execute("CREATE TABLE IF NOT EXISTS `user` ('id' INTEGER NOT NULL, 'name' TEXT, 'uuid' TEXT, 'account_id' INTEGER NULL, 'session_id' INTEGER NULL, 'last_server' INTEGER NULL, 'previous_server' INTEGER NULL, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT), FOREIGN KEY('account_id') REFERENCES account('id') ON DELETE SET NULL, FOREIGN KEY('session_id') REFERENCES session('id') ON DELETE SET NULL, FOREIGN KEY('last_server') REFERENCES server('id') ON DELETE SET NULL, FOREIGN KEY('previous_server') REFERENCES server('id') ON DELETE SET NULL)");
+            boolean user_create = statement.execute("CREATE TABLE IF NOT EXISTS `user` ('id' INTEGER NOT NULL, 'name' TEXT, 'uuid' TEXT, 'account_id' INTEGER NULL, 'session_id' INTEGER NULL, 'type' INTEGER DEFAULT 1, 'last_server' INTEGER NULL, 'previous_server' INTEGER NULL, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT), FOREIGN KEY('account_id') REFERENCES account('id') ON DELETE SET NULL, FOREIGN KEY('session_id') REFERENCES session('id') ON DELETE SET NULL, FOREIGN KEY('last_server') REFERENCES server('id') ON DELETE SET NULL, FOREIGN KEY('previous_server') REFERENCES server('id') ON DELETE SET NULL)");
 
             if (acc_create && sess_create && serv_create && user_create) {
                 plugin.info("Successfully setup LockLogin sqlite tables");
