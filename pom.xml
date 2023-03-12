@@ -68,7 +68,20 @@
         <locklogin.checksum.version>v5</locklogin.checksum.version>
 
         <locklogin.karmaapi.version>1.3.4-SNAPSHOT</locklogin.karmaapi.version>
-        <locklogin.karmaapi.platform>1.3.4-8</locklogin.karmaapi.platform>
+        <locklogin.karmaapi.platform>1.3.4-10</locklogin.karmaapi.platform>
+        <!--
+        locklogin karmaapi platform version changelog
+
+         Since 10/03/2023 - Changed version from 1.3.4-8 to 1.3.4-10
+
+                            The reason of this change is due the previous
+                            version was not working very well when encrypting
+                            or decrypting files. 1.3.4-10 improves the way the
+                            files are encrypted, by providing a way to generate
+                            the secret key (password based) and an IvParameterSpect
+                            used for encryption and decryption
+         -->
+
 
         <socket.io.version>2.1.0</socket.io.version>
         <socket.io.test>io.socket.client.IO</socket.io.test>
@@ -246,6 +259,27 @@
                 <artifactId>argon2-jvm</artifactId>
                 <version>2.11</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <!-- Apache -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.core.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-web</artifactId>
+                <version>${log4j.web.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- Provided by KarmaAPI -->
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>5.2.1</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

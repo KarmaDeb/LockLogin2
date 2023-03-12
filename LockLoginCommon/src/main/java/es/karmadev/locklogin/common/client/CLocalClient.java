@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.common.client;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.event.ClientEvent;
@@ -8,7 +9,9 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
+import es.karmadev.locklogin.common.CPluginNetwork;
+import es.karmadev.locklogin.common.server.CServer;
+import es.karmadev.locklogin.common.SQLiteDriver;
 import es.karmadev.locklogin.common.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.user.storage.session.CSession;
 
@@ -23,10 +26,8 @@ import java.util.UUID;
 
 public class CLocalClient implements LocalNetworkClient {
 
-    private final int id;
-    private final SQLiteDriver pool;
-
-    private NetworkServer server;
+    protected final int id;
+    protected final SQLiteDriver pool;
 
     public CLocalClient(final int id, final SQLiteDriver pool) {
         this.id = id;
@@ -66,6 +67,27 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public InetSocketAddress address() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `address`,`port` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    String address = result.getString("address");
+                    int port = result.getInt("port");
+                    if (!result.wasNull()) {
+                        if (address == null) address = "127.0.0.1";
+                        return InetSocketAddress.createUnresolved(address, port);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+
         return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
     }
 
@@ -107,6 +129,49 @@ public class CLocalClient implements LocalNetworkClient {
     }
 
     /**
+     * Update the connection address
+     *
+     * @param address the connection address
+     */
+    @Override
+    public void setAddress(final InetSocketAddress address) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+
+            statement.executeUpdate("UPDATE `user` SET `address` = '" + address.getHostString() + "' WHERE `id` = " + id);
+            statement.executeUpdate("UPDATE `user` SET `port` = " + address.getPort() + " WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection ,statement);
+        }
+    }
+
+    /**
+     * Set the connection name
+     *
+     * @param name the connection name
+     */
+    @Override
+    public void setName(final String name) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+
+            statement.executeUpdate("UPDATE `user` SET `name` = '" + name + "' WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+    }
+
+    /**
      * Get the connection unique identifier
      *
      * @return the connection unique identifier
@@ -139,7 +204,18 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setUniqueId(final UUID id) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
 
+            statement.executeUpdate("UPDATE `user` SET `uuid` = '" + id + "' WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
     }
 
     /**
@@ -149,7 +225,26 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public ConnectionType connection() {
-        return null;
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery("SELECT `type` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    int type = result.getInt("type");
+                    if (!result.wasNull()) {
+                        return ConnectionType.byId(type);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+
+        return ConnectionType.OFFLINE;
     }
 
     /**
@@ -159,7 +254,18 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setConnection(final ConnectionType type) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
 
+            statement.executeUpdate("UPDATE `user` SET `type` = " + type.id() + " WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection ,statement);
+        }
     }
 
     /**
@@ -183,13 +289,83 @@ public class CLocalClient implements LocalNetworkClient {
     }
 
     /**
+     * Get the client previous server
+     *
+     * @return the client previous server
+     */
+    @Override
+    public NetworkServer previousServer() {
+        Connection connection = null;
+        Statement statement = null;
+        LockLogin plugin = CurrentPlugin.getPlugin();
+
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `previous_server` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    int server_id = result.getInt("previous_server");
+                    if (!result.wasNull()) {
+                        CPluginNetwork network = (CPluginNetwork) plugin.network();
+
+                        NetworkServer server = network.getServer(server_id);
+                        if (server == null) {
+                            server = new CServer(server_id, pool);
+                            network.appendServer(server);
+                        }
+
+                        return server;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+
+        return null;
+    }
+
+    /**
      * Get the client last server
      *
      * @return the last server
      */
     @Override
-    public NetworkServer lastServer() {
-        return server;
+    public NetworkServer server() {
+        Connection connection = null;
+        Statement statement = null;
+        LockLogin plugin = CurrentPlugin.getPlugin();
+
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `last_server` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    int server_id = result.getInt("last_server");
+                    if (!result.wasNull()) {
+                        CPluginNetwork network = (CPluginNetwork) plugin.network();
+
+                        NetworkServer server = network.getServer(server_id);
+                        if (server == null) {
+                            server = new CServer(server_id, pool);
+                            network.appendServer(server);
+                        }
+
+                        return server;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection, statement);
+        }
+
+        return null;
     }
 
     /**
@@ -256,11 +432,39 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setServer(final NetworkServer server) {
-        if (this.server != null) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
 
+            statement.executeUpdate("UPDATE `user` SET `last_server` = " + server.id() + " WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection ,statement);
         }
+    }
 
-        this.server = server;
+    /**
+     * Force the client previous server
+     *
+     * @param server the new previous server
+     */
+    @Override
+    public void forcePreviousServer(final NetworkServer server) {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = pool.retrieve();
+            statement = connection.createStatement();
+
+            statement.executeUpdate("UPDATE `user` SET `previous_server` = " + server.id() + " WHERE `id` = " + id);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            pool.close(connection ,statement);
+        }
     }
 
     /**

@@ -1,5 +1,9 @@
 package es.karmadev.locklogin.api.plugin.runtime;
 
+import es.karmadev.locklogin.api.extension.Module;
+import ml.karmaconfigs.api.bukkit.server.BukkitServer;
+
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 
 /**
@@ -63,15 +67,18 @@ public abstract class LockLoginRuntime {
      */
     public final Platform platform() {
         try {
-            Class.forName("net.md_5.bungee.api.ProxiedPlayer");
-            return Platform.BUNGEECORD;
+            Class<?> proxyServer = Class.forName("net.md_5.bungee.api.ProxyServer");
+            Method getInstance = proxyServer.getDeclaredMethod("getInstance");
+
+            Object proxyInstance = getInstance.invoke(proxyServer);
+            Class<?> instanceClass = proxyInstance.getClass();
+
+            Method getVersion = instanceClass.getDeclaredMethod("getVersion");
+            String version = (String) getVersion.invoke(proxyInstance);
+
+            return Platform.BUNGEE.version(version);
         } catch (Throwable ex) {
-            try {
-                Class.forName("org.bukkit.entity.Player.Spigot");
-                return Platform.SPIGOT;
-            } catch (Throwable exc) {
-                return Platform.BUKKIT;
-            }
+            return Platform.BUKKIT.version(BukkitServer.getFullVersion());
         }
     }
 }

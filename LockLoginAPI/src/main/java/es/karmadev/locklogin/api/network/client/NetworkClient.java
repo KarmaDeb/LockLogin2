@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.network.client;
 
+import com.google.gson.JsonElement;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 
@@ -7,20 +8,6 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
  * Network client
  */
 public interface NetworkClient extends LocalNetworkClient {
-
-    /**
-     * Get the client previous server
-     *
-     * @return the client previous server
-     */
-    NetworkServer previousServer();
-
-    /**
-     * Get the client current server
-     *
-     * @return the client server
-     */
-    NetworkServer server();
 
     /**
      * Send a message to the client
@@ -69,17 +56,55 @@ public interface NetworkClient extends LocalNetworkClient {
      *
      * @param priority the packet priority
      * @param data the packet data
-     * @throws SecurityException if there's no module trying to send the packet
+     * @throws SecurityException if there's no module or plugin trying to send the packet
      */
     void appendPacket(final int priority, final byte... data) throws SecurityException;
 
     /**
      * Send a packet to the current client server
      *
+     * @param priority the packet priority
      * @param data the packet data
-     * @throws SecurityException if there's no module trying to send the packet
+     * @throws SecurityException if there's no module or plugin trying to send the packet
+     */
+    void appendPacket(final int priority, final String data) throws SecurityException;
+
+    /**
+     * Send a packet to the current client server
+     *
+     * @param priority the packet priority
+     * @param data the packet data
+     * @throws SecurityException if there's no module or plugin trying to send the packet
+     */
+    void appendPacket(final int priority, final JsonElement data) throws SecurityException;
+
+    /**
+     * Send a packet to the current client server
+     *
+     * @param data the packet data
+     * @throws SecurityException if there's no module or plugin trying to send the packet
      */
     default void appendPacket(final byte... data) throws SecurityException {
+        appendPacket(Integer.MAX_VALUE, data);
+    }
+
+    /**
+     * Send a packet to the current client server
+     *
+     * @param data the packet data
+     * @throws SecurityException if there's no module or plugin trying to send the packet
+     */
+    default void appendPacket(final String data) throws SecurityException {
+        appendPacket(Integer.MAX_VALUE, data);
+    }
+
+    /**
+     * Send a packet to the current client server
+     *
+     * @param data the packet data
+     * @throws SecurityException if there's no module or plugin trying to send the packet
+     */
+    default void appendPacket(final JsonElement data) throws SecurityException {
         appendPacket(Integer.MAX_VALUE, data);
     }
 

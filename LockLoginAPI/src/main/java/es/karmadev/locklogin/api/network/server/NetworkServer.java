@@ -3,6 +3,8 @@ package es.karmadev.locklogin.api.network.server;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 
+import java.net.InetSocketAddress;
+
 /**
  * Network server
  */
@@ -14,6 +16,20 @@ public interface NetworkServer extends NetworkEntity {
      * @return the server id
      */
     int id();
+
+    /**
+     * Update the server name
+     *
+     * @param name the server name
+     */
+    void setName(final String name);
+
+    /**
+     * Update the server address
+     *
+     * @param address the server new address
+     */
+    void setAddress(final InetSocketAddress address);
 
     /**
      * Get the server packet queue

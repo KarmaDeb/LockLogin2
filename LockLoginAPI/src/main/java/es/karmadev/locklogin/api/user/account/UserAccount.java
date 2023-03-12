@@ -120,6 +120,11 @@ public interface UserAccount {
      */
     void set2FA(final boolean status);
 
+    /**
+     * Get if the client is registered
+     *
+     * @return if the client is registered
+     */
     default boolean isRegistered() {
         HashResult value = password();
         return !StringUtils.isNullOrEmpty(value);
@@ -141,6 +146,17 @@ public interface UserAccount {
      * @return if the account has 2fa
      */
     boolean has2FA();
+
+    /**
+     * Get if the account has a valid 2fa token
+     * set
+     *
+     * @return if the account has a valid 2fa token set
+     */
+    default boolean _2faSet() {
+        String token = _2FA();
+        return !StringUtils.isNullOrEmpty(token);
+    }
 
     /**
      * Get if the account is protected

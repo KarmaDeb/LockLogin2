@@ -5,15 +5,32 @@ package es.karmadev.locklogin.api.plugin.runtime;
  */
 public enum Platform {
     /**
-     * Legacy bukkit server
+     * Bukkit server
      */
     BUKKIT,
     /**
-     * Spigot server
+     * Bungee server
      */
-    SPIGOT,
+    BUNGEE;
+
+    private String version;
+
     /**
-     * Proxy server
+     * Update the platform version
+     *
+     * @param v the version
      */
-    BUNGEECORD
+    protected Platform version(final String v) {
+        version = v;
+        return this;
+    }
+
+    /**
+     * Get the platform version
+     *
+     * @return the platform version
+     */
+    public String getVersion() {
+        return version;
+    }
 }

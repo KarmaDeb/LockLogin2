@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.api.network;
 
+import es.karmadev.locklogin.api.network.client.data.PermissionObject;
+
 import java.net.InetSocketAddress;
 import java.time.Instant;
 
@@ -28,4 +30,12 @@ public interface NetworkEntity {
      * @return the entity creation date
      */
     Instant creation();
+
+    /**
+     * Get if this entity has the specified permission
+     *
+     * @param permission the permission
+     * @return if the entity has the perimssion
+     */
+    boolean hasPermission(final PermissionObject permission);
 }

@@ -14,6 +14,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -30,6 +31,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -46,6 +48,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -62,6 +65,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -78,6 +82,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -94,6 +99,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -110,6 +116,7 @@
       "download": [
         "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
         "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
+        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
         "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
       ],
       "plugin": false
@@ -166,11 +173,19 @@
   ],
   "version": {
     "name": "${project.parent.version}",
+    "type": "${locklogin.update.name}",
     "check": [
       "https://karmadev.es/locklogin/version/",
       "https://backup.karmadev.es/locklogin/version",
+      "https://reddo.es/karmadev/locklogin/version/",
       "https://github.io/karmadeb/updates/locklogin/version/"
     ],
     "download": []
-  }
+  },
+  "checksum": [
+    "https://karmadev.es/locklogin/checksum/${locklogin.checksum.version}/checksum.lldb",
+    "https://backup.karmadev.es/locklogin/checksum/${locklogin.checksum.version}/checksum.lldb",
+    "https://reddo.es/repository/locklogin/${locklogin.checksum.version}/checksum.lldb",
+    "https://github.io/karmadeb/updates/locklogin/data/${locklogin.checksum.version}/checksum.lldb"
+  ]
 }

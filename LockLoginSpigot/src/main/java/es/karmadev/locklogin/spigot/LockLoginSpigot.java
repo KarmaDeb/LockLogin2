@@ -1,14 +1,20 @@
 package es.karmadev.locklogin.spigot;
 
+import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.license.License;
+import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
+import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
@@ -17,15 +23,20 @@ import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.CPluginNetwork;
 import es.karmadev.locklogin.common.dependency.CPluginDependency;
+import es.karmadev.locklogin.common.plugin.file.CPluginConfiguration;
+import es.karmadev.locklogin.common.plugin.file.lang.InternalPack;
 import es.karmadev.locklogin.common.protection.CPluginHasher;
-import es.karmadev.locklogin.common.protection.type.SHA256Hash;
-import es.karmadev.locklogin.common.protection.type.SHA512Hash;
+import es.karmadev.locklogin.common.protection.type.*;
 import es.karmadev.locklogin.common.runtime.CRuntime;
-import es.karmadev.locklogin.common.user.SQLiteDriver;
+import es.karmadev.locklogin.common.SQLiteDriver;
+import es.karmadev.locklogin.common.server.CServerFactory;
+import es.karmadev.locklogin.common.user.CUserFactory;
 import es.karmadev.locklogin.common.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.common.web.license.CLicenseProvider;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
+import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 import org.bukkit.plugin.Plugin;
@@ -37,20 +48,34 @@ import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
 
-    private final LockLoginRuntime runtime = new CRuntime();
-    private final CPluginNetwork network = new CPluginNetwork();
-    private final LockLoginHasher hasher;
-
     private final SQLiteDriver sqlite = new SQLiteDriver();
+
+    private final LockLoginRuntime runtime = new CRuntime();
+    private final CPluginNetwork network = new CPluginNetwork(sqlite);
     private final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
     private final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
+    private final CUserFactory default_user_factory = new CUserFactory(sqlite);
+    private final CServerFactory default_server_factory = new CServerFactory(sqlite);
+    private final Map<String, BackupService> backup_services = new ConcurrentHashMap<>();
+    private final CLicenseProvider license_provider = new CLicenseProvider();
+    private final Configuration configuration = new CPluginConfiguration();
+
+    private InternalPack pack = new InternalPack();
     private AccountFactory<UserAccount> account_factory = null;
     private SessionFactory<UserSession> session_factory = null;
+    private UserFactory<LocalNetworkClient> user_factory = null;
+    private ServerFactory<NetworkServer> server_factory = null;
+    private License license;
+
+    private final LockLoginHasher hasher;
+
 
     public LockLoginSpigot() {
         super(false);
@@ -77,6 +102,31 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     public Object plugin() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return this;
+    }
+
+    /**
+     * Get if the plugin is running in
+     * BungeeCord mode
+     *
+     * @return if the plugin is in bungee mode
+     */
+    @Override
+    public boolean bungeeMode() {
+        File server_folder = getServer().getWorldContainer();
+        File spigot_yml = new File(server_folder, "spigot.yml");
+        KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
+
+        return yaml.getBoolean("settings.bungeecord", false);
+    }
+
+    /**
+     * Get the plugin build type
+     *
+     * @return the plugin build
+     */
+    @Override
+    public BuildType build() {
+        return null;
     }
 
     /**
@@ -160,7 +210,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public Configuration configuration() {
-        return null;
+        return configuration;
     }
 
     /**
@@ -170,7 +220,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public Messages messages() {
-        return null;
+        return pack.getMessenger();
     }
 
     /**
@@ -206,7 +256,61 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public UserFactory<LocalNetworkClient> getUserFactory(final boolean original) {
-        return null;
+        return (UserFactory<LocalNetworkClient>) (original ? default_user_factory : (user_factory != null ? user_factory : default_user_factory));
+    }
+
+    /**
+     * Get the plugin server factory
+     *
+     * @param original retrieve the plugin default
+     *                 server factory
+     * @return the plugin server factory
+     */
+    @Override
+    public ServerFactory<NetworkServer> getServerFactory(final boolean original) {
+        return (ServerFactory<NetworkServer>) (original ? default_server_factory : (server_factory != null ? server_factory : default_server_factory));
+    }
+
+    /**
+     * Get a backup service
+     *
+     * @param name the service name
+     * @return the backup service
+     */
+    @Override
+    public BackupService getBackupService(final String name) {
+        return backup_services.getOrDefault(name, null);
+    }
+
+    /**
+     * Get the license provider
+     *
+     * @return the license provider
+     */
+    @Override
+    public LicenseProvider licenseProvider() {
+        return license_provider;
+    }
+
+    /**
+     * Get the current license
+     *
+     * @return the license
+     */
+    @Override
+    public License license() {
+        return license;
+    }
+
+    /**
+     * Updates the plugin license
+     *
+     * @param new_license the new plugin license
+     * @throws SecurityException if the action was not performed by the plugin
+     */
+    @Override
+    public void updateLicense(final License new_license) throws SecurityException {
+        license = new_license;
     }
 
     /**
@@ -235,8 +339,29 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      * @param factory the user factory
      */
     @Override
-    public void setUserFactory(UserFactory<LocalNetworkClient> factory) {
+    public void setUserFactory(final UserFactory<LocalNetworkClient> factory) {
+        user_factory = factory;
+    }
 
+    /**
+     * Define the plugin server factory
+     *
+     * @param factory the server factory
+     */
+    @Override
+    public void setServerFactory(final ServerFactory<NetworkServer> factory) {
+        server_factory = factory;
+    }
+
+    /**
+     * Register a backup service
+     *
+     * @param name    the service name
+     * @param service the backup service
+     */
+    @Override
+    public void registerBackupService(final String name, final BackupService service) {
+        backup_services.put(name, service);
     }
 
     /**
@@ -322,6 +447,10 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
         try {
             hasher.registerMethod(new SHA512Hash());
             hasher.registerMethod(new SHA256Hash());
+            hasher.registerMethod(new BCryptHash());
+            hasher.registerMethod(new Argon2I());
+            hasher.registerMethod(new Argon2D());
+            hasher.registerMethod(new Argon2ID());
         } catch (UnnamedHashException ex) {
             ex.printStackTrace();
         }

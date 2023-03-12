@@ -33,4 +33,22 @@ public interface PermissionConfiguration extends Serializable {
      * of '*'
      */
     boolean allowWildcard();
+
+    /**
+     * Get the permissions to grant to non logged
+     * clients
+     *
+     * @return the permissions to grant to non
+     * logged clients
+     */
+    String[] unLoggedGrants();
+
+    /**
+     * Get the permissions to grant to logged
+     * clients
+     *
+     * @return the permissions to grant to
+     * logged clients
+     */
+    String[] loggedGrants();
 }

@@ -8,6 +8,7 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
+import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -24,6 +25,20 @@ public interface LocalNetworkClient extends NetworkEntity {
      * @return the entity id
      */
     int id();
+
+    /**
+     * Update the connection address
+     *
+     * @param address the connection address
+     */
+    void setAddress(final InetSocketAddress address);
+
+    /**
+     * Set the connection name
+     *
+     * @param name the connection name
+     */
+    void setName(final String name);
 
     /**
      * Get the connection unique identifier
@@ -68,11 +83,18 @@ public interface LocalNetworkClient extends NetworkEntity {
     NetworkClient client();
 
     /**
+     * Get the client previous server
+     *
+     * @return the client previous server
+     */
+    NetworkServer previousServer();
+
+    /**
      * Get the client last server
      *
      * @return the last server
      */
-    NetworkServer lastServer();
+    NetworkServer server();
 
     /**
      * Get the client account
@@ -97,6 +119,13 @@ public interface LocalNetworkClient extends NetworkEntity {
      * when he joins the server
      */
     void setServer(final NetworkServer server);
+
+    /**
+     * Force the client previous server
+     *
+     * @param server the new previous server
+     */
+    void forcePreviousServer(final NetworkServer server);
 
     /**
      * Trigger an event

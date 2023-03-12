@@ -2,11 +2,15 @@ package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.license.License;
+import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
-import es.karmadev.locklogin.api.security.hash.PluginHash;
+import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
@@ -28,6 +32,21 @@ public interface LockLogin {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     Object plugin() throws SecurityException;
+
+    /**
+     * Get if the plugin is running in
+     * BungeeCord mode
+     *
+     * @return if the plugin is in bungee mode
+     */
+    boolean bungeeMode();
+
+    /**
+     * Get the plugin build type
+     *
+     * @return the plugin build
+     */
+    BuildType build();
 
     /**
      * Load an internal plugin file
@@ -110,6 +129,45 @@ public interface LockLogin {
     UserFactory<LocalNetworkClient> getUserFactory(final boolean original);
 
     /**
+     * Get the plugin server factory
+     *
+     * @param original retrieve the plugin default
+     *                 server factory
+     * @return the plugin server factory
+     */
+    ServerFactory<NetworkServer> getServerFactory(final boolean original);
+
+    /**
+     * Get a backup service
+     *
+     * @param name the service name
+     * @return the backup service
+     */
+    BackupService getBackupService(final String name);
+
+    /**
+     * Get the license provider
+     *
+     * @return the license provider
+     */
+    LicenseProvider licenseProvider();
+
+    /**
+     * Get the current license
+     *
+     * @return the license
+     */
+    License license();
+
+    /**
+     * Updates the plugin license
+     *
+     * @param new_license the new plugin license
+     * @throws SecurityException if the action was not performed by the plugin
+     */
+    void updateLicense(final License new_license) throws SecurityException;
+
+    /**
      * Define the plugin account factory
      *
      * @param factory the account factory
@@ -129,6 +187,21 @@ public interface LockLogin {
      * @param factory the user factory
      */
     void setUserFactory(final UserFactory<LocalNetworkClient> factory);
+
+    /**
+     * Define the plugin server factory
+     *
+     * @param factory the server factory
+     */
+    void setServerFactory(final ServerFactory<NetworkServer> factory);
+
+    /**
+     * Register a backup service
+     *
+     * @param name the service name
+     * @param service the backup service
+     */
+    void registerBackupService(final String name, final BackupService service);
 
     /**
      * Print a message

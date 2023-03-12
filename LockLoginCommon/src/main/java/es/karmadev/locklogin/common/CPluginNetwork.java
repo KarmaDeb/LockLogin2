@@ -1,28 +1,44 @@
 package es.karmadev.locklogin.common;
 
+import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.common.client.CLocalClient;
+import es.karmadev.locklogin.common.plugin.file.CSecretStore;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class CPluginNetwork implements PluginNetwork {
 
-    private final Set<LocalNetworkClient> clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final SQLiteDriver driver;
+    private final Set<NetworkClient> clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<NetworkServer> servers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<LocalNetworkClient> offline_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public CPluginNetwork(final SQLiteDriver driver) {
+        this.driver = driver;
+
+        CurrentPlugin.whenAvailable((plugin) -> {
+            Collection<LocalNetworkClient> offline_clients = getPlayers();
+            plugin.info("There're {0} accounts in this server (not all of them may be registered)", offline_clients.size());
+        });
+    }
 
     /**
      * Append a client
      *
      * @param client the client to append
      */
-    public void appendClient(final LocalNetworkClient client) {
+    public void appendClient(final NetworkClient client) {
         clients.add(client);
     }
 
@@ -43,13 +59,7 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public NetworkClient getPlayer(final int id) {
-        Optional<LocalNetworkClient> offline = clients.stream().filter((client) -> client.id() == id).findFirst();
-        if (offline.isPresent()) {
-            LocalNetworkClient local = offline.get();
-            if (local.online()) return local.client();
-        }
-
-        return null;
+        return clients.stream().filter((client) -> client.id() == id).findFirst().orElse(null);
     }
 
     /**
@@ -60,13 +70,7 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public NetworkClient getPlayer(final String name) {
-        Optional<LocalNetworkClient> offline = clients.stream().filter((cl) -> cl.name().equals(name)).findFirst();
-        if (offline.isPresent()) {
-            LocalNetworkClient local = offline.get();
-            if (local.online()) return local.client();
-        }
-
-        return null;
+        return clients.stream().filter((client) -> client.name().equals(name)).findFirst().orElse(null);
     }
 
     /**
@@ -77,13 +81,7 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public NetworkClient getPlayer(final UUID uniqueId) {
-        Optional<LocalNetworkClient> offline = clients.stream().filter((cl) -> cl.uniqueId().equals(uniqueId)).findFirst();
-        if (offline.isPresent()) {
-            LocalNetworkClient local = offline.get();
-            if (local.online()) return local.client();
-        }
-
-        return null;
+        return clients.stream().filter((client) -> client.uniqueId().equals(uniqueId)).findFirst().orElse(null);
     }
 
     /**
@@ -94,7 +92,31 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public LocalNetworkClient getEntity(final int id) {
-        return clients.stream().filter((client) -> client.id() == id).findFirst().orElse(null);
+        if (offline_cache.stream().anyMatch((offline) -> offline.id() == id)) {
+            return offline_cache.stream().filter((offline) -> offline.id() == id).findFirst().get();
+        }
+
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = driver.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `id` = " + id)) {
+                if (result.next()) {
+                    CLocalClient cl = new CLocalClient(id, driver);
+                    offline_cache.add(cl);
+
+                    return cl;
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            driver.close(connection, statement);
+        }
+
+        return null;
     }
 
     /**
@@ -105,7 +127,33 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public LocalNetworkClient getOfflinePlayer(final UUID uniqueId) {
-        return clients.stream().filter((client) -> client.uniqueId() == uniqueId).findFirst().orElse(null);
+        if (offline_cache.stream().anyMatch((offline) -> offline.uniqueId().equals(uniqueId))) {
+            return offline_cache.stream().filter((offline) -> offline.uniqueId().equals(uniqueId)).findFirst().get();
+        }
+
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = driver.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `uuid` = '" + uniqueId + "'")) {
+                if (result.next()) {
+                    int id = result.getInt("id");
+
+                    CLocalClient cl = new CLocalClient(id, driver);
+                    offline_cache.add(cl);
+
+                    return cl;
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            driver.close(connection, statement);
+        }
+
+        return null;
     }
 
     /**
@@ -152,7 +200,37 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public Collection<LocalNetworkClient> getPlayers() {
-        return new ArrayList<>(clients);
+        List<LocalNetworkClient> offline = new ArrayList<>(offline_cache);
+
+        StringBuilder idIgnorer = new StringBuilder();
+        for (LocalNetworkClient client : offline) {
+            idIgnorer.append(client.id()).append(",");
+        }
+        String not_in = StringUtils.replaceLast(idIgnorer.toString(), ",", "");
+
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = driver.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `id` NOT IN (" + not_in + ")")) {
+                while (result.next()) {
+                    int id = result.getInt("id");
+                    if (!result.wasNull()) {
+                        CLocalClient cl = new CLocalClient(id, driver);
+                        offline_cache.add(cl);
+                        offline.add(cl);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            driver.close(connection, statement);
+        }
+
+        return offline;
     }
 
     /**
@@ -163,16 +241,5 @@ public class CPluginNetwork implements PluginNetwork {
     @Override
     public Collection<NetworkServer> getServers() {
         return new ArrayList<>(servers);
-    }
-
-    /**
-     * Save data, this will store all the created
-     * accounts into database
-     *
-     * @return if the data was able to be stored
-     */
-    @Override
-    public CompletableFuture<Boolean> saveData() {
-        return null;
     }
 }

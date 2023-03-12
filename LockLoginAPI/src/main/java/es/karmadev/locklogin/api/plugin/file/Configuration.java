@@ -10,6 +10,14 @@ import java.io.Serializable;
 public interface Configuration {
 
     /**
+     * Reload the configuration
+     *
+     * @return if the configuration
+     * was able to be reloaded
+     */
+    boolean reload();
+
+    /**
      * Get the plugin proxy configuration
      *
      * @return the plugin proxy configuration
@@ -38,7 +46,7 @@ public interface Configuration {
      *
      * @return the plugin secret key
      */
-    String secretKey();
+    SecretStore secretKey();
 
     /**
      * Get the plugin statistics configuration
@@ -53,6 +61,14 @@ public interface Configuration {
      * @return the plugin backup configuration
      */
     BackupConfiguration backup();
+
+    /**
+     * Get the plugin premium configuration
+     *
+     * @return the plugin configuration for
+     * premium users
+     */
+    PremiumConfiguration premium();
 
     /**
      * Get if the plugin overwrites the
@@ -110,6 +126,13 @@ public interface Configuration {
     boolean hideNonLogged();
 
     /**
+     * Get the plugin messages interval configuration
+     *
+     * @return the plugin message configuration
+     */
+    MessageIntervalSection messageInterval();
+
+    /**
      * Get the plugin captcha configuration
      *
      * @return the plugin captcha configuration
@@ -138,6 +161,88 @@ public interface Configuration {
     PasswordConfiguration password();
 
     /**
+     * Get the plugin brute force configuration
+     *
+     * @return the plugin bruteforce
+     * settings
+     */
+    BruteForceSection bruteForce();
+
+    /**
+     * Get if the plugin allows a client to
+     * join to the server even though he's
+     * already in, only if the address is
+     * the same
+     *
+     * @return if the plugin filters connection
+     * protection
+     */
+    boolean allowSameIp();
+
+    /**
+     * Get if the plugin enables the pin
+     * login. Globally
+     *
+     * @return if the plugin uses pin
+     */
+    boolean enablePin();
+
+    /**
+     * Get if the plugin enables the
+     * 2fa login. Globally
+     *
+     * @return if the plugin uses 2fa
+     */
+    boolean enable2fa();
+
+    /**
+     * Get the configuration for the
+     * plugin updater
+     *
+     * @return the plugin updater configuration
+     */
+    UpdaterSection updater();
+
+    /**
+     * Get the configuration for the
+     * plugin spawn
+     *
+     * @return the plugin spawn configuration
+     */
+    SpawnSection spawn();
+
+    /**
+     * Get if the player chat gets cleared when
+     * he joins the server
+     *
+     * @return if the player chat gets cleared
+     */
+    boolean clearChat();
+
+    /**
+     * Get if the plugin validates the
+     * usernames
+     *
+     * @return if the plugin verifies
+     * names
+     */
+    boolean validateNames();
+
+    /**
+     * Get the plugin name check protocol
+     *
+     * @return the plugin name check protocl
+     */
+    int checkProtocol();
+
+    /**
+     * Get the plugin language
+     *
+     * @return the plugin language
+     */
+    String language();
+
+    /**
      * Serialize the configuration
      *
      * @return the serialized configuration
@@ -150,4 +255,24 @@ public interface Configuration {
      * @param serialized the serialized configuration
      */
     void load(final String serialized);
+
+    /**
+     * Secret storage
+     */
+    interface SecretStore extends Serializable {
+
+        /**
+         * The stored token
+         *
+         * @return the token
+         */
+        byte[] token();
+
+        /**
+         * The stored IV
+         *
+         * @return the IV
+         */
+        byte[] iv();
+    }
 }
