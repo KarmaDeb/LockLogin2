@@ -13,6 +13,16 @@
 #and some plugin messages
 ServerName: ""
 
+#Manage the web services communication
+#server.
+#
+# DO NOT CHANGE THIS UNLESS YOU KNOW WHAT
+# YOU ARE DOING
+Communications:
+  Server: "karmadev.es"
+  Port: 2053
+  SSL: true
+
 #Allow bedrock players to bypass login if
 #they already have an account on LockLogin
 BedrockLogin: false

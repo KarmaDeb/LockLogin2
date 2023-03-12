@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api;
 
+import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
@@ -158,6 +159,13 @@ public interface LockLogin {
      * @return the license
      */
     License license();
+
+    /**
+     * Get the plugin module manager
+     *
+     * @return the plugin module manager
+     */
+    ModuleManager moduleManager();
 
     /**
      * Updates the plugin license

@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.api.network.client.offline;
 
+import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.network.client.event.ClientEvent;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -126,11 +126,4 @@ public interface LocalNetworkClient extends NetworkEntity {
      * @param server the new previous server
      */
     void forcePreviousServer(final NetworkServer server);
-
-    /**
-     * Trigger an event
-     *
-     * @param event the event to fire
-     */
-    void triggerEvent(final ClientEvent event);
 }

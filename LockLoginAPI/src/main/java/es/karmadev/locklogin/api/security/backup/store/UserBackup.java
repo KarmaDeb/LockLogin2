@@ -20,29 +20,6 @@ public interface UserBackup extends Transictionable {
     int account();
 
     /**
-     * Get the user name
-     *
-     * @return the user name
-     */
-    String name();
-
-    /**
-     * Get the user unique id
-     *
-     * @return the user uid
-     */
-    UUID uniqueId();
-
-    /**
-     * Get if the user had persistent
-     * sessions
-     *
-     * @return if the user had persistent
-     * sessions
-     */
-    boolean sessionPersistent();
-
-    /**
      * Get when the account was created
      *
      * @return the account creation date

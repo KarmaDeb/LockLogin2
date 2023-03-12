@@ -33,6 +33,15 @@ public interface Configuration {
     String server();
 
     /**
+     * Get the server communications
+     * configuration
+     *
+     * @return the server communication
+     * configuration
+     */
+    CommunicationSection communications();
+
+    /**
      * Get if the bedrock players should be
      * able to bypass login steps
      *

@@ -3,6 +3,8 @@ package es.karmadev.locklogin.spigot;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
+import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
@@ -21,19 +23,21 @@ import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.CPluginNetwork;
-import es.karmadev.locklogin.common.dependency.CPluginDependency;
-import es.karmadev.locklogin.common.plugin.file.CPluginConfiguration;
-import es.karmadev.locklogin.common.plugin.file.lang.InternalPack;
-import es.karmadev.locklogin.common.protection.CPluginHasher;
-import es.karmadev.locklogin.common.protection.type.*;
-import es.karmadev.locklogin.common.runtime.CRuntime;
-import es.karmadev.locklogin.common.SQLiteDriver;
-import es.karmadev.locklogin.common.server.CServerFactory;
-import es.karmadev.locklogin.common.user.CUserFactory;
-import es.karmadev.locklogin.common.user.storage.account.CAccountFactory;
-import es.karmadev.locklogin.common.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.common.web.license.CLicenseProvider;
+import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
+import es.karmadev.locklogin.common.api.extension.CModuleManager;
+import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
+import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
+import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
+import es.karmadev.locklogin.common.api.protection.CPluginHasher;
+import es.karmadev.locklogin.common.api.protection.type.*;
+import es.karmadev.locklogin.common.api.runtime.CRuntime;
+import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.common.api.server.CServerFactory;
+import es.karmadev.locklogin.common.api.user.CUserFactory;
+import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
@@ -55,9 +59,13 @@ import java.util.jar.JarFile;
 
 public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
 
+    private final ModuleManager manager = new CModuleManager();
+
+    public final CommandRegistrar modCommands = null;
+
     private final SQLiteDriver sqlite = new SQLiteDriver();
 
-    private final LockLoginRuntime runtime = new CRuntime();
+    private final LockLoginRuntime runtime = new CRuntime(manager);
     private final CPluginNetwork network = new CPluginNetwork(sqlite);
     private final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
     private final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
@@ -300,6 +308,16 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     @Override
     public License license() {
         return license;
+    }
+
+    /**
+     * Get the plugin module manager
+     *
+     * @return the plugin module manager
+     */
+    @Override
+    public ModuleManager moduleManager() {
+        return manager;
     }
 
     /**

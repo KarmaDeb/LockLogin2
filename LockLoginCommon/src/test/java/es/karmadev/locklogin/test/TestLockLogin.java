@@ -3,7 +3,7 @@ package es.karmadev.locklogin.test;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.lang.LanguagePack;
+import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
@@ -20,16 +20,18 @@ import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.CPluginNetwork;
-import es.karmadev.locklogin.common.plugin.file.CPluginConfiguration;
-import es.karmadev.locklogin.common.protection.CPluginHasher;
-import es.karmadev.locklogin.common.runtime.CRuntime;
-import es.karmadev.locklogin.common.server.CServerFactory;
-import es.karmadev.locklogin.common.user.CUserFactory;
-import es.karmadev.locklogin.common.SQLiteDriver;
-import es.karmadev.locklogin.common.user.storage.account.CAccountFactory;
-import es.karmadev.locklogin.common.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.common.web.license.CLicenseProvider;
+import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.extension.CModuleManager;
+import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
+import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
+import es.karmadev.locklogin.common.api.protection.CPluginHasher;
+import es.karmadev.locklogin.common.api.runtime.CRuntime;
+import es.karmadev.locklogin.common.api.server.CServerFactory;
+import es.karmadev.locklogin.common.api.user.CUserFactory;
+import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
 import ml.karmaconfigs.api.common.karma.source.APISource;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.utils.enums.Level;
@@ -40,8 +42,11 @@ import java.nio.file.Path;
 
 public class TestLockLogin implements LockLogin, KarmaSource {
 
+    private final InternalPack pack = new InternalPack();
+
+    private final ModuleManager manager = new CModuleManager();
     public final SQLiteDriver sqlite = new SQLiteDriver();
-    public final LockLoginRuntime runtime = new CRuntime();
+    public final LockLoginRuntime runtime = new CRuntime(manager);
     public final CPluginNetwork network = new CPluginNetwork(sqlite);
     public final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
     public final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
@@ -174,13 +179,13 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
-     * Get the plugin language
+     * Get the plugin messages
      *
-     * @return the plugin language
+     * @return the plugin messages
      */
     @Override
-    public LanguagePack lang() {
-        return null;
+    public Messages messages() {
+        return pack.getMessenger();
     }
 
     /**
@@ -260,6 +265,16 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public License license() {
         return license;
+    }
+
+    /**
+     * Get the plugin module manager
+     *
+     * @return the plugin module manager
+     */
+    @Override
+    public ModuleManager moduleManager() {
+        return manager;
     }
 
     /**

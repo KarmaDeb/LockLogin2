@@ -20,6 +20,13 @@ public interface UserAccount {
     int id();
 
     /**
+     * Get the account owner id
+     *
+     * @return the account owner id
+     */
+    int ownerId();
+
+    /**
      * Removes an account
      *
      * @param issuer the issuer of the account removal
