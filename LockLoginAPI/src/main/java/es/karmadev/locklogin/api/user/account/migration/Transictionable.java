@@ -11,6 +11,22 @@ import java.util.UUID;
 public interface Transictionable extends Serializable {
 
     /**
+     * Get the transictionable account player
+     *
+     * @return the transictionable
+     * player
+     */
+    String player();
+
+    /**
+     * Get teh transictionable account
+     * unique id
+     *
+     * @return the transictionable uuid
+     */
+    UUID uniqueId();
+
+    /**
      * Get the transictionable account
      * password
      *
@@ -81,4 +97,13 @@ public interface Transictionable extends Serializable {
      * @return if the account has panic token
      */
     boolean hasPanic();
+
+    /**
+     * Get if the user had persistent
+     * sessions
+     *
+     * @return if the user had persistent
+     * sessions
+     */
+    boolean sessionPersistent();
 }
