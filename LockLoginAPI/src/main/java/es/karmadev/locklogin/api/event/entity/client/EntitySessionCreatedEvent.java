@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.event.entity.client;
 
+import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
@@ -28,7 +29,7 @@ public class EntitySessionCreatedEvent extends EntityEvent {
      *
      * @param entity the entity
      * @param session the entity session
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent()}
+     * @throws SecurityException as part of {@link  LockLoginEvent#LockLoginEvent()}
      */
     public EntitySessionCreatedEvent(final LocalNetworkClient entity, final UserSession session) throws SecurityException {
         this(null, entity, session);
@@ -40,7 +41,7 @@ public class EntitySessionCreatedEvent extends EntityEvent {
      * @param caller the event caller
      * @param entity the entity
      * @param session the entity session
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent(Module)}
+     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
      */
     public EntitySessionCreatedEvent(final Module caller, final LocalNetworkClient entity, UserSession session) throws SecurityException {
         super(caller, entity);

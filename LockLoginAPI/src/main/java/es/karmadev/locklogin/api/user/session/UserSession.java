@@ -25,6 +25,23 @@ public interface UserSession {
     LocalNetworkClient client();
 
     /**
+     * Validate this session
+     */
+    void validate();
+
+    /**
+     * Invalidate this session
+     */
+    void invalidate();
+
+    /**
+     * Get if the session is valid
+     *
+     * @return if the session is valid
+     */
+    boolean isValid();
+
+    /**
      * Get if the session is captcha logged
      *
      * @return if the session is captcha logged

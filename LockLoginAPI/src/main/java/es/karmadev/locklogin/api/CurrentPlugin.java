@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import lombok.experimental.UtilityClass;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -15,6 +16,11 @@ public final class CurrentPlugin {
 
     private static LockLogin plugin;
     private final static Set<Consumer<LockLogin>> available_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    /**
+     * Initialization not allowed
+     */
+    private CurrentPlugin() {}
 
     /**
      * Initialize the plugin

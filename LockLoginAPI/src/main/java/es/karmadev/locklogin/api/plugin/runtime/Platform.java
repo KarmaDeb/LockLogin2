@@ -19,6 +19,7 @@ public enum Platform {
      * Update the platform version
      *
      * @param v the version
+     * @return this platform
      */
     protected Platform version(final String v) {
         version = v;

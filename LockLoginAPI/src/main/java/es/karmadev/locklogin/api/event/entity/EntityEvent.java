@@ -9,12 +9,14 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
  */
 public abstract class EntityEvent extends LockLoginEvent {
 
+    /**
+     * The event entity
+     */
     protected final NetworkEntity entity;
 
     /**
      * Initialize the entity event
      *
-     * @param caller the event caller
      * @param entity the entity
      * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent()}
      */

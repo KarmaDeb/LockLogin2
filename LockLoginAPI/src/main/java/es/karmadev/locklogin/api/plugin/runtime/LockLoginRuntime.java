@@ -31,6 +31,11 @@ public abstract class LockLoginRuntime {
     public static final int ANY = 0;
 
     /**
+     * Initialize the LockLogin runtime
+     */
+    public LockLoginRuntime() {}
+
+    /**
      * Get the plugin runtime dependency manager
      *
      * @return the dependency manager
@@ -59,6 +64,14 @@ public abstract class LockLoginRuntime {
      * @throws SecurityException if the integrity fails to check
      */
     public abstract void verifyIntegrity(final int permission) throws SecurityException;
+
+    /**
+     * Get if the runtime is completely booted. Meaning
+     * the plugin is ready to handle everything
+     *
+     * @return the plugin boot status
+     */
+    public abstract boolean isBooted();
 
     /**
      * Get the runtime platform

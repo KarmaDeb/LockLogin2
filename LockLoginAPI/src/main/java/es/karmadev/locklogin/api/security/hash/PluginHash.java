@@ -11,6 +11,11 @@ import java.util.regex.Pattern;
 public abstract class PluginHash implements Serializable {
 
     /**
+     * Initialize the plugin hash
+     */
+    public PluginHash() {}
+
+    /**
      * Get the hashing name
      *
      * @return the hashing name

@@ -9,7 +9,7 @@ public interface PasswordValidator {
      * Get if the password is safe
      *
      * @param input the password
-     * @return
+     * @return the password check result
      */
     CheckResult isSafe(final String input);
 }

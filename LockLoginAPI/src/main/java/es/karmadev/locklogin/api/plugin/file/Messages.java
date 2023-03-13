@@ -15,6 +15,8 @@ public interface Messages {
     
     /**
      * Reload the messages file
+     *
+     * @return if the messages were able to be reloaded
      */
     boolean reload();
 
@@ -831,6 +833,7 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @param name message replace
      * @return plugin message
      */
     String locationReset(final String name);
@@ -845,6 +848,7 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @param name message replace
      * @return plugin message
      */
     String locationFixed(final String name);

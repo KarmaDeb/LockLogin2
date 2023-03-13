@@ -38,6 +38,8 @@ public interface LockLoginHasher {
      * Get the plugin virtual ID
      *
      * @return the plugin virtual ID
+     * @throws SecurityException if tried to access from a non
+     * module or jar file
      */
     VirtualID virtualID() throws SecurityException;
 }

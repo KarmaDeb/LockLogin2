@@ -19,7 +19,7 @@ public class EntityCreatedEvent extends EntityEvent {
      * Initialize the entity event
      *
      * @param entity the entity
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent()}
+     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
      */
     public EntityCreatedEvent(final LocalNetworkClient entity) throws SecurityException {
         this(null, entity);
@@ -30,7 +30,7 @@ public class EntityCreatedEvent extends EntityEvent {
      *
      * @param caller the event caller
      * @param entity the entity
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent(Module)}
+     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
      */
     public EntityCreatedEvent(final Module caller, final LocalNetworkClient entity) throws SecurityException {
         super(caller, entity);

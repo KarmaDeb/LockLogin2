@@ -39,9 +39,9 @@ public interface ModuleManager {
      * Add an event listener
      *
      * @param event the event
-     * @param handler the handler
      * @param listener the event handler
      * @param <T> the event
+     * @return the created event handler
      */
     <T extends LockLoginEvent> EventHandler addEventHandler(final T event, final Consumer<T> listener);
 

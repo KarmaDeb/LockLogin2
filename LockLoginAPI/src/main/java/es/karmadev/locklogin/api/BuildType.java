@@ -36,7 +36,7 @@ public enum BuildType {
      *
      * @param id the build id
      * @param name the build name
-     * @return
+     * @return the build type
      */
     public BuildType map(final String id, final String name) {
         this.id = id;

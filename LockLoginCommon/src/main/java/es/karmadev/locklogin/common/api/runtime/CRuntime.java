@@ -18,6 +18,8 @@ public class CRuntime extends LockLoginRuntime {
     private final DependencyManager manager = new CDependencyManager();
     private final ModuleManager modManager;
 
+    public boolean booted = false;
+
     public CRuntime(final ModuleManager manager) {
         modManager = manager;
     }
@@ -165,5 +167,16 @@ public class CRuntime extends LockLoginRuntime {
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    /**
+     * Get if the runtime is completely booted. Meaning
+     * the plugin is ready to handle everything
+     *
+     * @return the plugin boot status
+     */
+    @Override
+    public boolean isBooted() {
+        return booted;
     }
 }

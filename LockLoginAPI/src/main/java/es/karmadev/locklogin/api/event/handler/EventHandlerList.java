@@ -16,11 +16,17 @@ public final class EventHandlerList {
     private final Map<Module, List<EventHandler>> handlers = new ConcurrentHashMap<>();
 
     /**
+     * Initialize the event handler list. Usually this is initialized
+     * on the same field definition of your {@link es.karmadev.locklogin.api.event.LockLoginEvent event}
+     */
+    public EventHandlerList() {}
+
+    /**
      * Get all the module handlers for this
      * event registered under the specified module
      *
      * @param module the module
-     * @return
+     * @return the event handlers of the module
      */
     public EventHandler[] getHandlers(final Module module) {
         List<EventHandler> data = handlers.getOrDefault(module, new ConcurrentList<>());

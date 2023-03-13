@@ -6,6 +6,7 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
@@ -21,9 +22,11 @@ import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
@@ -59,30 +62,31 @@ import java.util.jar.JarFile;
 
 public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
 
-    private final ModuleManager manager = new CModuleManager();
+    public final ModuleManager manager = new CModuleManager();
 
     public final CommandRegistrar modCommands = null;
 
-    private final SQLiteDriver sqlite = new SQLiteDriver();
+    public final SQLiteDriver sqlite = new SQLiteDriver();
 
-    private final LockLoginRuntime runtime = new CRuntime(manager);
-    private final CPluginNetwork network = new CPluginNetwork(sqlite);
-    private final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
-    private final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
-    private final CUserFactory default_user_factory = new CUserFactory(sqlite);
-    private final CServerFactory default_server_factory = new CServerFactory(sqlite);
-    private final Map<String, BackupService> backup_services = new ConcurrentHashMap<>();
-    private final CLicenseProvider license_provider = new CLicenseProvider();
-    private final Configuration configuration = new CPluginConfiguration();
+    public final PremiumDataStore store = new CPremiumDataStore(sqlite);
+    public final CRuntime runtime = new CRuntime(manager);
+    public final CPluginNetwork network = new CPluginNetwork(sqlite);
+    public final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
+    public final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
+    public final CUserFactory default_user_factory = new CUserFactory(sqlite);
+    public final CServerFactory default_server_factory = new CServerFactory(sqlite);
+    public final Map<String, BackupService> backup_services = new ConcurrentHashMap<>();
+    public final CLicenseProvider license_provider = new CLicenseProvider();
+    public final Configuration configuration = new CPluginConfiguration();
 
-    private InternalPack pack = new InternalPack();
-    private AccountFactory<UserAccount> account_factory = null;
-    private SessionFactory<UserSession> session_factory = null;
-    private UserFactory<LocalNetworkClient> user_factory = null;
-    private ServerFactory<NetworkServer> server_factory = null;
-    private License license;
+    public InternalPack pack = new InternalPack();
+    public AccountFactory<UserAccount> account_factory = null;
+    public SessionFactory<UserSession> session_factory = null;
+    public UserFactory<LocalNetworkClient> user_factory = null;
+    public ServerFactory<NetworkServer> server_factory = null;
+    public License license;
 
-    private final LockLoginHasher hasher;
+    public final LockLoginHasher hasher;
 
 
     public LockLoginSpigot() {
@@ -125,6 +129,17 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
         KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
 
         return yaml.getBoolean("settings.bungeecord", false);
+    }
+
+    /**
+     * Get if the plugin is running in
+     * online mode
+     *
+     * @return if the server is online mode
+     */
+    @Override
+    public boolean onlineMode() {
+        return getServer().getOnlineMode();
     }
 
     /**
@@ -280,6 +295,16 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     }
 
     /**
+     * Get the plugin account manager
+     *
+     * @return the plugin account manager
+     */
+    @Override
+    public MultiAccountManager accountManager() {
+        return null;
+    }
+
+    /**
      * Get a backup service
      *
      * @param name the service name
@@ -318,6 +343,16 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     @Override
     public ModuleManager moduleManager() {
         return manager;
+    }
+
+    /**
+     * Get the plugin premium data store
+     *
+     * @return the plugin premium store
+     */
+    @Override
+    public PremiumDataStore premiumStore() {
+        return store;
     }
 
     /**
@@ -419,30 +454,33 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      * Log something that is just informative
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logInfo(final String message) {
-        logger().scheduleLog(Level.INFO, message);
+    public void logInfo(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.INFO, message, replaces);
     }
 
     /**
      * Log something that is important
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logWarn(final String message) {
-        logger().scheduleLog(Level.WARNING, message);
+    public void logWarn(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.WARNING, message, replaces);
     }
 
     /**
      * Log something that went wrong
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logErr(final String message) {
-        logger().scheduleLog(Level.GRAVE, message);
+    public void logErr(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.GRAVE, message, replaces);
     }
 
     /**
@@ -450,11 +488,12 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      *
      * @param error   the error
      * @param message the message
+     * @param replaces the message replaces
      */
     @Override
-    public void log(final Throwable error, final String message) {
+    public void log(final Throwable error, final String message, final Object... replaces) {
         logger().scheduleLog(Level.GRAVE, error);
-        logger().scheduleLog(Level.INFO, message);
+        logger().scheduleLog(Level.INFO, message, replaces);
     }
 
     /**

@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
@@ -18,6 +19,7 @@ import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
@@ -100,6 +102,17 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public boolean bungeeMode() {
+        return false;
+    }
+
+    /**
+     * Get if the plugin is running in
+     * online mode
+     *
+     * @return if the server is online mode
+     */
+    @Override
+    public boolean onlineMode() {
         return false;
     }
 
@@ -237,6 +250,16 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
+     * Get the plugin account manager
+     *
+     * @return the plugin account manager
+     */
+    @Override
+    public MultiAccountManager accountManager() {
+        return null;
+    }
+
+    /**
      * Get a backup service
      *
      * @param name the service name
@@ -275,6 +298,16 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public ModuleManager moduleManager() {
         return manager;
+    }
+
+    /**
+     * Get the plugin premium data store
+     *
+     * @return the plugin premium store
+     */
+    @Override
+    public PremiumDataStore premiumStore() {
+        return null;
     }
 
     /**
@@ -376,30 +409,33 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      * Log something that is just informative
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logInfo(final String message) {
-        logger().scheduleLog(Level.INFO, message);
+    public void logInfo(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.INFO, message, replaces);
     }
 
     /**
      * Log something that is important
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logWarn(final String message) {
-        logger().scheduleLog(Level.WARNING, message);
+    public void logWarn(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.WARNING, message, replaces);
     }
 
     /**
      * Log something that went wrong
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
     @Override
-    public void logErr(final String message) {
-        logger().scheduleLog(Level.GRAVE, message);
+    public void logErr(final String message, final Object... replaces) {
+        logger().scheduleLog(Level.GRAVE, message, replaces);
     }
 
     /**
@@ -407,11 +443,12 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      *
      * @param error   the error
      * @param message the message
+     * @param replaces the message replaces
      */
     @Override
-    public void log(final Throwable error, final String message) {
+    public void log(final Throwable error, final String message, final Object... replaces) {
         logger().scheduleLog(Level.GRAVE, error);
-        logger().scheduleLog(Level.INFO, message);
+        logger().scheduleLog(Level.INFO, message, replaces);
     }
 
 

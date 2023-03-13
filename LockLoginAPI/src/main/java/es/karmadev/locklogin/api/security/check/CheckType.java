@@ -29,8 +29,19 @@ public enum CheckType {
      */
     UPPER("Lowers", "&e- &aYour password has at least {min_upper} uppercase characters", "&e- &cYour password has {upper} of {min_upper} uppercase characters");
 
+    /**
+     * Configuration name
+     */
     public final String name;
+
+    /**
+     * Default success message
+     */
     public final String successMessage;
+
+    /**
+     * Default fail message
+     */
     public final String failMessage;
 
     CheckType(final String n, final String sm, final String fm) {

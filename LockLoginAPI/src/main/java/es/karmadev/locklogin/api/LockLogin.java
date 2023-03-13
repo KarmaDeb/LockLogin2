@@ -2,6 +2,7 @@ package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
@@ -15,6 +16,7 @@ import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
@@ -41,6 +43,14 @@ public interface LockLogin {
      * @return if the plugin is in bungee mode
      */
     boolean bungeeMode();
+
+    /**
+     * Get if the plugin is running in
+     * online mode
+     *
+     * @return if the server is online mode
+     */
+    boolean onlineMode();
 
     /**
      * Get the plugin build type
@@ -139,6 +149,13 @@ public interface LockLogin {
     ServerFactory<NetworkServer> getServerFactory(final boolean original);
 
     /**
+     * Get the plugin account manager
+     *
+     * @return the plugin account manager
+     */
+    MultiAccountManager accountManager();
+
+    /**
      * Get a backup service
      *
      * @param name the service name
@@ -166,6 +183,13 @@ public interface LockLogin {
      * @return the plugin module manager
      */
     ModuleManager moduleManager();
+
+    /**
+     * Get the plugin premium data store
+     *
+     * @return the plugin premium store
+     */
+    PremiumDataStore premiumStore();
 
     /**
      * Updates the plugin license
@@ -239,28 +263,32 @@ public interface LockLogin {
      * Log something that is just informative
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
-    void logInfo(final String message);
+    void logInfo(final String message, final Object... replaces);
 
     /**
      * Log something that is important
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
-    void logWarn(final String message);
+    void logWarn(final String message, final Object... replaces);
 
     /**
      * Log something that went wrong
      *
      * @param message the log message
+     * @param replaces the message replaces
      */
-    void logErr(final String message);
+    void logErr(final String message, final Object... replaces);
 
     /**
      * Log an error
      *
      * @param error the error
      * @param message the message
+     * @param replaces the message replaces
      */
-    void log(final Throwable error, final String message);
+    void log(final Throwable error, final String message, final Object... replaces);
 }

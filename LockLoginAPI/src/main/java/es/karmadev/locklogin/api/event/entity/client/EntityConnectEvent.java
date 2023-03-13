@@ -4,6 +4,7 @@ import es.karmadev.locklogin.api.event.Cancellable;
 import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import lombok.Getter;
@@ -27,10 +28,9 @@ public class EntityConnectEvent extends EntityEvent implements Cancellable {
      * Initialize the entity event
      *
      * @param entity the entity
-     * @param from the server the client is comming from
      * @param to the server the client has been connected to
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent()}
-     * @throws IllegalArgumentException as part of {@link EntityConnectEvent#EntitySwitchEvent(LocalNetworkClient, NetworkServer, NetworkServer)}
+     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
+     * @throws IllegalArgumentException as part of {@link EntityConnectEvent#EntityConnectEvent(LocalNetworkClient, NetworkServer)}
      */
     public EntityConnectEvent(final LocalNetworkClient entity, final NetworkServer to) throws SecurityException, IllegalArgumentException {
         this(null, entity, to);
@@ -41,9 +41,8 @@ public class EntityConnectEvent extends EntityEvent implements Cancellable {
      *
      * @param caller the event caller
      * @param entity the entity
-     * @param from the server the client is comming from
      * @param server the server the client has been connected to
-     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent(Module)}
+     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
      * @throws IllegalArgumentException if the target server is not valid
      */
     public EntityConnectEvent(final Module caller, final LocalNetworkClient entity, final NetworkServer server) throws SecurityException, IllegalArgumentException {
