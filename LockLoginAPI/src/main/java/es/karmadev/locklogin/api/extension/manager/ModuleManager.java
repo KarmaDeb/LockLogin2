@@ -1,8 +1,7 @@
 package es.karmadev.locklogin.api.extension.manager;
 
-import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
@@ -11,6 +10,7 @@ import java.util.function.Consumer;
 /**
  * LockLogin module manager
  */
+@SuppressWarnings("unused")
 public interface ModuleManager {
 
     /**

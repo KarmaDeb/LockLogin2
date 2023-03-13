@@ -6,7 +6,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -64,15 +63,10 @@ public final class SQLiteDriver {
      * Retrieve a new connection
      *
      * @return the connection to retrieve
+     * @throws SQLException as part of {@link HikariDataSource#getConnection()}
      */
-    public Connection retrieve() {
-        try {
-            return source.getConnection();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-
-        return null;
+    public Connection retrieve() throws SQLException {
+        return source.getConnection();
     }
 
     /**

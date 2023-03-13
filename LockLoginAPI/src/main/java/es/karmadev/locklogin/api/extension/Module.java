@@ -2,10 +2,9 @@ package es.karmadev.locklogin.api.extension;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.event.handler.EventHandler;
-import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import ml.karmaconfigs.api.common.collection.list.ConcurrentList;
 import ml.karmaconfigs.api.common.data.file.FileUtilities;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
@@ -14,8 +13,8 @@ import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -23,6 +22,7 @@ import java.util.jar.JarFile;
 /**
  * LockLogin module
  */
+@SuppressWarnings("unused")
 public abstract class Module implements KarmaSource {
 
     /**
@@ -59,6 +59,11 @@ public abstract class Module implements KarmaSource {
      * Module authors
      */
     private final String[] authors;
+
+    /**
+     * Module permissions
+     */
+    private final PermissionObject[] permissions;
 
     /**
      * Initializes the module
@@ -100,7 +105,7 @@ public abstract class Module implements KarmaSource {
                                 StringBuilder builder = new StringBuilder();
                                 int index = 0;
                                 for (Object object : unknownList) {
-                                    builder.append(String.valueOf(object)).append((index++ != unknownList.size() - 1 ? " " : ""));
+                                    builder.append(object).append((index++ != unknownList.size() - 1 ? " " : ""));
                                 }
 
                                 tmpDescription = builder.toString();
@@ -133,6 +138,14 @@ public abstract class Module implements KarmaSource {
                             throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(file) + ". Invalid or inexistent module authors");
                         }
 
+                        @SuppressWarnings("all")
+                        List<PermissionObject> foundPermissions = new ArrayList<>();
+                        if (yaml.isSet("permissions")) {
+                            KarmaYamlManager permissionSection = yaml.getSection("permissions");
+
+                        }
+                        permissions = foundPermissions.toArray(new PermissionObject[0]);
+
                         Module loaded = plugin.moduleManager().loader().find(name);
                         if (loaded != null) throw new ExceptionInInitializerError("Cannot initialize class " + this.getClass().getName() + ". Is this module already initialized?");
                     } else {
@@ -156,6 +169,25 @@ public abstract class Module implements KarmaSource {
      * When the module gets disabled
      */
     public abstract void onUnload();
+
+    /**
+     * Get all the permissions registered by the
+     * module
+     *
+     * @return the module permissions
+     */
+    public final PermissionObject[] getPermissions() {
+        return permissions.clone();
+    }
+
+    /**
+     * Get if the module is loaded
+     *
+     * @return if the module is loaded
+     */
+    public final boolean isLoaded() {
+        return Arrays.asList(plugin.moduleManager().loader().getModules()).contains(this);
+    }
 
     /**
      * Get the module command
@@ -205,14 +237,5 @@ public abstract class Module implements KarmaSource {
     @Override
     public final String[] authors() {
         return authors;
-    }
-
-    /**
-     * Create a new empty event handler
-     *
-     * @return the event handler
-     */
-    public static EventHandler emptyHandler() {
-        return new EventHandler() {};
     }
 }

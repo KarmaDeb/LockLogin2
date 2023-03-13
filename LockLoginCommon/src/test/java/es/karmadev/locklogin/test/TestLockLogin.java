@@ -14,6 +14,7 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.license.License;
 import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -23,6 +24,7 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.SQLiteDriver;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
@@ -30,7 +32,6 @@ import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import es.karmadev.locklogin.common.api.runtime.CRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 
+@SuppressWarnings("all")
 public class TestLockLogin implements LockLogin, KarmaSource {
 
     private final InternalPack pack = new InternalPack();
@@ -271,6 +273,17 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
+     * Get a service
+     *
+     * @param name the service name
+     * @return the service
+     */
+    @Override
+    public PluginService getService(String name) {
+        return null;
+    }
+
+    /**
      * Get the license provider
      *
      * @return the license provider
@@ -308,6 +321,29 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public PremiumDataStore premiumStore() {
         return null;
+    }
+
+    /**
+     * Register a service
+     *
+     * @param name    the service name
+     * @param service the plugin service to register
+     * @throws UnsupportedOperationException if the service is already registered
+     */
+    @Override
+    public void registerService(String name, PluginService service) throws UnsupportedOperationException {
+
+    }
+
+    /**
+     * Unregister a service
+     *
+     * @param name the service name
+     * @throws UnsupportedOperationException if the service is plugin internal
+     */
+    @Override
+    public void unregisterService(String name) throws UnsupportedOperationException {
+
     }
 
     /**
@@ -359,17 +395,6 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     @Override
     public void setServerFactory(final ServerFactory<NetworkServer> factory) {
         server_factory = factory;
-    }
-
-    /**
-     * Register a backup service
-     *
-     * @param name    the service name
-     * @param service the backup service
-     */
-    @Override
-    public void registerBackupService(final String name, final BackupService service) {
-
     }
 
     /**

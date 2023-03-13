@@ -4,8 +4,6 @@ import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.extension.manager.ModuleLoader;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CModuleLoader implements ModuleLoader {
 

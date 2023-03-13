@@ -5,18 +5,15 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.extension.command.worker.CommandCompletor;
 import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Module command
  */
+@SuppressWarnings("unused")
 public abstract class ModuleCommand {
 
     @Getter

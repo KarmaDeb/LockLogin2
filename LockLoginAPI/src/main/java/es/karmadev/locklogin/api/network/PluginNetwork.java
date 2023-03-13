@@ -7,7 +7,6 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Plugin network
