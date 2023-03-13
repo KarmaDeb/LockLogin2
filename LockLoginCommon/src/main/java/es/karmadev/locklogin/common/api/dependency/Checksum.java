@@ -21,7 +21,7 @@ class Checksum implements DependencyChecksum {
      */
     @Override
     public long value(final String name) {
-        return values.getOrDefault(name, 0l);
+        return values.getOrDefault(name, 0L);
     }
 
     /**
@@ -34,7 +34,7 @@ class Checksum implements DependencyChecksum {
     @Override
     public boolean matches(final DependencyChecksum other) {
         for (String key : values.keySet()) {
-            long value = values.getOrDefault(key, 0l);
+            long value = values.getOrDefault(key, 0L);
             if (other.value(key) != value) {
                 return false;
             }

@@ -3,7 +3,6 @@ package es.karmadev.locklogin.spigot;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
@@ -15,10 +14,9 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.license.License;
 import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.backup.BackupService;
-import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
@@ -26,28 +24,22 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
-import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
+import es.karmadev.locklogin.common.api.SQLiteDriver;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
-import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
+import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
-import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.common.api.runtime.CRuntime;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
+import lombok.Getter;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
-import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -59,38 +51,40 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
-public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
+public class LockLoginSpigot implements LockLogin {
 
-    public final ModuleManager manager = new CModuleManager();
+    private final KarmaPlugin plugin;
 
-    public final CommandRegistrar modCommands = null;
+    @Getter
+    private final SQLiteDriver driver = new SQLiteDriver();
 
-    public final SQLiteDriver sqlite = new SQLiteDriver();
+    private final CModuleManager moduleManager = new CModuleManager();
+    private final CRuntime runtime = new CRuntime(moduleManager);
+    private final CPluginNetwork network = new CPluginNetwork(driver);
+    private final CPluginHasher hasher;
+    private final CPluginConfiguration configuration;
+    private final InternalPack messages;
 
-    public final PremiumDataStore store = new CPremiumDataStore(sqlite);
-    public final CRuntime runtime = new CRuntime(manager);
-    public final CPluginNetwork network = new CPluginNetwork(sqlite);
-    public final CAccountFactory default_account_factory = new CAccountFactory(sqlite);
-    public final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
-    public final CUserFactory default_user_factory = new CUserFactory(sqlite);
-    public final CServerFactory default_server_factory = new CServerFactory(sqlite);
-    public final Map<String, BackupService> backup_services = new ConcurrentHashMap<>();
-    public final CLicenseProvider license_provider = new CLicenseProvider();
-    public final Configuration configuration = new CPluginConfiguration();
+    private final CAccountFactory default_account_factory = new CAccountFactory(driver);
+    private final CSessionFactory default_session_factory = new CSessionFactory(driver);
+    private final CUserFactory default_user_factory = new CUserFactory(driver);
+    private final CServerFactory default_server_factory = new CServerFactory(driver);
 
-    public InternalPack pack = new InternalPack();
-    public AccountFactory<UserAccount> account_factory = null;
-    public SessionFactory<UserSession> session_factory = null;
-    public UserFactory<LocalNetworkClient> user_factory = null;
-    public ServerFactory<NetworkServer> server_factory = null;
-    public License license;
+    private AccountFactory<? extends UserAccount> provider_account_factory = null;
+    private SessionFactory<? extends UserSession> provider_session_factory = null;
+    private UserFactory<? extends LocalNetworkClient> provider_user_factory = null;
+    private ServerFactory<? extends NetworkServer> provider_server_factory = null;
 
-    public final LockLoginHasher hasher;
+    private final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
+    private final CLicenseProvider license_provider;
 
+    private License license;
 
-    public LockLoginSpigot() {
-        super(false);
+    public LockLoginSpigot(final KarmaPlugin plugin) {
+        this.plugin = plugin;
+
         Class<CurrentPlugin> instance = CurrentPlugin.class;
         try {
             Method initialize = instance.getDeclaredMethod("initialize", LockLogin.class);
@@ -102,6 +96,9 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
         }
 
         hasher = new CPluginHasher();
+        configuration = new CPluginConfiguration();
+        messages = new InternalPack();
+        license_provider = new CLicenseProvider();
     }
 
     /**
@@ -113,7 +110,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     @Override
     public Object plugin() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
-        return this;
+        return plugin;
     }
 
     /**
@@ -124,7 +121,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public boolean bungeeMode() {
-        File server_folder = getServer().getWorldContainer();
+        File server_folder = plugin.getServer().getWorldContainer();
         File spigot_yml = new File(server_folder, "spigot.yml");
         KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
 
@@ -139,7 +136,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public boolean onlineMode() {
-        return getServer().getOnlineMode();
+        return plugin.getServer().getOnlineMode();
     }
 
     /**
@@ -149,7 +146,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public BuildType build() {
-        return null;
+        return BuildType.RELEASE;
     }
 
     /**
@@ -164,7 +161,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
     public InputStream load(final String name) throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
 
-        File pluginFile = getFile();
+        File pluginFile = plugin.getSourceFile();
         try(JarFile jarFile = new JarFile(pluginFile)) {
             JarEntry entry = jarFile.getJarEntry(name);
             try (InputStream stream = jarFile.getInputStream(entry)) {
@@ -191,7 +188,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public Path workingDirectory() {
-        return getDataPath();
+        return plugin.getDataPath();
     }
 
     /**
@@ -243,7 +240,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public Messages messages() {
-        return pack.getMessenger();
+        return messages.getMessenger();
     }
 
     /**
@@ -253,9 +250,13 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      *                 account factory
      * @return the plugin account factory
      */
-    @Override
-    public AccountFactory<UserAccount> getAccountFactory(final boolean original) {
-        return (AccountFactory<UserAccount>) (original ? default_account_factory : (account_factory != null ? account_factory : default_account_factory));
+    @Override @SuppressWarnings("unchecked")
+    public AccountFactory<? extends UserAccount> getAccountFactory(final boolean original) {
+        if (original || provider_account_factory == null) {
+            return default_account_factory;
+        }
+
+        return provider_account_factory;
     }
 
     /**
@@ -265,9 +266,13 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      *                 session factory
      * @return the plugin session factory
      */
-    @Override
-    public SessionFactory<UserSession> getSessionFactory(final boolean original) {
-        return (SessionFactory<UserSession>) (original ? default_session_factory : (session_factory != null ? session_factory : default_session_factory));
+    @Override @SuppressWarnings("unchecked")
+    public SessionFactory<? extends UserSession> getSessionFactory(final boolean original) {
+        if (original || provider_session_factory == null) {
+            return default_session_factory;
+        }
+
+        return provider_session_factory;
     }
 
     /**
@@ -277,9 +282,13 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      *                 user factory
      * @return the plugin user factory
      */
-    @Override
-    public UserFactory<LocalNetworkClient> getUserFactory(final boolean original) {
-        return (UserFactory<LocalNetworkClient>) (original ? default_user_factory : (user_factory != null ? user_factory : default_user_factory));
+    @Override @SuppressWarnings("unchecked")
+    public UserFactory<? extends LocalNetworkClient> getUserFactory(final boolean original) {
+        if (original || provider_user_factory == null) {
+            return default_user_factory;
+        }
+
+        return provider_user_factory;
     }
 
     /**
@@ -289,9 +298,13 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      *                 server factory
      * @return the plugin server factory
      */
-    @Override
-    public ServerFactory<NetworkServer> getServerFactory(final boolean original) {
-        return (ServerFactory<NetworkServer>) (original ? default_server_factory : (server_factory != null ? server_factory : default_server_factory));
+    @Override @SuppressWarnings("unchecked")
+    public ServerFactory<? extends NetworkServer> getServerFactory(final boolean original) {
+        if (original || provider_server_factory == null) {
+            return default_server_factory;
+        }
+
+        return provider_server_factory;
     }
 
     /**
@@ -312,7 +325,23 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public BackupService getBackupService(final String name) {
-        return backup_services.getOrDefault(name, null);
+        PluginService service = service_provider.getOrDefault(name, null);
+        if (service instanceof BackupService) {
+            return (BackupService) service;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a service
+     *
+     * @param name the service name
+     * @return the service
+     */
+    @Override
+    public PluginService getService(final String name) {
+        return service_provider.getOrDefault(name, null);
     }
 
     /**
@@ -322,6 +351,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public LicenseProvider licenseProvider() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
         return license_provider;
     }
 
@@ -332,6 +362,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public License license() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return license;
     }
 
@@ -342,7 +373,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public ModuleManager moduleManager() {
-        return manager;
+        return null;
     }
 
     /**
@@ -352,7 +383,43 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public PremiumDataStore premiumStore() {
-        return store;
+        return null;
+    }
+
+    /**
+     * Register a service
+     *
+     * @param name    the service name
+     * @param service the plugin service to register
+     * @throws UnsupportedOperationException if the service is already registered
+     */
+    @Override
+    public void registerService(final String name, final PluginService service) throws UnsupportedOperationException {
+        if (service_provider.containsKey(name)) {
+            throw new UnsupportedOperationException("Cannot register service " + name + " because it's already defined by another service");
+        }
+        Stream<PluginService> filtered_services = service_provider.values().stream().filter((registered) -> service.getClass().equals(registered.getClass()));
+        if (filtered_services.findAny().isPresent()) {
+            throw new UnsupportedOperationException("Cannot register service " + name + " because it's already registered under other service name");
+        }
+
+        service_provider.put(name, service);
+    }
+
+    /**
+     * Unregister a service
+     *
+     * @param name the service name
+     * @throws UnsupportedOperationException if the service is plugin internal
+     * @throws NullPointerException if the service does not exist
+     */
+    @Override
+    public void unregisterService(final String name) throws UnsupportedOperationException, NullPointerException {
+        PluginService service = service_provider.getOrDefault(name, null);
+        if (service == null) throw new NullPointerException("Cannot unregister service " + name + " because it does not exist");
+        if (service instanceof CLocalBackup) throw new UnsupportedOperationException("Cannot unregister plugin internal service: " + name);
+
+        service_provider.remove(name);
     }
 
     /**
@@ -363,6 +430,7 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public void updateLicense(final License new_license) throws SecurityException {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
         license = new_license;
     }
 
@@ -373,7 +441,8 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public void setAccountFactory(final AccountFactory<UserAccount> factory) {
-        account_factory = factory;
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        provider_account_factory = factory;
     }
 
     /**
@@ -383,7 +452,8 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public void setSessionFactory(final SessionFactory<UserSession> factory) {
-        session_factory = factory;
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        provider_session_factory = factory;
     }
 
     /**
@@ -393,7 +463,8 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public void setUserFactory(final UserFactory<LocalNetworkClient> factory) {
-        user_factory = factory;
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        provider_user_factory = factory;
     }
 
     /**
@@ -403,176 +474,86 @@ public class LockLoginSpigot extends KarmaPlugin implements LockLogin {
      */
     @Override
     public void setServerFactory(final ServerFactory<NetworkServer> factory) {
-        server_factory = factory;
-    }
-
-    /**
-     * Register a backup service
-     *
-     * @param name    the service name
-     * @param service the backup service
-     */
-    @Override
-    public void registerBackupService(final String name, final BackupService service) {
-        backup_services.put(name, service);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        provider_server_factory = factory;
     }
 
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void info(final String message, final Object... replaces) {
-        console().send(message, Level.INFO, replaces);
+        plugin.console().send(message, Level.INFO, replaces);
     }
 
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void warn(final String message, final Object... replaces) {
-        console().send(message, Level.WARNING, replaces);
+        plugin.console().send(message, Level.WARNING, replaces);
     }
 
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void err(final String message, final Object... replaces) {
-        console().send(message, Level.GRAVE, replaces);
+        plugin.console().send(message, Level.GRAVE, replaces);
     }
 
     /**
      * Log something that is just informative
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logInfo(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.INFO, message, replaces);
+        plugin.logger().scheduleLog(Level.INFO, message, replaces);
     }
 
     /**
      * Log something that is important
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logWarn(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.WARNING, message, replaces);
+        plugin.logger().scheduleLog(Level.WARNING, message, replaces);
     }
 
     /**
      * Log something that went wrong
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logErr(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.GRAVE, message, replaces);
+        plugin.logger().scheduleLog(Level.GRAVE, message, replaces);
     }
 
     /**
      * Log an error
      *
-     * @param error   the error
-     * @param message the message
+     * @param error    the error
+     * @param message  the message
      * @param replaces the message replaces
      */
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
-        logger().scheduleLog(Level.GRAVE, error);
-        logger().scheduleLog(Level.INFO, message, replaces);
-    }
-
-    /**
-     * Enable the KarmaPlugin
-     */
-    @Override
-    public void enable() {
-        try {
-            hasher.registerMethod(new SHA512Hash());
-            hasher.registerMethod(new SHA256Hash());
-            hasher.registerMethod(new BCryptHash());
-            hasher.registerMethod(new Argon2I());
-            hasher.registerMethod(new Argon2D());
-            hasher.registerMethod(new Argon2ID());
-        } catch (UnnamedHashException ex) {
-            ex.printStackTrace();
-        }
-
-        console().send("Preparing to inject dependencies. Please wait...", Level.WARNING);
-        CPluginDependency.load();
-
-        PluginManager pluginManager = getServer().getPluginManager();
-        boolean boot = true;
-        for (LockLoginDependency dependency : CPluginDependency.getAll()) {
-            if (dependency.isPlugin()) {
-                String name = dependency.name();
-                String version = dependency.version().plugin();
-
-                if (name.equalsIgnoreCase("KarmaAPI")) {
-                    String platform = dependency.version().project();
-
-                    String API_VERSION = KarmaAPI.getVersion();
-                    String PLUGIN_VERSION = KarmaAPI.getPluginVersion();
-
-                    if (API_VERSION.equals(platform)) {
-                        VersionComparator comparator = new VersionComparator(PLUGIN_VERSION.replace("-", "."), version.replace("-", "."));
-                        if (comparator.isUpToDate()) {
-                            console().send("KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
-                        } else {
-                            console().send("Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", Level.GRAVE, version, PLUGIN_VERSION);
-                            boot = false;
-                            break;
-                        }
-                    } else {
-                        console().send("Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", Level.GRAVE, platform, API_VERSION);
-                        boot = true;
-                        break;
-                    }
-                } else {
-                    if (pluginManager.isPluginEnabled(name)) {
-                        Plugin plugin = pluginManager.getPlugin(name);
-                        String pluginVersion = plugin.getDescription().getVersion();
-
-                        VersionComparator comparator = new VersionComparator(pluginVersion, version);
-                        if (!comparator.isUpToDate()) {
-                            console().send("Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", Level.WARNING, name, version, pluginVersion);
-                        } else {
-                            console().send("Plugin dependency {0} has been successfully hooked", Level.INFO, name);
-                        }
-                    }
-                }
-            } else {
-                console().send("Injecting dependency \"{0}\"", Level.INFO, dependency.name());
-                runtime.dependencyManager().append(dependency);
-            }
-        }
-
-        if (boot) {
-
-        }
-    }
-
-    /**
-     * Karma source update URL
-     *
-     * @return the source update URL
-     */
-    @Override
-    public String updateURL() {
-        return null;
+        plugin.logger().scheduleLog(Level.GRAVE, error);
+        plugin.logger().scheduleLog(Level.INFO, message, replaces);
     }
 }

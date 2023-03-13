@@ -1,13 +1,11 @@
 package es.karmadev.locklogin.api.plugin.runtime;
 
-import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
-
-import java.nio.file.Path;
 
 /**
  * LockLogin dependency manager
  */
+@SuppressWarnings("unused")
 public interface DependencyManager {
 
     /**

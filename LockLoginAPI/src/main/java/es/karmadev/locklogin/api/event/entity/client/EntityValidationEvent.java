@@ -5,12 +5,12 @@ import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 /**
- * This event is fired when an entity recives a validation
+ * This event is fired when an entity receives a validation
  * of any type
  */
+@SuppressWarnings("unused")
 public class EntityValidationEvent extends EntityEvent implements Cancellable {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
@@ -48,6 +48,7 @@ public class EntityValidationEvent extends EntityEvent implements Cancellable {
     @Override
     public void setCancelled(final boolean cancel, final String reason) {
         cancelled = cancel;
+        this.reason = reason;
     }
 
     /**

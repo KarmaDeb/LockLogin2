@@ -1,14 +1,12 @@
 package es.karmadev.locklogin.common.api.server;
 
-import es.karmadev.locklogin.api.event.LockLoginEvent;
-import es.karmadev.locklogin.api.event.entity.client.EntityConnectEvent;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
-import es.karmadev.locklogin.common.api.server.channel.SChannel;
 import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.common.api.server.channel.SChannel;
 import es.karmadev.locklogin.common.util.ActionListener;
 import es.karmadev.locklogin.common.util.action.ServerEntityAction;
 import lombok.AllArgsConstructor;
@@ -27,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@AllArgsConstructor
+@AllArgsConstructor @SuppressWarnings("unused")
 public class CServer implements NetworkServer {
 
     private final int id;
@@ -43,28 +41,28 @@ public class CServer implements NetworkServer {
 
                 //Any action performed on an offline client should remove its online client instance from a related object refference
                 Stream<NetworkClient> filtered = online_clients.stream().filter((online) -> client.id() == client.id());
-                online_clients.removeAll(filtered.collect(Collectors.toList()));
+                filtered.collect(Collectors.toList()).forEach(online_clients::remove);
             })
             .onClientDisconnect((client) -> {
                 offline_clients.remove(client);
 
                 //Any action performed on an offline client should remove its online client instance from a related object refference
                 Stream<NetworkClient> filtered = online_clients.stream().filter((online) -> client.id() == client.id());
-                online_clients.removeAll(filtered.collect(Collectors.toList()));
+                filtered.collect(Collectors.toList()).forEach(online_clients::remove);
             })
             .onOnlineConnect((client) -> {
                 online_clients.add(client);
 
                 //Any action performed on an online client should remove its offline client instance from a related object refference
                 Stream<LocalNetworkClient> filtered = offline_clients.stream().filter((offline) -> offline.id() == client.id());
-                offline_clients.removeAll(filtered.collect(Collectors.toList()));
+                filtered.collect(Collectors.toList()).forEach(offline_clients::remove);
             })
             .onOnlineDisconnect((client) -> {
                 online_clients.remove(client);
 
                 //Any action performed on an online client should remove its offline client instance from a related object refference
                 Stream<LocalNetworkClient> filtered = offline_clients.stream().filter((offline) -> offline.id() == client.id());
-                offline_clients.removeAll(filtered.collect(Collectors.toList()));
+                filtered.collect(Collectors.toList()).forEach(offline_clients::remove);
             }).build();
 
     /**

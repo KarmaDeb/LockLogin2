@@ -5,8 +5,8 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import es.karmadev.locklogin.common.api.server.channel.SPacket;
 import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.common.api.server.channel.SPacket;
 
 import java.sql.Connection;
 import java.sql.SQLException;

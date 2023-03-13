@@ -30,7 +30,7 @@ import com.google.common.io.Resources;
 import com.google.common.primitives.Longs;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import es.karmadev.locklogin.spigot.SpigotPlugin;
 import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
@@ -78,7 +78,9 @@ public final class MojangEncryption {
     static {
         PublicKey temporal_key = null;
         try {
-            URL key_dir = LockLoginSpigot.class.getClassLoader().getResource("yggdrasil_session_pubkey.der");
+            URL key_dir = SpigotPlugin.class.getClassLoader().getResource("internal/mojang_key.der");
+            if (key_dir == null) throw new IOException("Cannot read from invalid mojang key");
+
             byte[] key = Resources.toByteArray(key_dir);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(key);
 

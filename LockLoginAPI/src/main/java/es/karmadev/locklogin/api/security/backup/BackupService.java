@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.security.backup;
 
+import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.backup.store.BackupStorage;
 import es.karmadev.locklogin.api.security.backup.task.BackupRestoreTask;
 import es.karmadev.locklogin.api.security.backup.task.ScheduledBackup;
@@ -9,7 +10,8 @@ import java.time.Instant;
 /**
  * LockLogin backup service
  */
-public interface BackupService {
+@SuppressWarnings("unused")
+public interface BackupService extends PluginService {
 
     /**
      * Perform a backup

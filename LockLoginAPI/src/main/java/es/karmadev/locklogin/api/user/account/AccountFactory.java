@@ -3,8 +3,6 @@ package es.karmadev.locklogin.api.user.account;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 
-import java.util.UUID;
-
 /**
  * LockLogin account factory
  */

@@ -2,11 +2,11 @@ package es.karmadev.locklogin.api.network.client;
 
 import com.google.gson.JsonElement;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 /**
  * Network client
  */
+@SuppressWarnings("unused")
 public interface NetworkClient extends LocalNetworkClient {
 
     /**

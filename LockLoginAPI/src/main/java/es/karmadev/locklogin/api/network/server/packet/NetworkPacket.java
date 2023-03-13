@@ -1,11 +1,11 @@
 package es.karmadev.locklogin.api.network.server.packet;
 
 import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.network.client.NetworkClient;
 
 /**
  * Network packet message
  */
+@SuppressWarnings("unused")
 public interface NetworkPacket {
 
     /**

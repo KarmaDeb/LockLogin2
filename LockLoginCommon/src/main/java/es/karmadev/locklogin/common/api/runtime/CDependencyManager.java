@@ -2,8 +2,6 @@ package es.karmadev.locklogin.common.api.runtime;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.manager.ModuleLoader;
 import es.karmadev.locklogin.api.plugin.runtime.DependencyManager;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
@@ -12,15 +10,14 @@ import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("unused")
 public class CDependencyManager implements DependencyManager {
 
     private final Set<LockLoginDependency> dependencies = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Set<Module> modules = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * Append a dependency
@@ -36,7 +33,7 @@ public class CDependencyManager implements DependencyManager {
                 DependencyChecksum generated = dependency.generateChecksum();
                 DependencyChecksum loaded = dependency.checksum();
 
-                boolean download = false;
+                boolean download;
                 if (generated == null || loaded == null) {
                     download = !Files.exists(dependency.file());
                 } else {

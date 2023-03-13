@@ -2,7 +2,6 @@ package es.karmadev.locklogin.api.network.server;
 
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 
 import java.net.InetSocketAddress;
@@ -11,6 +10,7 @@ import java.util.Collection;
 /**
  * Network server
  */
+@SuppressWarnings("unused")
 public interface NetworkServer extends NetworkEntity {
 
     /**

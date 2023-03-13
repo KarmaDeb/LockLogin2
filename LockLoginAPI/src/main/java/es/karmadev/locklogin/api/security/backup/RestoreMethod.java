@@ -2,12 +2,15 @@ package es.karmadev.locklogin.api.security.backup;
 
 import es.karmadev.locklogin.api.user.account.AccountField;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Backup restore method
  */
+@SuppressWarnings("unused")
 public enum RestoreMethod {
     /**
      * Restore only whitelisted fields

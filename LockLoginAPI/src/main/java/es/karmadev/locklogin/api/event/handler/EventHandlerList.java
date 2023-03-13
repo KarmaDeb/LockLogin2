@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Event handler list
  */
+@SuppressWarnings("unused")
 public final class EventHandlerList {
 
     private final Map<Module, List<EventHandler>> handlers = new ConcurrentHashMap<>();
@@ -44,9 +45,7 @@ public final class EventHandlerList {
 
         for (Module module : modules) {
             List<EventHandler> data = handlers.getOrDefault(module, new ConcurrentList<>());
-            if (data.contains(handler)) {
-                data.remove(handler);
-            }
+            data.remove(handler);
 
             handlers.put(module, data);
         }

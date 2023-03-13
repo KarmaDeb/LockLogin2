@@ -13,7 +13,10 @@ import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.common.api.SQLiteDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -40,7 +43,7 @@ public class CAccount implements UserAccount {
         String target = null;
         String table = null;
         int use_id = -1;
-        if (field.equals(AccountField.USERNAME) || field.equals(AccountField.UNIQUEID)) {
+        if (field.equals(AccountField.PASSWORD) || field.equals(AccountField.PIN) || field.equals(AccountField.PANIC)) {
             table = "user";
             use_id = account_id;
 

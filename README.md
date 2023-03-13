@@ -3,8 +3,8 @@ LockLogin2 is the new version of LockLogin. With a better API and more stability
 <br>
 LockLogin is a free open-source authentication plugin for minecraft, compatible with<br>
 spigot, bungeecord and "multi-bungee". LockLogin is designed to enforce the server<br>
-and the client security, with tons of premium features for free, such as pin login<br>,
-2fa and also some other unique features, such as the panic token, or virtual IDs.<br>
+and the client security, with tons of premium features for free, such as pin login, 2fa<br>
+and also some other unique features, such as the panic token, or virtual IDs.<br>
 <br>
 LockLogin is open source, which means anyone can contribute to it, even thought there<br>
 official authors, LockLogin is a community plugin with no real owner who has authority<br>

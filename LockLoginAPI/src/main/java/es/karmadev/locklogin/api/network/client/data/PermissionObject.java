@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 /**
  * LockLogin permission object
  */
+@SuppressWarnings("unused")
 public interface PermissionObject {
 
     /**
@@ -18,15 +19,17 @@ public interface PermissionObject {
      * Add a permission children
      *
      * @param permission the children
+     * @return the modified permission
      */
-    void addChildren(final PermissionObject permission);
+    PermissionObject addChildren(final PermissionObject... permission);
 
     /**
      * Add a permission parent
      *
      * @param permission the parent
+     * @return the modified permission
      */
-    void addParent(final PermissionObject permission);
+    PermissionObject addParent(final PermissionObject... permission);
 
     /**
      * Get the children permissions
@@ -87,6 +90,8 @@ public interface PermissionObject {
         if (entity.hasPermission(this)) return true;
 
         PermissionObject top = topLevel();
+        if (top.inheritance() && entity.hasPermission(top)) return true;
+
         for (PermissionObject child : top.children()) {
             if (child.node().equals(node())) continue;
             if (child.isPermissible(entity)) return true;

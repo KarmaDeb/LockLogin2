@@ -36,7 +36,7 @@ public class SHA256Hash extends PluginHash {
                 .withContent(TextContent.ONLY_LETTERS)
                 .withType(TextType.ALL_UPPER)).create();
 
-        return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password, StandardCharsets.UTF_8).toString();
+        return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password, StandardCharsets.UTF_8);
     }
 
     private boolean auth(final String password, final String token) {
@@ -135,7 +135,6 @@ public class SHA256Hash extends PluginHash {
         LockLoginHasher hasher = plugin.hasher();
 
         VirtualizedInput virtualized = result.product();
-        EncryptionConfiguration encryption = plugin.configuration().encryption();
 
         String token = new String(virtualized.product(), StandardCharsets.UTF_8);
         String password = input;

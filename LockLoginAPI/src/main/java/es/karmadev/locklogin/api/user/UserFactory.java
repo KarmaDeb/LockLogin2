@@ -1,8 +1,6 @@
 package es.karmadev.locklogin.api.user;
 
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.api.user.session.UserSession;
 
 import java.util.UUID;
 

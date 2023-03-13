@@ -4,16 +4,14 @@ import es.karmadev.locklogin.api.event.Cancellable;
 import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import lombok.Getter;
 
-import javax.annotation.Nullable;
-
 /**
  * This event is fired when an entity is connected
  */
+@SuppressWarnings("unused")
 public class EntityConnectEvent extends EntityEvent implements Cancellable {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
@@ -30,7 +28,7 @@ public class EntityConnectEvent extends EntityEvent implements Cancellable {
      * @param entity the entity
      * @param to the server the client has been connected to
      * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
-     * @throws IllegalArgumentException as part of {@link EntityConnectEvent#EntityConnectEvent(LocalNetworkClient, NetworkServer)}
+     * @throws IllegalArgumentException as part of {@link EntityConnectEvent(LocalNetworkClient, NetworkServer)}
      */
     public EntityConnectEvent(final LocalNetworkClient entity, final NetworkServer to) throws SecurityException, IllegalArgumentException {
         this(null, entity, to);

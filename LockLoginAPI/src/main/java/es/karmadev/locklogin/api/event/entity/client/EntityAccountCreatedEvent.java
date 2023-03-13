@@ -4,7 +4,6 @@ import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import lombok.Getter;
 
@@ -15,6 +14,7 @@ import javax.annotation.Nullable;
  * This doesn't mean the client is registered, but his account
  * is ready to handle it
  */
+@SuppressWarnings("unused")
 public class EntityAccountCreatedEvent extends EntityEvent {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();

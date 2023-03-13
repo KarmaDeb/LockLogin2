@@ -1,11 +1,8 @@
 package es.karmadev.locklogin.api.security.backup.store;
 
-import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.migration.Transictionable;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * User backup data

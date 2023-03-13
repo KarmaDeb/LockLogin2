@@ -11,6 +11,7 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.license.License;
 import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.backup.BackupService;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 /**
  * LockLogin plugin
  */
+@SuppressWarnings("unused")
 public interface LockLogin {
 
     /**
@@ -119,7 +121,7 @@ public interface LockLogin {
      *                 account factory
      * @return the plugin account factory
      */
-    AccountFactory<UserAccount> getAccountFactory(final boolean original);
+    <T extends AccountFactory<? extends UserAccount>> T getAccountFactory(final boolean original);
 
     /**
      * Get the plugin session factory
@@ -128,7 +130,7 @@ public interface LockLogin {
      *                 session factory
      * @return the plugin session factory
      */
-    SessionFactory<UserSession> getSessionFactory(final boolean original);
+    <T extends SessionFactory<? extends UserSession>> T getSessionFactory(final boolean original);
 
     /**
      * Get the plugin user factory
@@ -137,7 +139,7 @@ public interface LockLogin {
      *                 user factory
      * @return the plugin user factory
      */
-    UserFactory<LocalNetworkClient> getUserFactory(final boolean original);
+    <T extends UserFactory<? extends LocalNetworkClient>> T getUserFactory(final boolean original);
 
     /**
      * Get the plugin server factory
@@ -146,7 +148,7 @@ public interface LockLogin {
      *                 server factory
      * @return the plugin server factory
      */
-    ServerFactory<NetworkServer> getServerFactory(final boolean original);
+    <T extends ServerFactory<? extends NetworkServer>> T getServerFactory(final boolean original);
 
     /**
      * Get the plugin account manager
@@ -162,6 +164,14 @@ public interface LockLogin {
      * @return the backup service
      */
     BackupService getBackupService(final String name);
+
+    /**
+     * Get a service
+     *
+     * @param name the service name
+     * @return the service
+     */
+    PluginService getService(final String name);
 
     /**
      * Get the license provider
@@ -190,6 +200,23 @@ public interface LockLogin {
      * @return the plugin premium store
      */
     PremiumDataStore premiumStore();
+
+    /**
+     * Register a service
+     *
+     * @param name the service name
+     * @param service the plugin service to register
+     * @throws UnsupportedOperationException if the service is already registered
+     */
+    void registerService(final String name, final PluginService service) throws UnsupportedOperationException;
+
+    /**
+     * Unregister a service
+     *
+     * @param name the service name
+     * @throws UnsupportedOperationException if the service is plugin internal
+     */
+    void unregisterService(final String name) throws UnsupportedOperationException;
 
     /**
      * Updates the plugin license
@@ -226,14 +253,6 @@ public interface LockLogin {
      * @param factory the server factory
      */
     void setServerFactory(final ServerFactory<NetworkServer> factory);
-
-    /**
-     * Register a backup service
-     *
-     * @param name the service name
-     * @param service the backup service
-     */
-    void registerBackupService(final String name, final BackupService service);
 
     /**
      * Print a message

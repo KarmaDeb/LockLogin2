@@ -5,7 +5,6 @@ import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import lombok.Getter;
 
@@ -16,6 +15,7 @@ import javax.annotation.Nullable;
  * This doesn't mean the client has been logged in any method,
  * but his session is ready to handle it.
  */
+@SuppressWarnings("unused")
 public class EntitySessionCreatedEvent extends EntityEvent {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();

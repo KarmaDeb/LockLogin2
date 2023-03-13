@@ -36,13 +36,8 @@ import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.model.skin.Textures;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
-import es.karmadev.locklogin.common.api.client.CLocalClient;
-import es.karmadev.locklogin.common.api.client.COnlineClient;
-import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.premium.handler.EncryptionHandler;
 import es.karmadev.locklogin.spigot.premium.handler.LoginHandler;
 import es.karmadev.locklogin.spigot.premium.mojang.MojangEncryption;
@@ -50,7 +45,7 @@ import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -72,38 +67,36 @@ import static com.comphenix.protocol.PacketType.Login.Client.START;
  * Part of the code of this class is from:
  * <a href="https://github.com/games647/FastLogin/blob/main/bukkit/src/main/java/com/github/games647/fastlogin/bukkit/listener/protocollib/ProtocolLibListener.java">FastLogin</a>
  */
+@SuppressWarnings("unused")
 public class ProtocolListener extends PacketAdapter {
 
-    private final static LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
+    private final static LockLogin plugin = CurrentPlugin.getPlugin();
     private final static Messages messages = plugin.messages();
 
     private final SecureRandom random = new SecureRandom();
     private final KeyPair keyPair = MojangEncryption.generatePair();
-    private final SQLiteDriver driver;
 
     public final static Map<InetSocketAddress, LoginSession> sessions = new ConcurrentHashMap<>();
 
 
-    public ProtocolListener(final SQLiteDriver driver) {
+    public ProtocolListener() {
         super(params()
-                .plugin(plugin)
+                .plugin((JavaPlugin) plugin.plugin())
                 .types(START, ENCRYPTION_BEGIN)
                 .optionAsync());
-
-        this.driver = driver;
     }
 
-    public static void register(final SQLiteDriver driver) {
+    public static void register() {
         plugin.info("Registering ProtocolLib handler");
         ProtocolLibrary.getProtocolManager().getAsynchronousManager()
-                .registerAsyncHandler(new ProtocolListener(driver)).start();
+                .registerAsyncHandler(new ProtocolListener()).start();
     }
 
     @Override
     public void onPacketReceiving(final PacketEvent event) {
         Configuration config = plugin.configuration();
 
-        if (event.isCancelled() || !plugin.runtime().isBooted() || keyPair == null || !config.premium().enable() || plugin.bungeeMode()) {
+        if (event.isCancelled() || plugin.runtime().booting() || keyPair == null || !config.premium().enable() || plugin.bungeeMode()) {
             /*
             We will ignore if the plugin is not fully started or the
             packet got cancelled in order to avoid errors
@@ -142,16 +135,9 @@ public class ProtocolListener extends PacketAdapter {
                 } catch (Throwable ignored) {}
             }
 
-            UUID id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
-
-            LocalNetworkClient local = plugin.network().getOfflinePlayer(id);
-            if (local == null) {
-                local = plugin.getUserFactory(false).create(name, id);
-            }
-
             event.getAsyncMarker().incrementProcessingDelay();
             Runnable task = new LoginHandler(random, player, event, name, client.orElse(null), keyPair.getPublic());
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, task);
+            Bukkit.getServer().getScheduler().runTaskAsynchronously((JavaPlugin) plugin.plugin(), task);
         } else {
             byte[] sharedSecret = event.getPacket().getByteArrays().read(0);
             if (sessions.containsKey(address)) {
@@ -159,11 +145,11 @@ public class ProtocolListener extends PacketAdapter {
 
                 byte[] token = session.getToken();
                 ClientKey key = session.getKey();
-                if (verifyNonce(player, container, key, token)) {
+                if (verifyNonce(container, key, token)) {
                     event.getAsyncMarker().incrementProcessingDelay();
 
                     Runnable runnable = new EncryptionHandler(event, player, session, sharedSecret, keyPair);
-                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, runnable);
+                    Bukkit.getServer().getScheduler().runTaskAsynchronously((JavaPlugin) plugin.plugin(), runnable);
                 } else {
                     player.kickPlayer(StringUtils.toColor(messages.premiumFailEncryption()));
                 }
@@ -174,18 +160,16 @@ public class ProtocolListener extends PacketAdapter {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean verifyNonce(Player sender, PacketContainer packet,
+    private boolean verifyNonce(PacketContainer packet,
                                 ClientKey clientPublicKey, byte[] expectedToken) {
+        if (keyPair == null) return false;
+
         if (MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 0))
                 && !MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 3))) {
             Either<byte[], ?> either = packet.getSpecificModifier(Either.class).read(0);
             if (clientPublicKey == null) {
                 Optional<byte[]> left = either.left();
-                if (!left.isPresent()) {
-                    return false;
-                }
-
-                return MojangEncryption.verifyIntegrity(expectedToken, keyPair.getPrivate(), left.get());
+                return left.filter(bytes -> MojangEncryption.verifyIntegrity(expectedToken, keyPair.getPrivate(), bytes)).isPresent();
             } else {
                 Optional<?> optSignatureData = either.right();
                 if (!optSignatureData.isPresent()) {

@@ -6,13 +6,13 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.security.backup.BackupService;
-import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.security.backup.RestoreMethod;
 import es.karmadev.locklogin.api.security.backup.store.BackupStorage;
 import es.karmadev.locklogin.api.security.backup.store.UserBackup;
 import es.karmadev.locklogin.api.security.backup.task.BackupRestoreTask;
 import es.karmadev.locklogin.api.security.backup.task.ScheduledBackup;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
+import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -132,8 +132,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         List<BackupStorage> fetched = new ArrayList<>();
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             Gson gson = new GsonBuilder().create();
@@ -173,8 +172,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         BackupStorage fetched = null;
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             Gson gson = new GsonBuilder().create();
@@ -216,8 +214,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         int success = 0;
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             for (Path backup : backup_files) {
@@ -247,8 +244,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         int purged = 0;
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             Gson gson = new GsonBuilder().create();
@@ -284,8 +280,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         int purged = 0;
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             Gson gson = new GsonBuilder().create();
@@ -321,8 +316,7 @@ public class CLocalBackup implements BackupService {
         Path backups_location = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups");
 
         int purged = 0;
-        try {
-            Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"));
+        try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             Gson gson = new GsonBuilder().create();
@@ -359,7 +353,7 @@ public class CLocalBackup implements BackupService {
         PluginNetwork network = plugin.network();
 
         AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
-        AccountMigrator migrator = factory.migrator();
+        AccountMigrator<UserAccount> migrator = factory.migrator();
 
         CompletableFuture.runAsync(() -> {
             BackupStorage[] backups = fetchAll();
@@ -368,16 +362,13 @@ public class CLocalBackup implements BackupService {
             int index = 0;
             AtomicBoolean problem = new AtomicBoolean();
 
-            Function<Integer, Void> finish = new Function<Integer, Void>() {
-                @Override
-                public Void apply(final Integer integer) {
-                    if (!problem.get()) {
-                        Consumer<Integer> success = task.success;
-                        if (success != null) success.accept(restored.size());
-                    }
-
-                    return null;
+            Function<Integer, Void> finish = integer -> {
+                if (!problem.get()) {
+                    Consumer<Integer> success = task.success;
+                    if (success != null) success.accept(restored.size());
                 }
+
+                return null;
             };
 
             for (BackupStorage storage : backups) {
@@ -391,64 +382,62 @@ public class CLocalBackup implements BackupService {
                         UserSession session = local.session();
                         UserAccount account = local.account();
 
-                        if (local != null) {
-                            restored.add(local.id());
+                        restored.add(local.id());
 
-                            try {
-                                switch (method) {
-                                    case EVERYTHING:
-                                        migrator.migrate(local, user);
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_WHITELIST:
-                                        migrator.migrate(local, user, method.getFieldsReverse());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_BLACKLIST:
-                                        migrator.migrate(local, user, method.getFields());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case NON_SET:
-                                        List<AccountField> fields = new ArrayList<>();
-                                        fields.add(AccountField.USERNAME); //Always set
-                                        fields.add(AccountField.UNIQUEID); //Always set
-                                        fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                        fields.add(AccountField.STATUS_2FA); //Always set
+                        try {
+                            switch (method) {
+                                case EVERYTHING:
+                                    migrator.migrate(local, user);
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_WHITELIST:
+                                    migrator.migrate(local, user, method.getFieldsReverse());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_BLACKLIST:
+                                    migrator.migrate(local, user, method.getFields());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case NON_SET:
+                                    List<AccountField> fields = new ArrayList<>();
+                                    fields.add(AccountField.USERNAME); //Always set
+                                    fields.add(AccountField.UNIQUEID); //Always set
+                                    fields.add(AccountField.SESSION_PERSISTENCE); //Always set
+                                    fields.add(AccountField.STATUS_2FA); //Always set
 
-                                        if (account == null) {
-                                            fields.clear();
-                                        } else {
-                                            if (account.isRegistered()) {
-                                                fields.add(AccountField.PASSWORD);
-                                            }
-                                            if (account.hasPin()) {
-                                                fields.add(AccountField.PIN);
-                                            }
-                                            if (account._2faSet()) {
-                                                fields.add(AccountField.TOKEN_2FA);
-                                            }
-                                            if (account.isProtected()) {
-                                                fields.add(AccountField.PANIC);
-                                            }
+                                    if (account == null) {
+                                        fields.clear();
+                                    } else {
+                                        if (account.isRegistered()) {
+                                            fields.add(AccountField.PASSWORD);
                                         }
+                                        if (account.hasPin()) {
+                                            fields.add(AccountField.PIN);
+                                        }
+                                        if (account._2faSet()) {
+                                            fields.add(AccountField.TOKEN_2FA);
+                                        }
+                                        if (account.isProtected()) {
+                                            fields.add(AccountField.PANIC);
+                                        }
+                                    }
 
-                                        migrator.migrate(local, user, fields.toArray(new AccountField[0]));
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                }
-                            } catch (Throwable unexpected) {
-                                if (error != null) error.accept(unexpected, restored.size());
-                                problem.set(true);
-                                break;
+                                    migrator.migrate(local, user, fields.toArray(new AccountField[0]));
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
                             }
+                        } catch (Throwable unexpected) {
+                            if (error != null) error.accept(unexpected, restored.size());
+                            problem.set(true);
+                            break;
                         }
                     } catch (Throwable unexpected) {
                         if (error != null) error.accept(unexpected, restored.size());
@@ -482,7 +471,7 @@ public class CLocalBackup implements BackupService {
         PluginNetwork network = plugin.network();
 
         AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
-        AccountMigrator migrator = factory.migrator();
+        AccountMigrator<UserAccount> migrator = factory.migrator();
 
         CompletableFuture.runAsync(() -> {
             Set<Integer> restored = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -496,7 +485,128 @@ public class CLocalBackup implements BackupService {
                     UserSession session = local.session();
                     UserAccount account = local.account();
 
-                    if (local != null) {
+                    restored.add(local.id());
+
+                    try {
+                        switch (method) {
+                            case EVERYTHING:
+                                migrator.migrate(local, user);
+                                if (session != null) {
+                                    session.persistent(user.sessionPersistent());
+                                }
+                                break;
+                            case FIELD_WHITELIST:
+                                migrator.migrate(local, user, method.getFieldsReverse());
+                                if (session != null) {
+                                    session.persistent(user.sessionPersistent());
+                                }
+                                break;
+                            case FIELD_BLACKLIST:
+                                migrator.migrate(local, user, method.getFields());
+                                if (session != null) {
+                                    session.persistent(user.sessionPersistent());
+                                }
+                                break;
+                            case NON_SET:
+                                List<AccountField> fields = new ArrayList<>();
+                                fields.add(AccountField.USERNAME); //Always set
+                                fields.add(AccountField.UNIQUEID); //Always set
+                                fields.add(AccountField.SESSION_PERSISTENCE); //Always set
+                                fields.add(AccountField.STATUS_2FA); //Always set
+
+                                if (account == null) {
+                                    fields.clear();
+                                } else {
+                                    if (account.isRegistered()) {
+                                        fields.add(AccountField.PASSWORD);
+                                    }
+                                    if (account.hasPin()) {
+                                        fields.add(AccountField.PIN);
+                                    }
+                                    if (account._2faSet()) {
+                                        fields.add(AccountField.TOKEN_2FA);
+                                    }
+                                    if (account.isProtected()) {
+                                        fields.add(AccountField.PANIC);
+                                    }
+                                }
+
+                                migrator.migrate(local, user, fields.toArray(new AccountField[0]));
+                                if (session != null) {
+                                    session.persistent(user.sessionPersistent());
+                                }
+                                break;
+                        }
+                    } catch (Throwable unexpected) {
+                        if (error != null) error.accept(unexpected, restored.size());
+                        problem = true;
+                        break;
+                    }
+                } catch (Throwable unexpected) {
+                    if (error != null) error.accept(unexpected, restored.size());
+                    problem = true;
+                    break;
+                }
+            }
+
+            if (!problem) {
+                Consumer<Integer> success = task.success;
+                if (success != null) success.accept(restored.size());
+            }
+        });
+
+        return task;
+    }
+
+    /**
+     * Restore all the backups between the provided ones
+     *
+     * @param from   the backup to start from
+     * @param to     the backup to end at
+     * @param method the restore method
+     * @return the restore task
+     */
+    @Override
+    public BackupRestoreTask restore(final BackupStorage from, final BackupStorage to, final RestoreMethod method) {
+        CRestoreTask task = new CRestoreTask();
+
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        PluginNetwork network = plugin.network();
+
+        AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
+        AccountMigrator<UserAccount> migrator = factory.migrator();
+
+        Instant start = from.creation();
+        Instant end = to.creation();
+
+        String startId = from.id();
+        String endId = to.id();
+        CompletableFuture.runAsync(() -> {
+            BackupStorage[] backups = fetchAll();
+
+            Set<Integer> restored = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+            boolean problem = false;
+            Set<UserBackup[]> suitable_accounts = new LinkedHashSet<>();
+            for (BackupStorage storage : backups) {
+                String id = storage.id();
+                Instant time = storage.creation();
+
+                if (id.equals(startId) || id.equals(endId) || time.isAfter(start) || time.isBefore(end)) {
+                    UserBackup[] accounts = storage.accounts();
+                    suitable_accounts.add(accounts);
+                }
+            }
+
+            for (UserBackup[] accounts : suitable_accounts) {
+                BiConsumer<Throwable, Integer> error = task.error;
+
+                for (UserBackup user : accounts) {
+                    try {
+                        LocalNetworkClient local = network.getEntity(user.account());
+                        UserSession session = local.session();
+                        UserAccount account = local.account();
+
                         restored.add(local.id());
 
                         try {
@@ -554,131 +664,6 @@ public class CLocalBackup implements BackupService {
                             problem = true;
                             break;
                         }
-                    }
-                } catch (Throwable unexpected) {
-                    if (error != null) error.accept(unexpected, restored.size());
-                    problem = true;
-                    break;
-                }
-            }
-
-            if (!problem) {
-                Consumer<Integer> success = task.success;
-                if (success != null) success.accept(restored.size());
-            }
-        });
-
-        return task;
-    }
-
-    /**
-     * Restore all the backups between the provided ones
-     *
-     * @param from   the backup to start from
-     * @param to     the backup to end at
-     * @param method the restore method
-     * @return the restore task
-     */
-    @Override
-    public BackupRestoreTask restore(final BackupStorage from, final BackupStorage to, final RestoreMethod method) {
-        CRestoreTask task = new CRestoreTask();
-
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        PluginNetwork network = plugin.network();
-
-        AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
-        AccountMigrator migrator = factory.migrator();
-
-        Instant start = from.creation();
-        Instant end = to.creation();
-
-        String startId = from.id();
-        String endId = to.id();
-        CompletableFuture.runAsync(() -> {
-            BackupStorage[] backups = fetchAll();
-
-            Set<Integer> restored = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-            boolean problem = false;
-            Set<UserBackup[]> suitable_accounts = new LinkedHashSet<>();
-            for (BackupStorage storage : backups) {
-                String id = storage.id();
-                Instant time = storage.creation();
-
-                if (id.equals(startId) || id.equals(endId) || time.isAfter(start) || time.isBefore(end)) {
-                    UserBackup[] accounts = storage.accounts();
-                    suitable_accounts.add(accounts);
-                }
-            }
-
-            for (UserBackup[] accounts : suitable_accounts) {
-                BiConsumer<Throwable, Integer> error = task.error;
-
-                for (UserBackup user : accounts) {
-                    try {
-                        LocalNetworkClient local = network.getEntity(user.account());
-                        UserSession session = local.session();
-                        UserAccount account = local.account();
-
-                        if (local != null) {
-                            restored.add(local.id());
-
-                            try {
-                                switch (method) {
-                                    case EVERYTHING:
-                                        migrator.migrate(local, user);
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_WHITELIST:
-                                        migrator.migrate(local, user, method.getFieldsReverse());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_BLACKLIST:
-                                        migrator.migrate(local, user, method.getFields());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case NON_SET:
-                                        List<AccountField> fields = new ArrayList<>();
-                                        fields.add(AccountField.USERNAME); //Always set
-                                        fields.add(AccountField.UNIQUEID); //Always set
-                                        fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                        fields.add(AccountField.STATUS_2FA); //Always set
-
-                                        if (account == null) {
-                                            fields.clear();
-                                        } else {
-                                            if (account.isRegistered()) {
-                                                fields.add(AccountField.PASSWORD);
-                                            }
-                                            if (account.hasPin()) {
-                                                fields.add(AccountField.PIN);
-                                            }
-                                            if (account._2faSet()) {
-                                                fields.add(AccountField.TOKEN_2FA);
-                                            }
-                                            if (account.isProtected()) {
-                                                fields.add(AccountField.PANIC);
-                                            }
-                                        }
-
-                                        migrator.migrate(local, user, fields.toArray(new AccountField[0]));
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                }
-                            } catch (Throwable unexpected) {
-                                if (error != null) error.accept(unexpected, restored.size());
-                                problem = true;
-                                break;
-                            }
-                        }
                     } catch (Throwable unexpected) {
                         if (error != null) error.accept(unexpected, restored.size());
                         problem = true;
@@ -712,7 +697,7 @@ public class CLocalBackup implements BackupService {
         PluginNetwork network = plugin.network();
 
         AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
-        AccountMigrator migrator = factory.migrator();
+        AccountMigrator<UserAccount> migrator = factory.migrator();
 
         Instant start = from.creation();
 
@@ -743,64 +728,62 @@ public class CLocalBackup implements BackupService {
                         UserSession session = local.session();
                         UserAccount account = local.account();
 
-                        if (local != null) {
-                            restored.add(local.id());
+                        restored.add(local.id());
 
-                            try {
-                                switch (method) {
-                                    case EVERYTHING:
-                                        migrator.migrate(local, user);
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_WHITELIST:
-                                        migrator.migrate(local, user, method.getFieldsReverse());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_BLACKLIST:
-                                        migrator.migrate(local, user, method.getFields());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case NON_SET:
-                                        List<AccountField> fields = new ArrayList<>();
-                                        fields.add(AccountField.USERNAME); //Always set
-                                        fields.add(AccountField.UNIQUEID); //Always set
-                                        fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                        fields.add(AccountField.STATUS_2FA); //Always set
+                        try {
+                            switch (method) {
+                                case EVERYTHING:
+                                    migrator.migrate(local, user);
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_WHITELIST:
+                                    migrator.migrate(local, user, method.getFieldsReverse());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_BLACKLIST:
+                                    migrator.migrate(local, user, method.getFields());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case NON_SET:
+                                    List<AccountField> fields = new ArrayList<>();
+                                    fields.add(AccountField.USERNAME); //Always set
+                                    fields.add(AccountField.UNIQUEID); //Always set
+                                    fields.add(AccountField.SESSION_PERSISTENCE); //Always set
+                                    fields.add(AccountField.STATUS_2FA); //Always set
 
-                                        if (account == null) {
-                                            fields.clear();
-                                        } else {
-                                            if (account.isRegistered()) {
-                                                fields.add(AccountField.PASSWORD);
-                                            }
-                                            if (account.hasPin()) {
-                                                fields.add(AccountField.PIN);
-                                            }
-                                            if (account._2faSet()) {
-                                                fields.add(AccountField.TOKEN_2FA);
-                                            }
-                                            if (account.isProtected()) {
-                                                fields.add(AccountField.PANIC);
-                                            }
+                                    if (account == null) {
+                                        fields.clear();
+                                    } else {
+                                        if (account.isRegistered()) {
+                                            fields.add(AccountField.PASSWORD);
                                         }
+                                        if (account.hasPin()) {
+                                            fields.add(AccountField.PIN);
+                                        }
+                                        if (account._2faSet()) {
+                                            fields.add(AccountField.TOKEN_2FA);
+                                        }
+                                        if (account.isProtected()) {
+                                            fields.add(AccountField.PANIC);
+                                        }
+                                    }
 
-                                        migrator.migrate(local, user, fields.toArray(new AccountField[0]));
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                }
-                            } catch (Throwable unexpected) {
-                                if (error != null) error.accept(unexpected, restored.size());
-                                problem = true;
-                                break;
+                                    migrator.migrate(local, user, fields.toArray(new AccountField[0]));
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
                             }
+                        } catch (Throwable unexpected) {
+                            if (error != null) error.accept(unexpected, restored.size());
+                            problem = true;
+                            break;
                         }
                     } catch (Throwable unexpected) {
                         if (error != null) error.accept(unexpected, restored.size());
@@ -835,7 +818,7 @@ public class CLocalBackup implements BackupService {
         PluginNetwork network = plugin.network();
 
         AccountFactory<UserAccount> factory = plugin.getAccountFactory(false);
-        AccountMigrator migrator = factory.migrator();
+        AccountMigrator<UserAccount> migrator = factory.migrator();
 
         Instant end = to.creation();
 
@@ -866,64 +849,62 @@ public class CLocalBackup implements BackupService {
                         UserSession session = local.session();
                         UserAccount account = local.account();
 
-                        if (local != null) {
-                            restored.add(local.id());
+                        restored.add(local.id());
 
-                            try {
-                                switch (method) {
-                                    case EVERYTHING:
-                                        migrator.migrate(local, user);
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_WHITELIST:
-                                        migrator.migrate(local, user, method.getFieldsReverse());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case FIELD_BLACKLIST:
-                                        migrator.migrate(local, user, method.getFields());
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                    case NON_SET:
-                                        List<AccountField> fields = new ArrayList<>();
-                                        fields.add(AccountField.USERNAME); //Always set
-                                        fields.add(AccountField.UNIQUEID); //Always set
-                                        fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                        fields.add(AccountField.STATUS_2FA); //Always set
+                        try {
+                            switch (method) {
+                                case EVERYTHING:
+                                    migrator.migrate(local, user);
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_WHITELIST:
+                                    migrator.migrate(local, user, method.getFieldsReverse());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case FIELD_BLACKLIST:
+                                    migrator.migrate(local, user, method.getFields());
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
+                                case NON_SET:
+                                    List<AccountField> fields = new ArrayList<>();
+                                    fields.add(AccountField.USERNAME); //Always set
+                                    fields.add(AccountField.UNIQUEID); //Always set
+                                    fields.add(AccountField.SESSION_PERSISTENCE); //Always set
+                                    fields.add(AccountField.STATUS_2FA); //Always set
 
-                                        if (account == null) {
-                                            fields.clear();
-                                        } else {
-                                            if (account.isRegistered()) {
-                                                fields.add(AccountField.PASSWORD);
-                                            }
-                                            if (account.hasPin()) {
-                                                fields.add(AccountField.PIN);
-                                            }
-                                            if (account._2faSet()) {
-                                                fields.add(AccountField.TOKEN_2FA);
-                                            }
-                                            if (account.isProtected()) {
-                                                fields.add(AccountField.PANIC);
-                                            }
+                                    if (account == null) {
+                                        fields.clear();
+                                    } else {
+                                        if (account.isRegistered()) {
+                                            fields.add(AccountField.PASSWORD);
                                         }
+                                        if (account.hasPin()) {
+                                            fields.add(AccountField.PIN);
+                                        }
+                                        if (account._2faSet()) {
+                                            fields.add(AccountField.TOKEN_2FA);
+                                        }
+                                        if (account.isProtected()) {
+                                            fields.add(AccountField.PANIC);
+                                        }
+                                    }
 
-                                        migrator.migrate(local, user, fields.toArray(new AccountField[0]));
-                                        if (session != null) {
-                                            session.persistent(user.sessionPersistent());
-                                        }
-                                        break;
-                                }
-                            } catch (Throwable unexpected) {
-                                if (error != null) error.accept(unexpected, restored.size());
-                                problem = true;
-                                break;
+                                    migrator.migrate(local, user, fields.toArray(new AccountField[0]));
+                                    if (session != null) {
+                                        session.persistent(user.sessionPersistent());
+                                    }
+                                    break;
                             }
+                        } catch (Throwable unexpected) {
+                            if (error != null) error.accept(unexpected, restored.size());
+                            problem = true;
+                            break;
                         }
                     } catch (Throwable unexpected) {
                         if (error != null) error.accept(unexpected, restored.size());
@@ -940,5 +921,15 @@ public class CLocalBackup implements BackupService {
         });
 
         return task;
+    }
+
+    /**
+     * Get the service name
+     *
+     * @return the service name
+     */
+    @Override
+    public String name() {
+        return "backup";
     }
 }

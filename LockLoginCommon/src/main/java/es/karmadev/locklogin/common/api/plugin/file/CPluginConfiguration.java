@@ -7,7 +7,6 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karma.file.yaml.YamlReloader;
@@ -136,7 +135,7 @@ public class CPluginConfiguration implements Configuration {
 
             SecretKey secret = FileEncryptor.generateSecureKey(password, new String(salt));
             IvParameterSpec parameter = FileEncryptor.generateSecureSpec();
-            if (secret == null || parameter == null) {
+            if (secret == null) {
                 LockLogin plugin = CurrentPlugin.getPlugin();
                 plugin.err("Failed to generate plugin secret key. This will be harmfull in the future");
 

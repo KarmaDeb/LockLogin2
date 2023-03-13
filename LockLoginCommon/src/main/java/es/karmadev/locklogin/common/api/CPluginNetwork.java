@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.common.api;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -92,7 +91,7 @@ public class CPluginNetwork implements PluginNetwork {
     @Override
     public LocalNetworkClient getEntity(final int id) {
         if (offline_cache.stream().anyMatch((offline) -> offline.id() == id)) {
-            return offline_cache.stream().filter((offline) -> offline.id() == id).findFirst().get();
+            return offline_cache.stream().filter((offline) -> offline.id() == id).findFirst().orElse(null);
         }
 
         Connection connection = null;
@@ -121,13 +120,13 @@ public class CPluginNetwork implements PluginNetwork {
     /**
      * Get an offline client
      *
-     * @param uniqueId the client unqiue id
+     * @param uniqueId the client unique id
      * @return the client
      */
     @Override
     public LocalNetworkClient getOfflinePlayer(final UUID uniqueId) {
         if (offline_cache.stream().anyMatch((offline) -> offline.uniqueId().equals(uniqueId))) {
-            return offline_cache.stream().filter((offline) -> offline.uniqueId().equals(uniqueId)).findFirst().get();
+            return offline_cache.stream().filter((offline) -> offline.uniqueId().equals(uniqueId)).findFirst().orElse(null);
         }
 
         Connection connection = null;
@@ -183,8 +182,8 @@ public class CPluginNetwork implements PluginNetwork {
      * @return the online players
      */
     @Override
-    public Collection<NetworkEntity> getOnlinePlayers() {
-        List<NetworkEntity> entities = new ArrayList<>();
+    public Collection<NetworkClient> getOnlinePlayers() {
+        List<NetworkClient> entities = new ArrayList<>();
         clients.forEach((cl) -> {
             if (cl.online()) entities.add(cl.client());
         });

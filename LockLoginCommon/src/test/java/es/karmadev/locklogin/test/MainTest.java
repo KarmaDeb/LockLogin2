@@ -1,7 +1,5 @@
 package es.karmadev.locklogin.test;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -14,22 +12,13 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.common.plugin.web.SocketService;
 import io.socket.client.Socket;
-import ml.karmaconfigs.api.common.string.random.RandomString;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.Arrays;
 import java.util.UUID;
 
-public class Main {
+public class MainTest {
 
     private final TestLockLogin plugin = new TestLockLogin();
 
@@ -93,7 +82,7 @@ public class Main {
     }
 
     //Passed: 12/03/22 23:42
-    @Test
+    @Test @SuppressWarnings("all")
     public void testSocket() throws InterruptedException {
         SocketService service = new SocketService();
         plugin.info("WebSocket service at: {0}", service.getAddress());

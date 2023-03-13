@@ -16,6 +16,7 @@ import java.util.Base64;
 /**
  * Network packet
  */
+@SuppressWarnings("unused")
 public class SPacket implements NetworkPacket {
 
     private int priority = 0;
@@ -54,6 +55,7 @@ public class SPacket implements NetworkPacket {
     }
 
     public SPacket priority(final int level) {
+        priority = level;
         return this;
     }
 

@@ -11,20 +11,7 @@ import io.socket.engineio.client.transports.WebSocket;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import okhttp3.OkHttpClient;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +20,7 @@ import static io.socket.client.IO.Options;
 /**
  * LockLogin websocket service
  */
+@SuppressWarnings("unused")
 public class SocketService {
 
     private static SocketService service;

@@ -7,11 +7,11 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Plugin network
  */
+@SuppressWarnings("unused")
 public interface PluginNetwork {
 
     /**
@@ -75,7 +75,7 @@ public interface PluginNetwork {
      *
      * @return the online players
      */
-    Collection<NetworkEntity> getOnlinePlayers();
+    Collection<NetworkClient> getOnlinePlayers();
 
     /**
      * Get all the players

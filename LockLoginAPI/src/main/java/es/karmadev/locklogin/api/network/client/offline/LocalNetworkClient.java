@@ -1,15 +1,13 @@
 package es.karmadev.locklogin.api.network.client.offline;
 
-import es.karmadev.locklogin.api.event.entity.EntityEvent;
-import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.NetworkEntity;
+import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
 import java.net.InetSocketAddress;
-import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -17,6 +15,7 @@ import java.util.UUID;
  * expect it to be not online, which basically means its
  * data is being loaded locally
  */
+@SuppressWarnings("unused")
 public interface LocalNetworkClient extends NetworkEntity {
 
     /**

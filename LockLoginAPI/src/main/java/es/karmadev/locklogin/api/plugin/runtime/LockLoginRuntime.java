@@ -1,6 +1,5 @@
 package es.karmadev.locklogin.api.plugin.runtime;
 
-import es.karmadev.locklogin.api.extension.Module;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 
 import java.lang.reflect.Method;
@@ -9,6 +8,7 @@ import java.nio.file.Path;
 /**
  * LockLogin plugin runtime
  */
+@SuppressWarnings("unused")
 public abstract class LockLoginRuntime {
 
     /**
@@ -71,7 +71,7 @@ public abstract class LockLoginRuntime {
      *
      * @return the plugin boot status
      */
-    public abstract boolean isBooted();
+    public abstract boolean booting();
 
     /**
      * Get the runtime platform

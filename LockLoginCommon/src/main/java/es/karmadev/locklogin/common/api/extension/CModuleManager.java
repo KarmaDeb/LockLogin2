@@ -13,7 +13,6 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -120,6 +119,7 @@ public class CModuleManager implements ModuleManager {
         if (module != null) {
             EventHandler handler = new EventHandler() {
 
+                @SuppressWarnings("unused")
                 public void onUnknown(final T event) {
                     listener.accept(event);
                 }
@@ -159,11 +159,11 @@ public class CModuleManager implements ModuleManager {
             Method getHandlers = event.getDeclaredMethod("getHandlers");
             EventHandlerList list = (EventHandlerList) getHandlers.invoke(event);
 
-            if (list == null) throw new UnsupportedOperationException("Cannot handle event " + event.getClass().getSimpleName() + " as a method getHandlers is required but was not found");
+            if (list == null) throw new UnsupportedOperationException("Cannot handle event " + event.getSimpleName() + " as a method getHandlers is required but was not found");
 
             return list;
         } catch (NoSuchMethodException | ClassCastException | IllegalAccessException | InvocationTargetException e) {
-            throw new UnsupportedOperationException("Cannot handle event " + event.getClass().getSimpleName() + " as a method getHandlers is required but was not found");
+            throw new UnsupportedOperationException("Cannot handle event " + event.getSimpleName() + " as a method getHandlers is required but was not found");
         }
     }
 }

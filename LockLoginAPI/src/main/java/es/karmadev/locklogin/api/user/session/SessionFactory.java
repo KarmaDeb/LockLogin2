@@ -2,8 +2,6 @@ package es.karmadev.locklogin.api.user.session;
 
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 
-import java.util.UUID;
-
 /**
  * LockLogin session factory
  */

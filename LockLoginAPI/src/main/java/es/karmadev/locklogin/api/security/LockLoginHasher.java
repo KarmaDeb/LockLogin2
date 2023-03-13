@@ -3,11 +3,11 @@ package es.karmadev.locklogin.api.security;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
-import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 
 /**
  * LockLogin hasher
  */
+@SuppressWarnings("unused")
 public interface LockLoginHasher {
 
     /**

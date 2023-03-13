@@ -1,10 +1,8 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import lombok.experimental.UtilityClass;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -12,6 +10,7 @@ import java.util.function.Consumer;
 /**
  * Current LockLogin plugin
  */
+@SuppressWarnings("unused")
 public final class CurrentPlugin {
 
     private static LockLogin plugin;
@@ -25,14 +24,14 @@ public final class CurrentPlugin {
     /**
      * Initialize the plugin
      *
-     * @param instace the plugin instace
+     * @param instance the plugin instance
      */
-    protected static void initialize(final LockLogin instace) throws SecurityException {
+    static void initialize(final LockLogin instance) throws SecurityException {
         if (plugin != null) throw new SecurityException("Cannot redefine plugin instance!");
-        if (instace.runtime() == null) throw new SecurityException();
+        if (instance.runtime() == null) throw new SecurityException();
 
-        instace.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
-        plugin = instace;
+        instance.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+        plugin = instance;
     }
 
     /**
