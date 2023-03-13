@@ -11,6 +11,9 @@ import lombok.Getter;
 @Getter
 public abstract class EntityEvent extends LockLoginEvent {
 
+    /**
+     * The event entity
+     */
     protected final NetworkEntity entity;
 
     /**

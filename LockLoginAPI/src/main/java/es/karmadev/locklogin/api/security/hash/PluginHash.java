@@ -40,6 +40,11 @@ public abstract class PluginHash {
     }
 
     /**
+     * Initialize the plugin hash
+     */
+    public PluginHash() {}
+
+    /**
      * Get the hashing name
      *
      * @return the hashing name

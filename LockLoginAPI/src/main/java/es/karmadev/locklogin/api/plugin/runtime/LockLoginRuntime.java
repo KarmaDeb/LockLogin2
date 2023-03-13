@@ -14,6 +14,11 @@ public abstract class LockLoginRuntime {
     public LockLoginRuntime() {}
 
     /**
+     * Initialize the LockLogin runtime
+     */
+    public LockLoginRuntime() {}
+
+    /**
      * Get the plugin runtime dependency manager
      *
      * @return the dependency manager
@@ -35,6 +40,14 @@ public abstract class LockLoginRuntime {
      * @return the plugin boot status
      */
     public abstract boolean booting();
+
+    /**
+     * Get if the runtime is completely booted. Meaning
+     * the plugin is ready to handle everything
+     *
+     * @return the plugin boot status
+     */
+    public abstract boolean isBooted();
 
     /**
      * Get the runtime platform

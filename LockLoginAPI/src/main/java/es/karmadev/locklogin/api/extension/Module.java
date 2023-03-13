@@ -25,14 +25,39 @@ import java.util.jar.JarFile;
  */
 public abstract class Module implements KarmaSource {
 
+    /**
+     * All the loaded module names
+     */
     private final static List<String> loaded = new ConcurrentList<>();
 
+    /**
+     * Default plugin
+     */
     protected final LockLogin plugin = CurrentPlugin.getPlugin();
+
+    /**
+     * Default module manager
+     */
     protected final ModuleManager manager = plugin.moduleManager();
 
+    /**
+     * Module name
+     */
     private final String name;
+
+    /**
+     * Module version
+     */
     private final String version;
+
+    /**
+     * Module description
+     */
     private final String description;
+
+    /**
+     * Module authors
+     */
     private final String[] authors;
 
     /**
