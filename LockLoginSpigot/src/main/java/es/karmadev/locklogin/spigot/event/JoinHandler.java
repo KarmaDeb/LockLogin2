@@ -10,9 +10,11 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
+import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -121,14 +123,19 @@ public class JoinHandler implements Listener {
                 multi.assign(offline, address);
 
                 int amount = multi.getAccounts(address).size();
-                if (amount > configuration.register().maxAccounts()) {
+                int max = configuration.register().maxAccounts();
+                if (amount >= max && max > 1) { //We only want to send a warning if the maximum amount of accounts is over 1
                     for (NetworkClient client : plugin.network().getOnlinePlayers()) {
-
+                        if (client.hasPermission(LockLoginPermission.PERMISSION_INFO_ALT_ALERT)) {
+                            client.sendMessage(messages.prefix() + messages.altFound(name, amount));
+                        }
                     }
                 }
-
+            } else {
+                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.maxRegisters()));
+                return;
             }
-            //TODO: Check potential alt accounts
+
             //TODO: Create BruteForce handler
 
             if (configuration.verifyUniqueIDs()) {
@@ -167,12 +174,11 @@ public class JoinHandler implements Listener {
                 if (id == null) id = player.getUniqueId();
             }
 
-            LocalNetworkClient offline = plugin.network().getOfflinePlayer(id);
+            CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
             COnlineClient online = new COnlineClient(offline.id(), plugin.getDriver(), null);
 
             CPluginNetwork network = (CPluginNetwork) plugin.network();
             network.appendClient(online);
-
         });
     }
 

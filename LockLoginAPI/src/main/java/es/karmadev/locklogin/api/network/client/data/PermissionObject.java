@@ -2,6 +2,10 @@ package es.karmadev.locklogin.api.network.client.data;
 
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * LockLogin permission object
  */
@@ -83,18 +87,23 @@ public interface PermissionObject {
      * Get if the specified permission is permissible
      *
      * @param entity the entity to check permission with
+     * @param ignoredNodes the nodes to ignore
      * @return if the specified permission applies to
      * this one or vice-versa
      */
-    default boolean isPermissible(final NetworkEntity entity) {
+    default boolean isPermissible(final NetworkEntity entity, final String... ignoredNodes) {
         if (entity.hasPermission(this)) return true;
+
+        List<String> ignored = new ArrayList<>(Arrays.asList(ignoredNodes));
+        ignored.add(node());
 
         PermissionObject top = topLevel();
         if (top.inheritance() && entity.hasPermission(top)) return true;
 
         for (PermissionObject child : top.children()) {
-            if (child.node().equals(node())) continue;
-            if (child.isPermissible(entity)) return true;
+            if (!ignored.contains(child.node())) {
+                if (child.isPermissible(entity, ignored.toArray(new String[0]))) return true;
+            }
         }
 
         return false;

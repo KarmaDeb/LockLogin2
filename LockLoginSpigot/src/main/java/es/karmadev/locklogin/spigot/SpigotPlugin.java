@@ -1,16 +1,25 @@
 package es.karmadev.locklogin.spigot;
 
+import es.karmadev.locklogin.api.network.client.ConnectionType;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
+import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.protection.type.*;
+import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+
+import java.util.UUID;
 
 public class SpigotPlugin extends KarmaPlugin {
 
@@ -94,6 +103,40 @@ public class SpigotPlugin extends KarmaPlugin {
 
         if (boot) {
             console().send("LockLogin has been booted", Level.OK);
+
+            PremiumDataStore store = spigot.premiumStore();
+            VaultPermissionManager vaultTmpManager = null;
+            if (pluginManager.isPluginEnabled("Vault")) {
+                try {
+                    vaultTmpManager = new VaultPermissionManager(this);
+                } catch (IllegalStateException ignored) {}
+            }
+
+            VaultPermissionManager vaultManager = vaultTmpManager;
+            for (LocalNetworkClient local : spigot.network().getPlayers()) {
+                if (local instanceof CLocalClient) {
+                    CLocalClient offline = (CLocalClient) local;
+                    offline.hasPermission = permissionObject -> {
+                        UUID uniqueId = local.uniqueId();
+                        if (local.connection().equals(ConnectionType.ONLINE)) {
+                            UUID tmpId = store.onlineId(offline.name());
+                            if (tmpId != null) uniqueId = tmpId;
+                        }
+
+                        OfflinePlayer offlinePlayer = getServer().getOfflinePlayer(uniqueId);
+                        if (vaultManager != null) {
+                            return vaultManager.hasPermission(offlinePlayer, permissionObject);
+                        } else {
+                            if (offlinePlayer.isOnline()) {
+                                Player player = offlinePlayer.getPlayer();
+                                return player != null && player.hasPermission(permissionObject.node());
+                            }
+                        }
+
+                        return false;
+                    };
+                }
+            }
         } else {
             console().send("LockLogin won't initialize due an internal error. Please report this to discord {0}", Level.WARNING, "https://discord.gg/77p8KZNfqE");
         }
