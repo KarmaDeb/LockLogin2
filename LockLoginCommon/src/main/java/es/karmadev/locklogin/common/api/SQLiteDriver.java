@@ -48,11 +48,46 @@ public final class SQLiteDriver {
             boolean sess_create = statement.execute("CREATE TABLE IF NOT EXISTS `session` ('id' INTEGER NOT NULL, 'captcha_login' BOOLEAN, 'pass_login' BOOLEAN, 'pin_login' BOOLEAN, '2fa_login' BOOLEAN, 'persistence' BOOLEAN, 'captcha' TEXT, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))");
             boolean serv_create = statement.execute("CREATE TABLE IF NOT EXISTS `server` ('id' INTEGER NOT NULL, 'name' TEXT, 'address' TEXT, 'port' INTEGER, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))");
             boolean user_create = statement.execute("CREATE TABLE IF NOT EXISTS `user` ('id' INTEGER NOT NULL, 'name' TEXT, 'uuid' TEXT, 'account_id' INTEGER NULL, 'session_id' INTEGER NULL, 'type' INTEGER DEFAULT 1, 'last_server' INTEGER NULL, 'previous_server' INTEGER NULL, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT), FOREIGN KEY('account_id') REFERENCES account('id') ON DELETE SET NULL, FOREIGN KEY('session_id') REFERENCES session('id') ON DELETE SET NULL, FOREIGN KEY('last_server') REFERENCES server('id') ON DELETE SET NULL, FOREIGN KEY('previous_server') REFERENCES server('id') ON DELETE SET NULL)");
+            boolean premium_create = statement.execute("CREATE TABLE IF NOT EXISTS `premium` ('id' INTEGER NOT NULL, 'name' TEXT, 'uuid' TEXT, PRIMARY KEY('id' AUTOINCREMENT))");
+            boolean panic_create = statement.execute("CREATE TABLE IF NOT EXISTS `panic` ('id' INTEGER NOT NULL, 'player' INTEGER NOT NULL, 'status' BOOLEAN DEFAULT false, PRIMARY KEY('id' AUTOINCREMENT), FOREIGN KEY('player') REFERENCES user('id') ON DELETE SET NULL)");
+            boolean brute_create = statement.execute("CREATE TABLE IF NOT EXISTS `brute` ('id' INTEGER NOT NULL, 'address' TEXT NOT NULL, 'tries' INTEGER DEFAULT 0, 'blocked' BOOLEAN DEFAULT false, 'remaining' NUMERIC DEFAULT 0, PRIMARY KEY('id' AUTOINCREMENT))");
 
-            if (acc_create && sess_create && serv_create && user_create) {
+            if (acc_create && sess_create && serv_create && user_create && premium_create && panic_create && brute_create) {
                 plugin.info("Successfully setup LockLogin sqlite tables");
+            } else {
+                plugin.info("An error occurred while running SQL queries. Some tables were not able to be created");
+
+                if (!acc_create) {
+                    plugin.err("Failed to create accounts table");
+                    plugin.logErr("Couldn't create table: account");
+                }
+                if (!sess_create) {
+                    plugin.err("Failed to create sessions table");
+                    plugin.logErr("Couldn't create table: session");
+                }
+                if (!serv_create) {
+                    plugin.err("Failed to create servers table");
+                    plugin.logErr("Couldn't create table: server");
+                }
+                if (!user_create) {
+                    plugin.err("Failed to create users table");
+                    plugin.logErr("Couldn't create table: user");
+                }
+                if (!premium_create) {
+                    plugin.err("Failed to create premiums table");
+                    plugin.logErr("Couldn't create table: premium");
+                }
+                if (panic_create) {
+                    plugin.err("Failed to create panic mode table");
+                    plugin.logErr("Couldn't create table: panic");
+                }
+                if (!brute_create) {
+                    plugin.err("Failed to create brute force table");
+                    plugin.logErr("Couldn't create table: brute");
+                }
             }
         } catch (SQLException ex) {
+            plugin.log(ex, "An exception has raised when setting up LockLogin sqlite database");
             plugin.err("Failed to setup LockLogin sqlite connection");
         } finally {
             close(connection, statement);
