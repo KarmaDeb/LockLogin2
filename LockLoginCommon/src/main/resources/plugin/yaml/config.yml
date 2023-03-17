@@ -1,7 +1,7 @@
 ###########################################################
 #                                                         #
 #   LockLogin source is a plugin under RedDo GPL license  #
-#             https://karmadev.es/license                 #
+#               https://reddo.es/license                  #
 #                                                         #
 #                                                         #
 #                   For more help                         #
@@ -254,8 +254,10 @@ Permissions:
   AllowWildcard: false
   UnLogged:
     - "my.permission.for.unlogged"
+    - "[group]unlogged"
   Logged:
     - "my.permission.for.logged"
+    - "[group]default"
 
 #Password configuration
 #
@@ -312,7 +314,7 @@ BruteForce:
 #to join the server if his IP is the same
 #that the one is already connected.
 #By enabling this the player will still have
-#to login
+#to log in
 AllowSameIp: true
 
 #Enable pin feature (This is not 2FA)
@@ -403,9 +405,16 @@ NameCheckProtocol: 2
 # French ( fr_FR | French )
 # Simplified Chinese ( zh_CN | Chinese simplified | Simplified chinese )
 # being english by default
-#
-# The ApiKey can be requested at: https://discord.gg/77p8KZNfqE
-# and it allows you to publish your language packs from the plugin
 Language:
   Name: en_EN
-  ApiKey: ""
+
+#Plugin database configuration
+#For advanced database configuration, please refer
+#to the database.yml configuration file
+#
+# Valid drivers are:
+#  SQLite
+#  MySQL
+#  MariaDB
+#  MongoDB
+DataDriver: SQLITE
