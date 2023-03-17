@@ -8,7 +8,7 @@ import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 import es.karmadev.locklogin.api.user.account.migration.Transictionable;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -20,9 +20,9 @@ import java.util.List;
 public class CMigrator implements AccountMigrator<CAccount> {
 
     private final CAccountFactory factory;
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
 
-    public CMigrator(final CAccountFactory factory, final SQLiteDriver driver) {
+    public CMigrator(final CAccountFactory factory, final DataDriver driver) {
         this.factory = factory;
         this.driver = driver;
     }

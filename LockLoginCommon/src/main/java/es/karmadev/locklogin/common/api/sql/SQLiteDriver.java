@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.common.api;
+package es.karmadev.locklogin.common.api.sql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -18,6 +18,13 @@ public final class SQLiteDriver {
 
     private HikariDataSource source;
 
+    /**
+     * Test if the environment is ready to run SQL
+     */
+    public void testDrivers() {
+        testDrivers("MongoDB", "", "");
+    }
+
     public void connect() {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
@@ -26,7 +33,7 @@ public final class SQLiteDriver {
 
         HikariConfig config = new HikariConfig();
         config.setPoolName("locklogin");
-        //config.setDriverClassName("org.hsqldb.jdbc.JDBCDriver");
+        config.setDriverClassName("org");
         config.setJdbcUrl("jdbc:sqlite:" + sql_file);
         config.setMinimumIdle(10);
         config.setMaximumPoolSize(50);
@@ -121,6 +128,18 @@ public final class SQLiteDriver {
             try {
                 connection.close();
             } catch (Throwable ignored) {}
+        }
+    }
+
+    private void testDrivers(final String name, final String testClass, final String downloadURL) {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        plugin.info("Verifying for {0} driver", name);
+
+        try {
+            Class.forName(testClass);
+            plugin.info("Driver {0} found!", name);
+        } catch (ClassNotFoundException ex) {
+
         }
     }
 }

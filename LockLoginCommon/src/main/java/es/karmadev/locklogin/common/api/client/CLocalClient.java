@@ -10,7 +10,7 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.server.CServer;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.session.CSession;
@@ -28,11 +28,11 @@ import java.util.function.Function;
 public class CLocalClient implements LocalNetworkClient {
 
     protected final int id;
-    protected final SQLiteDriver pool;
+    protected final DataDriver pool;
 
     public Function<PermissionObject, Boolean> hasPermission;
 
-    public CLocalClient(final int id, final SQLiteDriver pool) {
+    public CLocalClient(final int id, final DataDriver pool) {
         this.id = id;
         this.pool = pool;
     }

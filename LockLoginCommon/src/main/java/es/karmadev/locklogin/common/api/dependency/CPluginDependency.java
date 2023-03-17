@@ -17,10 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 
@@ -79,6 +76,8 @@ public class CPluginDependency {
                             KarmaMain checksum = new KarmaMain(dataFile);
                             checksum.create();
 
+                            List<JsonDependency> ignore = new ArrayList<>();
+                            List<JsonDependency> install = new ArrayList<>();
                             for (JsonElement element : dependencies) {
                                 JsonObject dependencyJson = element.getAsJsonObject();
                                 JsonDependency dependency = new JsonDependency(dependencyJson);
@@ -91,9 +90,11 @@ public class CPluginDependency {
                                 if (StringUtils.isNullOrEmpty(testClass)) continue;
                                 try {
                                     Class.forName(dependency.testClass());
-                                    plugin.info("Ignoring dependency {0} because it seems to be already injected", dependency.name());
-                                    dependency.assertInstalled();
-                                } catch (Throwable notFound) {}
+                                    ignore.add(dependency);
+                                } catch (Throwable ex) {
+                                    install.add(dependency);
+                                }
+
                                 if (Files.exists(dependency.file())) {
                                     byte[] rBytes = Files.readAllBytes(dependency.file());
 
@@ -113,7 +114,21 @@ public class CPluginDependency {
                                 dependency.checksum().define("adler", adler);
                                 dependency.checksum().define("crc", crc);
 
+                                if (dependency.checksum().matches(dependency.generateChecksum())) {
+                                    if (!ignore.contains(dependency))
+                                        ignore.add(dependency);
+
+                                    install.remove(dependency);
+                                }
+
                                 CPluginDependency.dependencies.put(id, dependency);
+                            }
+
+                            for (JsonDependency dependency : ignore) {
+                                plugin.info("Dependency {0} won't be downloaded as it has been already found", dependency.name());
+                            }
+                            for (JsonDependency dependency : install) {
+                                plugin.info("Failed to detect dependency {0}. It will be downloaded", dependency.name());
                             }
                         }
                     }

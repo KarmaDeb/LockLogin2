@@ -61,19 +61,7 @@ public interface LockLoginDependency {
     /**
      * Get if the dependency is a plugin
      *
-     * @return if the dependenc is a plugin
+     * @return if the dependency is a plugin
      */
     boolean isPlugin();
-
-    /**
-     * Get if the dependency is installed
-     *
-     * @return if the dependency is installed
-     */
-    boolean needsInstallation();
-
-    /**
-     * Mark the dependency as installed
-     */
-    void assertInstalled();
 }

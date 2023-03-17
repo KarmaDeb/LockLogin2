@@ -5,7 +5,7 @@ import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.server.channel.SChannel;
 import es.karmadev.locklogin.common.util.ActionListener;
 import es.karmadev.locklogin.common.util.action.ServerEntityAction;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 public class CServer implements NetworkServer {
 
     private final int id;
-    private final SQLiteDriver pool;
+    private final DataDriver pool;
     private final SChannel channel = new SChannel();
 
     private final Set<LocalNetworkClient> offline_clients = Collections.newSetFromMap(new ConcurrentHashMap<>());

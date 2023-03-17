@@ -1,14 +1,9 @@
 package es.karmadev.locklogin.api.extension.command;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.extension.command.worker.CommandCompletor;
 import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.Getter;
-
-import java.nio.file.Path;
 
 /**
  * Module command
@@ -24,12 +19,6 @@ public abstract class ModuleCommand {
     private final String description;
     @Getter
     private final String[] aliases;
-
-    @Getter
-    private CommandExecutor executor;
-
-    @Getter
-    private CommandCompletor tabCompletor;
 
     /**
      * Initialize the command
@@ -50,41 +39,29 @@ public abstract class ModuleCommand {
      * Set the command executor
      *
      * @param executor the command executor
-     * @throws SecurityException if the module trying to define the
-     * executor is not the command owner
+     * @return this command
      */
-    public void setExecutor(final CommandExecutor executor) throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
-
-        Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().find(caller);
-
-        if (callerModule == null || !callerModule.equals(module)) {
-            throw new SecurityException("Cannot set module executor from an unverified source");
-        }
-
-        this.executor = executor;
-    }
+    public abstract ModuleCommand setExecutor(final CommandExecutor executor);
 
     /**
      * Set the command tab completor
      *
-     * @param completor the command executor
-     * @throws SecurityException if the module trying to define the
-     * executor is not the command owner
+     * @param completor the command completor
+     * @return this command
      */
-    public void setTabCompletor(final CommandCompletor completor) throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+    public abstract ModuleCommand setTabCompletor(final CommandCompletor completor);
 
-        Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().find(caller);
+    /**
+     * Get the command executor
+     *
+     * @return the command executor
+     */
+    public abstract CommandExecutor getExecutor();
 
-        if (callerModule == null || !callerModule.equals(module)) {
-            throw new SecurityException("Cannot set module tab completor from an unverified source");
-        }
-
-        this.tabCompletor = completor;
-    }
+    /**
+     * Get the command tab completor
+     *
+     * @return the command tab completor
+     */
+    public abstract CommandCompletor getTabCompletor();
 }

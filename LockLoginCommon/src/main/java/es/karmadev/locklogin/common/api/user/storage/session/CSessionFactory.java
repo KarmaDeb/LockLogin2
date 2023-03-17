@@ -2,7 +2,7 @@ package es.karmadev.locklogin.common.api.user.storage.session;
 
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -12,9 +12,9 @@ import java.time.Instant;
 
 public class CSessionFactory implements SessionFactory<CSession> {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
 
-    public CSessionFactory(final SQLiteDriver driver) {
+    public CSessionFactory(final DataDriver driver) {
         this.driver = driver;
     }
 

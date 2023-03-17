@@ -33,7 +33,7 @@ public class CPluginConfiguration implements Configuration {
      */
     public CPluginConfiguration() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        FileCopy copy = new FileCopy(CPluginConfiguration.class, "config.yml");
+        FileCopy copy = new FileCopy(CPluginConfiguration.class, "plugin/yaml/config.yml");
         try {
             copy.copy(file);
         } catch (Throwable ex) {
@@ -84,7 +84,7 @@ public class CPluginConfiguration implements Configuration {
         if (StringUtils.isNullOrEmpty(name)) {
             name = "My server";
             yaml.set("ServerName", name);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin().plugin(), "config.yml");
+            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
         }
 
         return name;
@@ -146,7 +146,7 @@ public class CPluginConfiguration implements Configuration {
             raw = StringUtils.serialize(store);
 
             yaml.set("SecretKey", raw);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin().plugin(), "config.yml");
+            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
 
             return store;
         }
@@ -453,7 +453,7 @@ public class CPluginConfiguration implements Configuration {
         }
         if (!oChannel.equals(channel)) {
             yaml.set("Updater.Channel", channel);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin().plugin(), "config.yml");
+            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
         }
 
         return CUpdaterSection.of(BuildType.valueOf(channel.toUpperCase()), check, checkTime);

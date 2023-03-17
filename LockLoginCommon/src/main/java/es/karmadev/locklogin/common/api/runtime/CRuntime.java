@@ -69,7 +69,7 @@ public class CRuntime extends LockLoginRuntime {
         }
 
         CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
-        if (source == null) return null;
+        if (source == null) return Paths.get(path);
 
         String server = source.getLocation().getFile();
         if (server.startsWith("/")) {
@@ -109,7 +109,7 @@ public class CRuntime extends LockLoginRuntime {
      */
     @Override
     public void verifyIntegrity(final int permission) throws SecurityException {
-        if (permission < ANY) return;
+        if (permission < 0) return;
 
         String path = LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
         if (path.startsWith("/")) {
@@ -123,7 +123,7 @@ public class CRuntime extends LockLoginRuntime {
         }
 
         CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
-        if (source == null) return;
+        if (source == null) throw new SecurityException("Cannot validate runtime integrity. Are we running in a test environment?");
 
         String server = source.getLocation().getFile();
         if (server.startsWith("/")) {
@@ -132,10 +132,13 @@ public class CRuntime extends LockLoginRuntime {
 
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
         String method = "";
+        Class<?> sourceClass = null;
         for (StackTraceElement element : elements) {
             String name = element.getClassName();
             try {
                 Class<?> clazz = Class.forName(name);
+                if (sourceClass == null) sourceClass = clazz;
+
                 URL url = clazz.getResource('/' + name.replace('.', '/') + ".class");
                 if (url != null) {
                     String urlPath = url.getPath();
@@ -149,12 +152,13 @@ public class CRuntime extends LockLoginRuntime {
                             if (jarPath.startsWith(pluginsFolder.toString())) {
                                 Path caller = Paths.get(jarPath);
 
-                                Module mod = modManager.loader().find(caller);
+                                Module mod = modManager.loader().findByFile(caller);
                                 String pathName = PathUtilities.getPrettyPath(caller);
                                 if (mod != null) {
                                     pathName = "(Module) " + mod.name();
                                     if (permission == PLUGIN_AND_MODULES) break;
                                     if (permission == MODULE_ONLY) {
+
                                         //TODO: Check if the module owns the class
                                     }
                                 }
@@ -176,7 +180,7 @@ public class CRuntime extends LockLoginRuntime {
      * @return the plugin boot status
      */
     @Override
-    public boolean isBooted() {
-        return booted;
+    public boolean booting() {
+        return !booted;
     }
 }

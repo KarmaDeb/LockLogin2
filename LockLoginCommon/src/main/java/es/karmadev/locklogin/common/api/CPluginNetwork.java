@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
@@ -17,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CPluginNetwork implements PluginNetwork {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
     private final Set<NetworkClient> clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<NetworkServer> servers = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<LocalNetworkClient> offline_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    public CPluginNetwork(final SQLiteDriver driver) {
+    public CPluginNetwork(final DataDriver driver) {
         this.driver = driver;
 
         CurrentPlugin.whenAvailable((plugin) -> {

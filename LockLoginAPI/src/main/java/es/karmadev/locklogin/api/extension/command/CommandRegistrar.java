@@ -11,7 +11,7 @@ public interface CommandRegistrar {
      * @param name the command name
      * @return the command
      */
-    ModuleCommand find(final String name);
+    ModuleCommand getCommand(final String name);
 
     /**
      * Get all the commands

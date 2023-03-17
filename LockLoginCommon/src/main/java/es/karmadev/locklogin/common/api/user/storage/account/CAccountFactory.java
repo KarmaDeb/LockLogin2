@@ -3,7 +3,7 @@ package es.karmadev.locklogin.common.api.user.storage.account;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.user.storage.account.transiction.CMigrator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
@@ -20,11 +20,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CAccountFactory implements AccountFactory<CAccount> {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
     private final Set<CAccount> account_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CMigrator migrator;
 
-    public CAccountFactory(final SQLiteDriver driver) {
+    public CAccountFactory(final DataDriver driver) {
         this.driver = driver;
         this.migrator = new CMigrator(this, driver);
     }

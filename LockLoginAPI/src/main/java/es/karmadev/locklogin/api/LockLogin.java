@@ -6,6 +6,8 @@ import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
+import es.karmadev.locklogin.api.plugin.ServerHash;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.license.License;
@@ -14,6 +16,7 @@ import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.backup.BackupService;
+import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
@@ -53,6 +56,13 @@ public interface LockLogin {
      * @return if the server is online mode
      */
     boolean onlineMode();
+
+    /**
+     * Get the plugin data driver
+     *
+     * @return the plugin data driver
+     */
+    DataDriver driver();
 
     /**
      * Get the plugin build type
@@ -158,14 +168,6 @@ public interface LockLogin {
     MultiAccountManager accountManager();
 
     /**
-     * Get a backup service
-     *
-     * @param name the service name
-     * @return the backup service
-     */
-    BackupService getBackupService(final String name);
-
-    /**
      * Get a service
      *
      * @param name the service name
@@ -200,6 +202,15 @@ public interface LockLogin {
      * @return the plugin premium store
      */
     PremiumDataStore premiumStore();
+
+    /**
+     * Get the current server hash
+     *
+     * @return the server hash
+     * @throws SecurityException if tried to be accessed from any
+     * external source that's not the self plugin
+     */
+    ServerHash server() throws SecurityException;
 
     /**
      * Register a service

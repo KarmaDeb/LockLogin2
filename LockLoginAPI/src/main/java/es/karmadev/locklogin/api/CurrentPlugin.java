@@ -35,13 +35,22 @@ public final class CurrentPlugin {
     }
 
     /**
+     * Update the plugin state
+     */
+    public static void updateState() {
+        if (plugin != null && plugin.driver().connected()) {
+            available_queue.forEach((c) -> c.accept(plugin));
+        }
+    }
+
+    /**
      * Get the LockLogin plugin as
      * soon as possible
      *
      * @param action the action to perform with the plugin instance
      */
     public static void whenAvailable(final Consumer<LockLogin> action) {
-        if (plugin != null) {
+        if (plugin != null && plugin.driver().connected()) {
             action.accept(plugin);
         } else {
             available_queue.add(action);

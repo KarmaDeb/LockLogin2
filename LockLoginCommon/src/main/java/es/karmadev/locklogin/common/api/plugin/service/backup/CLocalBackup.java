@@ -37,6 +37,16 @@ import java.util.stream.Stream;
 public class CLocalBackup implements BackupService {
 
     /**
+     * Get the service name
+     *
+     * @return the service name
+     */
+    @Override
+    public String name() {
+        return "Local Backups";
+    }
+
+    /**
      * Perform a backup
      *
      * @return the backup task
@@ -921,15 +931,5 @@ public class CLocalBackup implements BackupService {
         });
 
         return task;
-    }
-
-    /**
-     * Get the service name
-     *
-     * @return the service name
-     */
-    @Override
-    public String name() {
-        return "backup";
     }
 }

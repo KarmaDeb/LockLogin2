@@ -83,9 +83,22 @@ public interface BruteForceService extends PluginService {
     boolean isPanicking(final LocalNetworkClient client);
 
     /**
+     * Get if the address is blocked
+     *
+     * @param address the address
+     * @return if the address is blocked
+     */
+    boolean isBlocked(final InetAddress address);
+
+    /**
      * Save the current brute force
      * status, to be loaded in the next
      * server start
      */
-    boolean saveStatus();
+    void saveStatus();
+
+    /**
+     * Load the brute force status
+     */
+    void loadStatus();
 }

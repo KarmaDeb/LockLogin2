@@ -10,6 +10,7 @@ import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +28,9 @@ public class CDependencyManager implements DependencyManager {
     @Override
     public void append(final LockLoginDependency dependency) {
         if (dependencies.stream().noneMatch((stored) -> stored.name().equals(dependency.name()))) {
-            if (dependency.needsInstallation()) {
+            try {
+                Class.forName(dependency.testClass());
+            } catch (ClassNotFoundException ex) {
                 LockLogin plugin = CurrentPlugin.getPlugin();
 
                 DependencyChecksum generated = dependency.generateChecksum();
@@ -53,13 +56,24 @@ public class CDependencyManager implements DependencyManager {
                     downloader.download();
                 }
 
-                BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().getClass().getClassLoader());
+                BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
                 loader.add(dependency.file());
                 dependencies.add(dependency);
 
                 plugin.info("Loaded dependency {0}", dependency.name());
             }
         }
+    }
+
+    /**
+     * Append an external library
+     *
+     * @param library the library
+     */
+    @Override
+    public void appendExternal(final Path library) {
+        BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
+        loader.add(library);
     }
 
     /**

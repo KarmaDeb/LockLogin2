@@ -3,7 +3,7 @@ package es.karmadev.locklogin.common.api.user;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.user.UserFactory;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
@@ -15,9 +15,9 @@ import java.util.UUID;
 
 public class CUserFactory implements UserFactory<CLocalClient> {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
 
-    public CUserFactory(final SQLiteDriver driver) {
+    public CUserFactory(final DataDriver driver) {
         this.driver = driver;
     }
 

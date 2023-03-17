@@ -12,27 +12,21 @@
         "required": "${apache.commons.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
     {
       "id": "google_authenticator",
       "name": "Google Authenticator",
-      "file": "GooglaAuthenticator.jar",
+      "file": "GoogleAuthenticator.jar",
       "test": "${google.auth.test}",
       "version": {
         "project": "${google.auth.version}",
         "required": "${google.auth.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
@@ -46,10 +40,7 @@
         "required": "${google.guava.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
@@ -63,10 +54,7 @@
         "required": "${log4j.core.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
@@ -80,10 +68,7 @@
         "required": "${log4j.web.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
@@ -97,10 +82,7 @@
         "required": "${socket.io.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },
@@ -111,13 +93,24 @@
       "test": "${hikari.cp.test}",
       "version": {
         "project": "${hikari.cp.version}",
-        "requred": "${hikari.cp.version}"
+        "required": "${hikari.cp.version}"
       },
       "download": [
-        "https://karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://backup.karmadev.es/locklogin-repository/${locklogin.repository.version}/",
-        "https://reddo.es/repository/locklogin/${locklogin.repository.version}/",
-        "https://github.io/karmadeb/updates/locklogin/repository/${locklogin.repository.version}/"
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ],
+      "plugin": false
+    },
+    {
+      "id": "java_native_access",
+      "name": "Java Native Access",
+      "file": "JavaNA.jar",
+      "test": "${java.native.test}",
+      "version": {
+        "project": "${java.native.version}",
+        "required": "${java.native.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
       "plugin": false
     },

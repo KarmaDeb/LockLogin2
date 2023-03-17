@@ -321,9 +321,9 @@ public final class LockLoginPermission {
             if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
 
             Module module = plugin.moduleManager().loader().load(caller);
-            if (module == null || !module.isLoaded()) throw new SecurityException("Cannot maintain a secure permission policty with an invalid API iterator");
+            if (module == null || !module.isLoaded()) throw new SecurityException("Cannot maintain a secure permission policy with an invalid API iterator");
 
-            module_node_map.put(permission.node(), new ModulePermission(module, permission));
+            module_node_map.put(permission.node(), new ModulePermission(module, permission.addParent(LOCKLOGIN.addChildren(permission))));
             return true;
         }
 

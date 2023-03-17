@@ -4,7 +4,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;
@@ -15,9 +15,9 @@ import java.time.Instant;
 
 public class CServerFactory implements ServerFactory<CServer> {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
 
-    public CServerFactory(final SQLiteDriver driver) {
+    public CServerFactory(final DataDriver driver) {
         this.driver = driver;
     }
 

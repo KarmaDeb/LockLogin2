@@ -11,6 +11,9 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.floodgate.FloodGateService;
+import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
@@ -36,6 +39,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +87,6 @@ public class JoinHandler implements Listener {
             plugin.moduleManager().fireEvent(event);
         }
 
-        if (online_uid != null && !online_uid.equals(offline_uid)) uuid_translator.put(online_uid, offline_uid);
         UUID use_uid = offline_uid;
         if (online_uid != null) {
             PremiumConfiguration premiumConfig = configuration.premium();
@@ -136,13 +139,38 @@ public class JoinHandler implements Listener {
                 return;
             }
 
-            //TODO: Create BruteForce handler
+            PluginService bf_service = plugin.getService("bruteforce");
+            if (bf_service instanceof BruteForceService) {
+                BruteForceService bruteforce = (BruteForceService) bf_service;
+
+                if (bruteforce.isBlocked(address)) {
+                    long timeLeft = bruteforce.banTimeLeft(address);
+                    plugin.logWarn("[BFAP] Address {0} tried to access the server but was blocked for brute force attack. Ban time ramining: {1}", address.getHostAddress(), TimeUnit.MILLISECONDS.toSeconds(timeLeft));
+
+                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(timeLeft)));
+                    return;
+                }
+            }
 
             if (configuration.verifyUniqueIDs()) {
                 if (!provided_id.equals(use_uid)) {
-                    boolean allow = false;
+                    boolean deny = true;
 
-                    //TODO: Add compatibility with FloodGate
+                    PluginService fg_service = plugin.getService("floodgate");
+                    if (fg_service instanceof FloodGateService) {
+                        FloodGateService floodgate = (FloodGateService) fg_service;
+                        if (floodgate.isBedrock(provided_id)) {
+                            deny = false;
+                            use_uid = provided_id;
+                        }
+                    }
+
+                    if (deny) {
+                        plugin.logWarn("[USP] Denied connection from {0} because its UUID ({1}) doesn't match with generated one ({2})", name, use_uid, provided_id);
+
+                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
+                        return;
+                    }
                 }
             }
 
@@ -159,6 +187,7 @@ public class JoinHandler implements Listener {
                 }
             }
 
+            if (online_uid != null && !online_uid.equals(offline_uid)) uuid_translator.put(online_uid, use_uid);
             e.allow();
         }
     }
@@ -175,7 +204,7 @@ public class JoinHandler implements Listener {
             }
 
             CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
-            COnlineClient online = new COnlineClient(offline.id(), plugin.getDriver(), null);
+            COnlineClient online = new COnlineClient(offline.id(), plugin.driver(), null);
 
             CPluginNetwork network = (CPluginNetwork) plugin.network();
             network.appendClient(online);

@@ -11,6 +11,7 @@ import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
+import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
@@ -19,7 +20,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class SpigotPlugin extends KarmaPlugin {
 
@@ -28,7 +33,6 @@ public class SpigotPlugin extends KarmaPlugin {
     public SpigotPlugin() {
         super(false);
         spigot = new LockLoginSpigot(this);
-        spigot.getDriver().connect();
     }
 
     /**
@@ -36,20 +40,6 @@ public class SpigotPlugin extends KarmaPlugin {
      */
     @Override
     public void enable() {
-        LockLoginHasher hasher = spigot.hasher();
-
-        try {
-            hasher.registerMethod(new SHA512Hash());
-            hasher.registerMethod(new SHA256Hash());
-            hasher.registerMethod(new BCryptHash());
-            hasher.registerMethod(new Argon2I());
-            hasher.registerMethod(new Argon2D());
-            hasher.registerMethod(new Argon2ID());
-        } catch (UnnamedHashException ex) {
-            ex.printStackTrace();
-            return;
-        }
-
         console().send("Preparing to inject dependencies. Please wait...", Level.WARNING);
         CPluginDependency.load();
 
@@ -96,12 +86,28 @@ public class SpigotPlugin extends KarmaPlugin {
                     }
                 }
             } else {
-                console().send("Injecting dependency \"{0}\"", Level.INFO, dependency.name());
+                console().send("Injecting dependency {0}", Level.INFO, dependency.name());
                 spigot.runtime().dependencyManager().append(dependency);
             }
         }
 
         if (boot) {
+            spigot.installDriver();
+
+            LockLoginHasher hasher = spigot.hasher();
+
+            try {
+                hasher.registerMethod(new SHA512Hash());
+                hasher.registerMethod(new SHA256Hash());
+                hasher.registerMethod(new BCryptHash());
+                hasher.registerMethod(new Argon2I());
+                hasher.registerMethod(new Argon2D());
+                hasher.registerMethod(new Argon2ID());
+            } catch (UnnamedHashException ex) {
+                ex.printStackTrace();
+                return;
+            }
+
             console().send("LockLogin has been booted", Level.OK);
 
             PremiumDataStore store = spigot.premiumStore();
@@ -133,10 +139,32 @@ public class SpigotPlugin extends KarmaPlugin {
                             }
                         }
 
+
                         return false;
                     };
                 }
             }
+
+            Path legacy_mod_directory = getDataPath().resolve("plugin").resolve("modules");
+            if (Files.exists(legacy_mod_directory)) {
+                try(Stream<Path> files = Files.list(legacy_mod_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {
+                    if (files.findAny().isPresent()) {
+                        console().send("LockLogin has detected presence of legacy modules folder. Those won't be loaded as they used an unsupported plugin API. Please refer to {0} to update the modules and install them in the /mods plugin directory",
+                                Level.WARNING,
+                                "https://reddo.es/karmadev/locklogin/community/products/");
+                    }
+                } catch (IOException ignored) {}
+            }
+            Path modules_directory = getDataPath().resolve("mods");
+            PathUtilities.createDirectory(modules_directory);
+
+            try(Stream<Path> files = Files.list(modules_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {
+                if (files.findAny().isPresent()) {
+                    if (Files.exists(legacy_mod_directory)) {
+                        PathUtilities.destroy(legacy_mod_directory);
+                    }
+                }
+            } catch (IOException ignored) {}
         } else {
             console().send("LockLogin won't initialize due an internal error. Please report this to discord {0}", Level.WARNING, "https://discord.gg/77p8KZNfqE");
         }

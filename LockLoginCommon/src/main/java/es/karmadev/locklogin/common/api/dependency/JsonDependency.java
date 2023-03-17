@@ -8,7 +8,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import lombok.RequiredArgsConstructor;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.net.MalformedURLException;
@@ -26,8 +25,6 @@ public class JsonDependency implements LockLoginDependency {
     private final Checksum generated_checksum = new Checksum();
 
     private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    private boolean installed = false;
 
     /**
      * Get the dependency name
@@ -117,12 +114,12 @@ public class JsonDependency implements LockLoginDependency {
                     if (!ignored_hosts.contains(raw_url)) {
                         String domain = URLUtils.getDomainName(raw_url);
 
-                        if (domain != null && URLUtils.exists(domain)) {
+                        if (domain != null && URLUtils.exists("https://" + domain)) {
                             try {
-                                return new URL(raw_url + object.get("file").getAsString());
+                                return new URL(raw_url + object.get("id").getAsString() + ".jar");
                             } catch (MalformedURLException ignored) {}
                         } else {
-                            CurrentPlugin.getPlugin().info("Ignoring dependency host {0} because checks failed", Level.INFO, (domain != null ? domain : raw_url));
+                            CurrentPlugin.getPlugin().info("Ignoring dependency host {0} because checks failed", (domain != null ? domain : raw_url));
                             ignored_hosts.add(raw_url);
                         }
                     }
@@ -136,28 +133,10 @@ public class JsonDependency implements LockLoginDependency {
     /**
      * Get if the dependency is a plugin
      *
-     * @return if the dependenc is a plugin
+     * @return if the dependency is a plugin
      */
     @Override
     public boolean isPlugin() {
         return object.get("plugin").getAsBoolean();
-    }
-
-    /**
-     * Get if the dependency is installed
-     *
-     * @return if the dependency is installed
-     */
-    @Override
-    public boolean needsInstallation() {
-        return installed;
-    }
-
-    /**
-     * Mark the dependency as installed
-     */
-    @Override
-    public void assertInstalled() {
-        installed = true;
     }
 }

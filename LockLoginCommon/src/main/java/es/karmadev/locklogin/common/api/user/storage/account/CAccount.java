@@ -10,7 +10,7 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
@@ -24,7 +24,7 @@ public class CAccount implements UserAccount {
 
     private final int id;
     private final int account_id;
-    private final SQLiteDriver pool;
+    private final DataDriver pool;
 
     /**
      * Initialize the account
@@ -33,7 +33,7 @@ public class CAccount implements UserAccount {
      * @param account_id the account id
      * @param pool the account pool
      */
-    public CAccount(final int user_id, final int account_id, final SQLiteDriver pool) {
+    public CAccount(final int user_id, final int account_id, final DataDriver pool) {
         this.id = user_id;
         this.account_id = account_id;
         this.pool = pool;

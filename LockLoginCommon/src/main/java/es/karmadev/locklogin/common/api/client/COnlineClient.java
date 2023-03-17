@@ -5,7 +5,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.server.channel.SPacket;
 
 import java.sql.Connection;
@@ -24,7 +24,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     private NetworkServer server;
     private NetworkServer previous = null;
 
-    public COnlineClient(final int id, final SQLiteDriver pool, final NetworkServer current) {
+    public COnlineClient(final int id, final DataDriver pool, final NetworkServer current) {
         super(id, pool);
         server = current;
     }

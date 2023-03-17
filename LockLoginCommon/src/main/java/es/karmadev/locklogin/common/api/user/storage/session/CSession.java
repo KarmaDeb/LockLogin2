@@ -4,7 +4,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -18,7 +18,7 @@ public class CSession implements UserSession {
 
     private final int id;
     private final int session_id;
-    private final SQLiteDriver pool;
+    private final DataDriver pool;
 
     private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
 
@@ -29,7 +29,7 @@ public class CSession implements UserSession {
      * @param session_id the session id
      * @param pool the session pool
      */
-    public CSession(final int user_id, final int session_id, final SQLiteDriver pool) {
+    public CSession(final int user_id, final int session_id, final DataDriver pool) {
         this.id = user_id;
         this.session_id = session_id;
         this.pool = pool;
@@ -54,6 +54,32 @@ public class CSession implements UserSession {
     @Override
     public LocalNetworkClient client() {
         return CurrentPlugin.getPlugin().network().getEntity(id);
+    }
+
+    /**
+     * Validate this session
+     */
+    @Override
+    public void validate() {
+
+    }
+
+    /**
+     * Invalidate this session
+     */
+    @Override
+    public void invalidate() {
+
+    }
+
+    /**
+     * Get if the session is valid
+     *
+     * @return if the session is valid
+     */
+    @Override
+    public boolean isValid() {
+        return false;
     }
 
     /**

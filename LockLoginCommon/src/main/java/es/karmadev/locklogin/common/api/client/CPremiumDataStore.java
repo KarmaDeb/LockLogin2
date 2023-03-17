@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.common.api.client;
 
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
-import es.karmadev.locklogin.common.api.SQLiteDriver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
@@ -14,10 +14,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class CPremiumDataStore implements PremiumDataStore {
 
-    private final SQLiteDriver driver;
+    private final DataDriver driver;
     private final Map<String, UUID> cached = new ConcurrentHashMap<>();
 
-    public CPremiumDataStore(final SQLiteDriver driver) {
+    public CPremiumDataStore(final DataDriver driver) {
         this.driver = driver;
 
         Connection connection = null;

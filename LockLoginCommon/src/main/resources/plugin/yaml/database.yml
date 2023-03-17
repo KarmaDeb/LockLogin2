@@ -1,0 +1,92 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under RedDo GPL license  #
+#               https://reddo.es/license                  #
+#                                                         #
+#                                                         #
+#                   For more help                         #
+#             go to: https://rb.gy/simfd2                 #
+#                                                         #
+###########################################################
+
+#Database connection utilities
+#
+# Name:               The database name, for SQLite this will be the sqlite file name (without extensions)
+# Host:               Useless in SQLite. Database host, usually an IP address (127.0.0.1)
+# Port:               Useless in SQLite. It indicates the port where your sql server is hosted on
+# User:               The user that should have access to the database
+# Pass:               The user password, if any (recommended)
+# UseSSL:             If the connection to the host is performed under SSL. Usually not needed as most
+#                     servers use the same server as the SQL server. But if that's not the case, it's
+#                     highly recommended to enable and configure this setting
+# IgnoreCertificates: If the connection should ignore server certificates, usually needed in tests
+#                     environments, but not recommended on production
+Database:
+  Name: "locklogin"
+  Host: "127.0.0.1"
+  Port: 3306
+  User: "root"
+  Pass: ""
+  UseSSL: false
+  IgnoreCertificates: false
+
+#Tables configuration. LockLogin allows to modify
+#every table row. This helps you to add compatibility
+#with a CMS if you have any.
+#
+# To make LockLogin work with any CMS, just make LockLogin use
+# the same fields your CMS uses. Also don't forget to make the
+# plugin and your CMS use the same hashing algorithm with the
+# same configuration.
+Tables:
+  Accounts:
+    Table:        "account"
+    Columns:
+      id:         "id"
+      password:   "password"
+      pin:        "pin"
+      2fa_token:  "2fa_token"
+      panic:      "panic"
+      2fa:        "2fa"
+      creation:   "created_at"
+  Sessions:
+    Table:        "session"
+    Columns:
+      id:         "id"
+      captcha:    "captcha_login"
+      login:      "pass_login"
+      pin:        "pin_login"
+      gAuth:      "2fa_login"
+      persistent: "persistence"
+      code:       "captcha"
+      creation:   "created_at"
+  Servers:
+    Table:        "server"
+    Columns:
+      id:         "id"
+      name:       "name"
+      address:    "address"
+      port:       "port"
+      creation:   "created_at"
+  Users:
+    Table:        "user"
+    Columns:
+      id:         "id"
+      name:       "name"
+      uuid:       "uuid"
+      premium:    "premium_uuid"
+      account:    "account_id"
+      session:    "session_id"
+      connection: "type"
+      server:     "last_server"
+      pre_server: "previous_server"
+      panicking:  "panicking"
+      creation:   "created_at"
+  BruteForce:
+    Table:        "brute"
+    Columns:
+      id:         "id"
+      address:    "address"
+      tries:      "tries"
+      blocked:    "blocked"
+      remaining:  "remaining"

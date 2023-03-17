@@ -1,9 +1,9 @@
-name: "${project.parent.name}"
+name: LockLogin
 version: "${project.parent.version}"
 description: "${project.parent.description}"
 author: "KarmaDev"
 website: "https://karmadev.es/"
-main: es.karmadev.locklogin.spigot.LockLoginSpigot
+main: ${spigot.main}
 database: true
 api-version: 1.13
 depend:

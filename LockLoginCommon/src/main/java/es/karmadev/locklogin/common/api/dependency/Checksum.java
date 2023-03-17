@@ -35,6 +35,8 @@ class Checksum implements DependencyChecksum {
     public boolean matches(final DependencyChecksum other) {
         for (String key : values.keySet()) {
             long value = values.getOrDefault(key, 0L);
+            if (value == 0) return false;
+
             if (other.value(key) != value) {
                 return false;
             }
