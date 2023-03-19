@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.common.api.client;
 
-import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;

@@ -3,8 +3,8 @@ package es.karmadev.locklogin.common.api.server;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
-import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.common.api.CPluginNetwork;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;

@@ -3,6 +3,7 @@ package es.karmadev.locklogin.common.api.user.storage.account;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -10,7 +11,6 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;

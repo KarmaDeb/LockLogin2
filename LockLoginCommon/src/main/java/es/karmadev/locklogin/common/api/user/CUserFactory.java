@@ -2,8 +2,8 @@ package es.karmadev.locklogin.common.api.user;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
