@@ -17,6 +17,7 @@ import es.karmadev.locklogin.api.plugin.license.License;
 import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -26,7 +27,6 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.common.api.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
@@ -35,10 +35,12 @@ import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
 import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.plugin.service.brute.CBruteForce;
 import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
+import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
 import es.karmadev.locklogin.common.api.runtime.CRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
+import es.karmadev.locklogin.common.api.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
@@ -67,7 +69,7 @@ import java.util.stream.Stream;
 
 public class LockLoginSpigot implements LockLogin, KarmaSource {
 
-    private final CSQLDriver driver = new CSQLDriver(Driver.SQLite);
+    private final CSQLDriver driver;
     private final KarmaPlugin plugin;
 
     private final CModuleManager moduleManager = new CModuleManager();
@@ -106,13 +108,15 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
             ex.printStackTrace();
         }
 
-        hasher = new CPluginHasher();
         configuration = new CPluginConfiguration();
         messages = new InternalPack();
+        hasher = new CPluginHasher();
         license_provider = new CLicenseProvider();
 
         CLocalBackup backup_service = new CLocalBackup();
+        CNameProvider name_service = new CNameProvider();
 
+        registerService("name", name_service);
         registerService("backup", backup_service);
         try {
             Class.forName("org.geysermc.floodgate.api.FloodgateApi");
@@ -124,7 +128,8 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
             plugin.console().send("Failed to detect FloodGate API. FloodGate service will be disabled", Level.WARNING);
         }
 
-
+        driver = new CSQLDriver();
+        CurrentPlugin.updateState();
     }
 
     void installDriver() {
@@ -477,7 +482,13 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
         }
 
         service_provider.put(name, service);
-        plugin.logger().scheduleLog(Level.INFO, "Registered service {0} for provider {1}", name, service.getClass().getName());
+        String serviceClass = service.getClass().getName();
+        if (service instanceof ServiceProvider) {
+            ServiceProvider<?> provider = (ServiceProvider<?>) service;
+            serviceClass = provider.getService().getName();
+        }
+
+        plugin.logger().scheduleLog(Level.INFO, "Registered service {0} for provider {1}", name, serviceClass);
     }
 
     /**

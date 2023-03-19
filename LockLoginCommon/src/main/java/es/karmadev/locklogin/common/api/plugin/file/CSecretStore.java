@@ -1,16 +1,41 @@
 package es.karmadev.locklogin.common.api.plugin.file;
 
-import es.karmadev.locklogin.api.plugin.file.Configuration;
-import lombok.Value;
-import lombok.experimental.Accessors;
+import es.karmadev.locklogin.api.plugin.file.section.SecretStore;
 
 /**
  * Secret store
  */
-@Accessors(fluent = true)
-@Value(staticConstructor = "of")
-public final class CSecretStore implements Configuration.SecretStore {
+public class CSecretStore implements SecretStore {
 
-    byte[] token;
-    byte[] iv;
+    private final byte[] token;
+    private final byte[] iv;
+
+    public CSecretStore(final byte[] t, final byte[] i) {
+        token = t;
+        iv = i;
+    }
+
+    /**
+     * The stored token
+     *
+     * @return the token
+     */
+    @Override
+    public byte[] token() {
+        return token;
+    }
+
+    /**
+     * The stored IV
+     *
+     * @return the IV
+     */
+    @Override
+    public byte[] iv() {
+        return iv;
+    }
+
+    public static CSecretStore of(final byte[] token, final byte[] iv) {
+        return new CSecretStore(token, iv);
+    }
 }

@@ -9,7 +9,6 @@ import ml.karmaconfigs.api.common.ResourceDownloader;
 import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
@@ -36,13 +35,7 @@ public class CDependencyManager implements DependencyManager {
                 DependencyChecksum generated = dependency.generateChecksum();
                 DependencyChecksum loaded = dependency.checksum();
 
-                boolean download;
-                if (generated == null || loaded == null) {
-                    download = !Files.exists(dependency.file());
-                } else {
-                    download = !generated.matches(loaded);
-                }
-
+                boolean download = generated == null || loaded == null || !generated.matches(loaded);
                 if (download) {
                     plugin.info("Dependency {0} is not downloaded. Downloading it...", dependency.name());
 

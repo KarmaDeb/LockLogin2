@@ -2,7 +2,8 @@ package es.karmadev.locklogin.api.security.hash;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -10,10 +11,16 @@ import java.util.regex.Pattern;
  */
 public abstract class PluginHash implements Serializable {
 
+    protected final Set<String> protected_properties = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    protected final Map<String, String> temporal_properties = new ConcurrentHashMap<>();
+    protected final Map<String, String> permanent_properties = new ConcurrentHashMap<>();
+
     /**
      * Initialize the plugin hash
      */
-    public PluginHash() {}
+    public PluginHash(final String... properties) {
+        protected_properties.addAll(Arrays.asList(properties));
+    }
 
     /**
      * Get the hashing name
@@ -34,7 +41,7 @@ public abstract class PluginHash implements Serializable {
      * Get if the provided hash result needs a rehash
      *
      * @param result the hash result
-     * @return if the hahs needs a rehash
+     * @return if the hash needs a rehash
      */
     public abstract boolean needsRehash(final HashResult result);
 
@@ -46,6 +53,49 @@ public abstract class PluginHash implements Serializable {
      * @return if the input is correct
      */
     public abstract boolean verify(final String input, final HashResult result);
+
+    /**
+     * Write a property for the hash
+     *
+     * @param key the property key
+     * @param value the property value
+     * @param persistent if the property is persistent or
+     *                   will only be used during the next hash
+     */
+    public void writeProperty(final String key, final String value, final boolean persistent) {
+        if (protected_properties.contains(key)) {
+            if (value == null || !persistent) return;
+        }
+
+        if (persistent) {
+            temporal_properties.remove(key);
+            permanent_properties.put(key, value);
+        } else {
+            if (!permanent_properties.containsKey(key)) {
+                temporal_properties.put(key, value);
+            }
+        }
+    }
+
+    /**
+     * Get a property
+     *
+     * @param key the property key
+     * @return the property value
+     */
+    protected final String getProperty(final String key) {
+        return permanent_properties.getOrDefault(key, temporal_properties.computeIfPresent(key, (k, v) -> null));
+    }
+
+    /**
+     * Get if a property is permanent
+     *
+     * @param key the key
+     * @return if the property is permanent
+     */
+    protected boolean isPermanent(final String key) {
+        return permanent_properties.getOrDefault(key, null) != null;
+    }
 
     /**
      * Converses a base64 string into a raw string, or vice-versa

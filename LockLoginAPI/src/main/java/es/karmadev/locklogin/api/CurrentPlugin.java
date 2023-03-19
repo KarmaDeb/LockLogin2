@@ -15,6 +15,7 @@ public final class CurrentPlugin {
 
     private static LockLogin plugin;
     private final static Set<Consumer<LockLogin>> available_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<Consumer<LockLogin>> sql_available_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * Initialization not allowed
@@ -38,8 +39,14 @@ public final class CurrentPlugin {
      * Update the plugin state
      */
     public static void updateState() {
-        if (plugin != null && plugin.driver().connected()) {
+        if (plugin != null) {
+            if (plugin.driver().connected()) {
+                sql_available_queue.forEach((c) -> c.accept(plugin));
+                sql_available_queue.clear();
+            }
+
             available_queue.forEach((c) -> c.accept(plugin));
+            available_queue.clear();
         }
     }
 
@@ -51,6 +58,20 @@ public final class CurrentPlugin {
      */
     public static void whenAvailable(final Consumer<LockLogin> action) {
         if (plugin != null && plugin.driver().connected()) {
+            action.accept(plugin);
+        } else {
+            sql_available_queue.add(action);
+        }
+    }
+
+    /**
+     * Get the LockLogin plugin as
+     * soon as possible without SQL support
+     *
+     * @param action the action to perform with the plugin instance
+     */
+    public static void whenAvailableNoSQL(final Consumer<LockLogin> action) {
+        if (plugin != null) {
             action.accept(plugin);
         } else {
             available_queue.add(action);

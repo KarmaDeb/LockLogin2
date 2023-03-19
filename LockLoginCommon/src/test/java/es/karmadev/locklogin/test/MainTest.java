@@ -1,12 +1,15 @@
 package es.karmadev.locklogin.test;
 
 import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.query.JoinRow;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.query.QueryModifier;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import es.karmadev.locklogin.common.api.sql.JoinRow;
-import es.karmadev.locklogin.common.api.sql.QueryBuilder;
-import es.karmadev.locklogin.common.api.sql.QueryModifier;
+import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
+import es.karmadev.locklogin.common.api.plugin.service.name.CNameValidator;
+import ml.karmaconfigs.api.common.string.StringUtils;
 import org.junit.Test;
 
 public class MainTest {
@@ -16,6 +19,38 @@ public class MainTest {
     {
         plugin.sqlite.connect();
     }*/
+
+    @Test
+    public void testNames() {
+        CNameProvider provider = new CNameProvider();
+        String[] checkNames = new String[]{
+                "Notch",
+                "Steve",
+                "KarmaDev",
+                "Mr_Pro99",
+                "Álvaro55.25,wad2",
+                "SeñorHost"
+        };
+
+        for (String name : checkNames) {
+            CNameValidator validator = provider.serve();
+            validator.validate(name);
+
+            if (validator.isValid()) {
+                System.out.println(name);
+            } else {
+                System.out.println(StringUtils.toAnyOsColor("(Invalid) " + name + ": " + validator.invalidCharacters() + "&r"));
+            }
+        }
+    }
+
+    @Test
+    public void testLoad() {
+        String raw = "rO0ABXNyADllcy5rYXJtYWRldi5sb2NrbG9naW4uY29tbW9uLmFwaS5wbHVnaW4uZmlsZS5DU2VjcmV0U3RvcmVoaQ9Ss0JS7AIAAlsAAml2dAACW0JbAAV0b2tlbnEAfgABeHB1cgACW0Ks8xf4BghU4AIAAHhwAAABAK4uBfBZD0hBUBIHi9lo67sRGgQgnDCP11NQRyUyiFij1USUqhxsfWcmZTbOlQJRuPpF2CgGWZX/RoG49n1SJpw3I6xkRT1JDdlKOjwtT/+HN5LKFHdar11Zb8vRyDsT3P2fCW2t0YKCItzhsvVnXC0Hd9RUjFmXNOvtOWgQXeRSrRlPQQaIy4JAVRSiZwq467P3Ur7wfRcstsCxsSsYgQBbagGMtRQQCid8ASyzOWiEZcFieOg2glZxCwuGEpBGepXmiZjV1wh6Va24qCDO0sEYdeOIsfbA2K0rO5THUr0SCHySx9KN354TBE9kvj1hThgzqOogEYsx0xZ9TayNoZx1cQB+AAMAAAAgBFLz6lqzPMkSrsPD3D0GYcf3BcBCKgf5N7+KZypceIQ=";
+        Object load = StringUtils.load(raw);
+
+        System.out.println(load);
+    }
 
     @Test
     public void testQueryBuilder() {
@@ -82,11 +117,15 @@ public class MainTest {
                 .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.NOT_NULL, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))
                 .withPrimaryKey(Row.ID, true);
 
+        QueryBuilder alterQuery = QueryBuilder.createQuery(driver)
+                        .alter(Table.ACCOUNT).add(Row.TOKEN_2FA, RowType.BOOLEAN);
+
         System.out.println(accountCreteQuery.build(");"));
         System.out.println(sessionCreateQuery.build(");"));
         System.out.println(serverCreateQuery.build(");"));
         System.out.println(userCreateQuery.build(");"));
         System.out.println(bruteCreateQuery.build(");"));
+        System.out.println(alterQuery.build(";"));
     }
 
     /*

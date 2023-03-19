@@ -1,10 +1,13 @@
-package es.karmadev.locklogin.common.api.sql;
+package es.karmadev.locklogin.api.plugin.database.query;
 
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import lombok.Getter;
 import lombok.Value;
 
+/**
+ * A join-able row
+ */
 @Value(staticConstructor = "at")
 public class JoinRow {
 

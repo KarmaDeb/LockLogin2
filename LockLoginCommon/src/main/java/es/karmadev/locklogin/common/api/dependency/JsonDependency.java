@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JsonDependency implements LockLoginDependency {
 
     private final JsonObject object;
-    private final Checksum checksum = new Checksum();
-    private final Checksum generated_checksum = new Checksum();
+    private final Checksum checksum = new Checksum(this);
+    private final Checksum generated_checksum = new Checksum(this);
 
     private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 

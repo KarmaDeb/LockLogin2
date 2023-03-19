@@ -19,8 +19,11 @@
 # UseSSL:             If the connection to the host is performed under SSL. Usually not needed as most
 #                     servers use the same server as the SQL server. But if that's not the case, it's
 #                     highly recommended to enable and configure this setting
-# IgnoreCertificates: If the connection should ignore server certificates, usually needed in tests
-#                     environments, but not recommended on production
+# ValidateCerts:      If the connection should validate server certificates, usually not needed in tests
+#                     environments, but recommended on production
+# TestQuery:          (DO NOT TOUCH IT IF YOU DON'T KNOW WHAT YOU ARE DOING) This is a test query to determine
+#                     the limitations and compatibilities of the sql server. This helps to make sure the SQL queries
+#                     are completely compatible with the server
 Database:
   Name: "locklogin"
   Host: "127.0.0.1"
@@ -28,7 +31,36 @@ Database:
   User: "root"
   Pass: ""
   UseSSL: false
-  IgnoreCertificates: false
+  ValidateCerts: false
+  TestQuery: "SELECT 1"
+
+#Database pooling configuration
+# Pooling is a technique that consists in create multiple connections
+# to a SQL server, in order to execute queries faster, as there's always
+# a connection in the connection pool. If you want to use a sql server,
+# it must support pooling (multiple connections from a single address).
+#
+# ConnectionTimeout:  The maximum time to wait before retrieving a connection
+# UnusedTimeout:      The time to wait before returning a connection to the pool
+#                     if it has not been used
+# LeakDetection:      The time in where the server will consider a leak if no response
+#                     is received from the server
+# MaximumLifeTime:    The connections maximum lifetime, independent if they are being used
+#                     or not. Please note there should be any query that lasts long that 30
+#                     seconds in this plugin.
+# MinimumConnections: The minimum amount of connections that should exist on the pool. Setting a lower
+#                     number will make the plugin work harder, but the sql server less stressed. It's all
+#                     about balancing depending on your slq server specifications and network
+# MaximumConnections: The maximum amount of connections to store on the pool. This works different as Minimum
+#                     Connections. When the plugin detects that the connection pool has this amount of connect
+#                     ions, it will stop creating new ones if needed, and use unused pool connections.
+Pooling:
+  ConnectionTimeout: 60
+  UnusedTimeout: 10
+  LeakDetection: 20
+  MaximumLifeTime: 30
+  MinimumConnections: 10
+  MaximumConnections: 50
 
 #Tables configuration. LockLogin allows to modify
 #every table row. This helps you to add compatibility
@@ -90,3 +122,4 @@ Tables:
       tries:      "tries"
       blocked:    "blocked"
       remaining:  "remaining"
+      creation:   "blocked_since"

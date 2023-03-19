@@ -30,8 +30,13 @@ public class CPluginDependency {
      */
     public static void load() {
         LockLogin plugin = CurrentPlugin.getPlugin();
+        plugin.info("Loading dependencies, please wait");
+
         try (InputStream locklogin = plugin.load("internal/locklogin.json")) {
             if (locklogin != null) {
+                Path dataFile = plugin.workingDirectory().resolve("cache").resolve("tables.kf");
+                KarmaMain checksum = null;
+
                 try (InputStreamReader isr = new InputStreamReader(locklogin)) {
                     Gson gson = new GsonBuilder().create();
                     JsonObject json = gson.fromJson(isr, JsonObject.class);
@@ -57,7 +62,6 @@ public class CPluginDependency {
                             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                             BufferedReader bf = new BufferedReader(reader);
 
-                            Path dataFile = plugin.workingDirectory().resolve("cache").resolve("tables.lldb");
                             PathUtilities.create(dataFile);
 
                             BufferedWriter writer = Files.newBufferedWriter(dataFile, StandardCharsets.UTF_8);
@@ -73,64 +77,72 @@ public class CPluginDependency {
                             reader.close();
                             bf.close();
 
-                            KarmaMain checksum = new KarmaMain(dataFile);
+                            checksum = new KarmaMain(dataFile);
                             checksum.create();
-
-                            List<JsonDependency> ignore = new ArrayList<>();
-                            List<JsonDependency> install = new ArrayList<>();
-                            for (JsonElement element : dependencies) {
-                                JsonObject dependencyJson = element.getAsJsonObject();
-                                JsonDependency dependency = new JsonDependency(dependencyJson);
-
-                                String id = dependencyJson.get("id").getAsString();
-                                long adler = checksum.get("adler." + id, new KarmaPrimitive(0L)).getAsLong();
-                                long crc = checksum.get("crc." + id, new KarmaPrimitive(0L)).getAsLong();
-
-                                String testClass = dependency.testClass();
-                                if (StringUtils.isNullOrEmpty(testClass)) continue;
-                                try {
-                                    Class.forName(dependency.testClass());
-                                    ignore.add(dependency);
-                                } catch (Throwable ex) {
-                                    install.add(dependency);
-                                }
-
-                                if (Files.exists(dependency.file())) {
-                                    byte[] rBytes = Files.readAllBytes(dependency.file());
-
-                                    Adler32 rAdler = new Adler32();
-                                    rAdler.update(ByteBuffer.wrap(rBytes));
-
-                                    CRC32 rCrc = new CRC32();
-                                    rCrc.update(ByteBuffer.wrap(rBytes));
-
-                                    dependency.generateChecksum().define("adler", rAdler.getValue());
-                                    dependency.generateChecksum().define("crc", rCrc.getValue());
-                                } else {
-                                    dependency.generateChecksum().define("adler", 0);
-                                    dependency.generateChecksum().define("crc", 0);
-                                }
-
-                                dependency.checksum().define("adler", adler);
-                                dependency.checksum().define("crc", crc);
-
-                                if (dependency.checksum().matches(dependency.generateChecksum())) {
-                                    if (!ignore.contains(dependency))
-                                        ignore.add(dependency);
-
-                                    install.remove(dependency);
-                                }
-
-                                CPluginDependency.dependencies.put(id, dependency);
-                            }
-
-                            for (JsonDependency dependency : ignore) {
-                                plugin.info("Dependency {0} won't be downloaded as it has been already found", dependency.name());
-                            }
-                            for (JsonDependency dependency : install) {
-                                plugin.info("Failed to detect dependency {0}. It will be downloaded", dependency.name());
-                            }
                         }
+                    }
+
+                    if (Files.exists(dataFile) && checksum == null) {
+                        checksum = new KarmaMain(dataFile);
+                    }
+
+                    List<JsonDependency> ignore = new ArrayList<>();
+                    List<JsonDependency> install = new ArrayList<>();
+                    for (JsonElement element : dependencies) {
+                        JsonObject dependencyJson = element.getAsJsonObject();
+                        JsonDependency dependency = new JsonDependency(dependencyJson);
+
+                        String id = dependencyJson.get("id").getAsString();
+                        long adler = 0;
+                        long crc = 0;
+                        if (checksum != null) {
+                            adler = checksum.get("adler." + id, new KarmaPrimitive(0L)).getAsLong();
+                            crc = checksum.get("crc." + id, new KarmaPrimitive(0L)).getAsLong();
+                        }
+
+                        String testClass = dependency.testClass();
+                        if (StringUtils.isNullOrEmpty(testClass)) continue;
+                        try {
+                            Class.forName(dependency.testClass());
+                            ignore.add(dependency);
+                        } catch (Throwable ex) {
+                            install.add(dependency);
+                        }
+
+                        if (Files.exists(dependency.file())) {
+                            byte[] rBytes = Files.readAllBytes(dependency.file());
+
+                            Adler32 rAdler = new Adler32();
+                            rAdler.update(ByteBuffer.wrap(rBytes));
+
+                            CRC32 rCrc = new CRC32();
+                            rCrc.update(ByteBuffer.wrap(rBytes));
+
+                            dependency.generateChecksum().define("adler", rAdler.getValue());
+                            dependency.generateChecksum().define("crc", rCrc.getValue());
+                        } else {
+                            dependency.generateChecksum().define("adler", 0);
+                            dependency.generateChecksum().define("crc", 0);
+                        }
+
+                        dependency.checksum().define("adler", adler);
+                        dependency.checksum().define("crc", crc);
+
+                        if (dependency.checksum().matches(dependency.generateChecksum())) {
+                            if (!ignore.contains(dependency))
+                                ignore.add(dependency);
+
+                            install.remove(dependency);
+                        }
+
+                        CPluginDependency.dependencies.put(id, dependency);
+                    }
+
+                    for (JsonDependency dependency : ignore) {
+                        plugin.logInfo("Dependency {0} will be loaded from memory", dependency.name());
+                    }
+                    for (JsonDependency dependency : install) {
+                        plugin.warn("Dependency {0} will be downloaded", dependency.name());
                     }
                 }
             }

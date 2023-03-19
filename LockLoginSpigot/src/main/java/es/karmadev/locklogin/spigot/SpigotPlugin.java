@@ -8,6 +8,7 @@ import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
+import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class SpigotPlugin extends KarmaPlugin {
@@ -41,6 +43,7 @@ public class SpigotPlugin extends KarmaPlugin {
     @Override
     public void enable() {
         console().send("Preparing to inject dependencies. Please wait...", Level.WARNING);
+        long start = System.currentTimeMillis();
         CPluginDependency.load();
 
         PluginManager pluginManager = getServer().getPluginManager();
@@ -81,12 +84,15 @@ public class SpigotPlugin extends KarmaPlugin {
                                 console().send("Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", Level.WARNING, name, version, pluginVersion);
                             } else {
                                 console().send("Plugin dependency {0} has been successfully hooked", Level.INFO, name);
+                                if (name.equalsIgnoreCase("Spartan")) {
+                                    spigot.registerService("spartan", new SpartanService());
+                                }
                             }
                         }
                     }
                 }
             } else {
-                console().send("Injecting dependency {0}", Level.INFO, dependency.name());
+                //console().send("Injecting dependency {0}", Level.INFO, dependency.name());
                 spigot.runtime().dependencyManager().append(dependency);
             }
         }
@@ -165,6 +171,10 @@ public class SpigotPlugin extends KarmaPlugin {
                     }
                 }
             } catch (IOException ignored) {}
+
+            long end = System.currentTimeMillis();
+            long diff = end - start;
+            console().send("LockLogin initialized in {0}ms ({1} seconds)", Level.INFO, diff, TimeUnit.MILLISECONDS.toSeconds(diff));
         } else {
             console().send("LockLogin won't initialize due an internal error. Please report this to discord {0}", Level.WARNING, "https://discord.gg/77p8KZNfqE");
         }

@@ -12,7 +12,9 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.plugin.service.floodgate.FloodGateService;
+import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
 import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -145,6 +147,8 @@ public class JoinHandler implements Listener {
 
                 if (bruteforce.isBlocked(address)) {
                     long timeLeft = bruteforce.banTimeLeft(address);
+
+                    //BFAP = Brute Force Attack Protector
                     plugin.logWarn("[BFAP] Address {0} tried to access the server but was blocked for brute force attack. Ban time ramining: {1}", address.getHostAddress(), TimeUnit.MILLISECONDS.toSeconds(timeLeft));
 
                     e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, StringUtils.toColor(messages.ipBlocked(timeLeft)));
@@ -166,6 +170,7 @@ public class JoinHandler implements Listener {
                     }
 
                     if (deny) {
+                        //USP = UUID Spoofer Protector
                         plugin.logWarn("[USP] Denied connection from {0} because its UUID ({1}) doesn't match with generated one ({2})", name, use_uid, provided_id);
 
                         e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.uuidFetchError()));
@@ -174,7 +179,39 @@ public class JoinHandler implements Listener {
                 }
             }
 
-            //TODO: Check names
+            PluginService name_service = plugin.getService("name");
+            if (name_service instanceof ServiceProvider) {
+                ServiceProvider<? extends PluginService> provider = (ServiceProvider<?>) name_service;
+                PluginService service = provider.serve();
+
+                if (service instanceof NameValidator) {
+                    NameValidator validator = (NameValidator) service;
+                    validator.validate(name);
+
+                    if (validator.isValid()) {
+                        plugin.logInfo("Successfully validated username of {0}", name);
+                    } else {
+                        boolean deny = true;
+
+                        PluginService fg_service = plugin.getService("floodgate");
+                        if (fg_service instanceof FloodGateService) {
+                            FloodGateService floodgate = (FloodGateService) fg_service;
+                            if (floodgate.isBedrock(provided_id)) {
+                                deny = false;
+                                plugin.info("Connected bedrock client {0}", name);
+                            }
+                        }
+
+                        if (deny) {
+                            //NVP = Name Validator Protector
+                            plugin.logWarn("[NVP] Denied connection from {0} because its name was not valid ({1})", name, StringUtils.stripColor(validator.invalidCharacters()));
+                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor(messages.illegalName(validator.invalidCharacters())));
+                            return;
+                        }
+                    }
+                }
+            }
+
             Player online = Bukkit.getServer().getPlayer(use_uid);
             if (online != null && configuration.allowSameIp()) {
                 InetSocketAddress online_address = online.getAddress();

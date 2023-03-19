@@ -2,8 +2,6 @@ package es.karmadev.locklogin.api.plugin.file;
 
 import es.karmadev.locklogin.api.plugin.file.section.*;
 
-import java.io.Serializable;
-
 /**
  * LockLogin configuration
  */
@@ -252,6 +250,14 @@ public interface Configuration {
     String language();
 
     /**
+     * Get the plugin database
+     * configuration
+     *
+     * @return the database configuration
+     */
+    Database database();
+
+    /**
      * Serialize the configuration
      *
      * @return the serialized configuration
@@ -265,23 +271,4 @@ public interface Configuration {
      */
     void load(final String serialized);
 
-    /**
-     * Secret storage
-     */
-    interface SecretStore extends Serializable {
-
-        /**
-         * The stored token
-         *
-         * @return the token
-         */
-        byte[] token();
-
-        /**
-         * The stored IV
-         *
-         * @return the IV
-         */
-        byte[] iv();
-    }
 }

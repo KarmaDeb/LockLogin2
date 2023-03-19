@@ -3,8 +3,8 @@ package es.karmadev.locklogin.common.api.plugin.service.brute;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import ml.karmaconfigs.api.common.timer.SchedulerUnit;
@@ -45,6 +45,18 @@ public class CBruteForce implements BruteForceService {
     @Override
     public String name() {
         return "BruteForce";
+    }
+
+    /**
+     * Get if this service must be
+     * obtained via a service provider
+     *
+     * @return if the service depends
+     * on a service provider
+     */
+    @Override
+    public boolean useProvider() {
+        return false;
     }
 
     /**

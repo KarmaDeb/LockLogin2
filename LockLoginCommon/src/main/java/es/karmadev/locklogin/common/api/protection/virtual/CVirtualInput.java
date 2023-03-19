@@ -8,7 +8,7 @@ import lombok.experimental.Accessors;
 @Value(staticConstructor = "of")
 public class CVirtualInput implements VirtualizedInput {
 
-    int[] refferences;
+    int[] references;
 
     boolean valid;
 

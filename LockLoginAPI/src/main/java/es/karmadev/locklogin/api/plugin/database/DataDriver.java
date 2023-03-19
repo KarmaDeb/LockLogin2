@@ -2,10 +2,10 @@ package es.karmadev.locklogin.api.plugin.database;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import ml.karmaconfigs.api.common.ResourceDownloader;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 
 import java.io.File;
@@ -18,6 +18,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -47,6 +48,13 @@ public interface DataDriver {
      * able to be established
      */
     Connection retrieve() throws SQLException;
+
+    /**
+     * Fetch the existing tables
+     *
+     * @return the existing tables
+     */
+    List<Table> fetchTables();
 
     /**
      * Close the connection and its statement

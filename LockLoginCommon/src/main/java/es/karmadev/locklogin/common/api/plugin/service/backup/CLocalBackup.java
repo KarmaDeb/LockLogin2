@@ -47,6 +47,18 @@ public class CLocalBackup implements BackupService {
     }
 
     /**
+     * Get if this service must be
+     * obtained via a service provider
+     *
+     * @return if the service depends
+     * on a service provider
+     */
+    @Override
+    public boolean useProvider() {
+        return false;
+    }
+
+    /**
      * Perform a backup
      *
      * @return the backup task

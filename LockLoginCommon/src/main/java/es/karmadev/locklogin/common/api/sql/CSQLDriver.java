@@ -6,26 +6,29 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.query.JoinRow;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.query.QueryModifier;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
+import es.karmadev.locklogin.api.plugin.file.Database;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class CSQLDriver implements DataDriver {
 
     private HikariDataSource source;
     private boolean connected = false;
-
-    private final Driver driver;
-
-    public CSQLDriver(final Driver driver) {
-        this.driver = driver;
-    }
 
     /**
      * Connect to the driver
@@ -34,20 +37,29 @@ public class CSQLDriver implements DataDriver {
     public void connect() {
         if (!connected) {
             LockLogin plugin = CurrentPlugin.getPlugin();
+            Database database = plugin.configuration().database();
+            Driver driver = database.driver();
 
             Path sql_file = plugin.workingDirectory().resolve("data").resolve("accounts.db");
-            PathUtilities.create(sql_file);
 
             HikariConfig config = new HikariConfig();
             config.setPoolName("locklogin-" + driver.name());
             config.setDriverClassName(driver.getTestClass());
-            config.setJdbcUrl(driver.getConnection(sql_file));
-            config.setMinimumIdle(10);
-            config.setMaximumPoolSize(50);
-            config.setIdleTimeout(300 * 1000L);
-            config.setConnectionTimeout(60000L);
-            config.setConnectionTestQuery("SELECT 1");
-            config.setLeakDetectionThreshold(6000000L);
+            if (driver.equals(Driver.SQLite)) {
+                config.setJdbcUrl(driver.getConnection(sql_file));
+            } else {
+                config.setJdbcUrl(driver.getConnection(database.host(), database.port(), database.database(), database.ssl(), database.verifyCertificates()));
+                config.setUsername(database.username());
+                config.setPassword(database.password());
+            }
+
+            config.setMinimumIdle(database.minimumConnections());
+            config.setMaximumPoolSize(database.maximumConnections());
+            config.setIdleTimeout(database.unusedTimeout() * 1000L);
+            config.setConnectionTimeout(database.connectionTimeout() * 1000L);
+            config.setConnectionTestQuery(database.testQuery());
+            config.setMaxLifetime(database.maximumLifetime() * 1000L);
+            config.setLeakDetectionThreshold(database.leakDetection() * 1000L);
 
             source = new HikariDataSource(config);
             plugin.info("Initialized LockLogin sqlite connection successfully");
@@ -58,6 +70,10 @@ public class CSQLDriver implements DataDriver {
             try {
                 connection = source.getConnection();
                 statement = connection.createStatement();
+
+                /*if (driver.equals(Driver.SQLite)) {
+                    statement.execute("CREATE TABLE IF NOT EXISTS `sqlite_master` (`type` TEXT, `name` TEXT, `tbl_name` TEXT, `rootpage` INTEGER, `sql` TEXT)");
+                }*/
 
                 QueryBuilder accountCreteQuery = QueryBuilder.createQuery(driver)
                         .createTable(true, Table.ACCOUNT)
@@ -120,25 +136,79 @@ public class CSQLDriver implements DataDriver {
                         .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.NOT_NULL, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))
                         .withPrimaryKey(Row.ID, true);
 
-                plugin.logInfo("Executing query <code>{0}</code>", accountCreteQuery.build());
-                //"CREATE TABLE IF NOT EXISTS `account` ('id' INTEGER NOT NULL, 'password' TEXT, 'pin' TEXT, '2fa_token' TEXT, 'panic' TEXT, '2fa' BOOLEAN, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))"
-                boolean acc_create = statement.execute(accountCreteQuery.queryType());
+                List<Table> tables = new ArrayList<>(Arrays.asList(Table.values()));
+                try (ResultSet result = statement.executeQuery("SELECT `name` AS 'table', `sql` AS 'sequence' FROM `sqlite_master` WHERE `type`='table'")) {
+                    while (result.next()) {
+                        String tableName = result.getString("table");
+                        String sqlQuery = result.getString("sequence");
 
-                plugin.logInfo("Executing query <code>{0}</code>", sessionCreateQuery.build());
-                //"CREATE TABLE IF NOT EXISTS `session` ('id' INTEGER NOT NULL, 'captcha_login' BOOLEAN, 'pass_login' BOOLEAN, 'pin_login' BOOLEAN, '2fa_login' BOOLEAN, 'persistence' BOOLEAN, 'captcha' TEXT, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))"
-                boolean sess_create = statement.execute(sessionCreateQuery.queryType());
+                        if (!StringUtils.isNullOrEmpty(tableName) && !StringUtils.isNullOrEmpty(sqlQuery)) {
+                            for (Table table : Table.values()) {
+                                String tbName = database.tableName(table);
+                                if (tbName.equals(tableName)) {
+                                    tables.remove(table);
+                                }
+                            }
+                        }
+                    }
+                }
 
-                plugin.logInfo("Executing query <code>{0}</code>", serverCreateQuery.build());
-                //"CREATE TABLE IF NOT EXISTS `server` ('id' INTEGER NOT NULL, 'name' TEXT, 'address' TEXT, 'port' INTEGER, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT))"
-                boolean serv_create = statement.execute(serverCreateQuery.build());
-
-                plugin.logInfo("Executing query <code>{0}</code>", userCreateQuery.build());
-                //"CREATE TABLE IF NOT EXISTS `user` ('id' INTEGER NOT NULL, 'name' TEXT, 'uuid' TEXT, 'account_id' INTEGER NULL, 'session_id' INTEGER NULL, 'type' INTEGER DEFAULT 1, 'last_server' INTEGER NULL, 'previous_server' INTEGER NULL, 'created_at' NUMERIC, PRIMARY KEY('id' AUTOINCREMENT), FOREIGN KEY('account_id') REFERENCES account('id') ON DELETE SET NULL, FOREIGN KEY('session_id') REFERENCES session('id') ON DELETE SET NULL, FOREIGN KEY('last_server') REFERENCES server('id') ON DELETE SET NULL, FOREIGN KEY('previous_server') REFERENCES server('id') ON DELETE SET NULL)"
-                boolean user_create = statement.execute(userCreateQuery.build());
-
-                plugin.logInfo("Executing query <code>{0}</code>", bruteCreateQuery.build());
-                //"CREATE TABLE IF NOT EXISTS `brute` ('id' INTEGER NOT NULL, 'address' TEXT NOT NULL, 'tries' INTEGER DEFAULT 0, 'blocked' BOOLEAN DEFAULT false, 'remaining' NUMERIC DEFAULT 0, PRIMARY KEY('id' AUTOINCREMENT))"
-                boolean brute_create = statement.execute(bruteCreateQuery.build());
+                boolean acc_create = true;
+                boolean sess_create = true;
+                boolean serv_create = true;
+                boolean user_create = true;
+                boolean brute_create = true;
+                for (Table table : Table.values()) {
+                    if (tables.contains(table)) {
+                        switch (table) {
+                            case ACCOUNT:
+                                plugin.logInfo("Executing query <code>{0}</code>", accountCreteQuery.build());
+                                try {
+                                    statement.execute(accountCreteQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    acc_create = false;
+                                }
+                                break;
+                            case SESSION:
+                                plugin.logInfo("Executing query <code>{0}</code>", sessionCreateQuery.build());
+                                try {
+                                    statement.execute(sessionCreateQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    sess_create = false;
+                                }
+                                break;
+                            case SERVER:
+                                plugin.logInfo("Executing query <code>{0}</code>", serverCreateQuery.build());
+                                try {
+                                    statement.execute(serverCreateQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    serv_create = false;
+                                }
+                                break;
+                            case USER:
+                                plugin.logInfo("Executing query <code>{0}</code>", userCreateQuery.build());
+                                try {
+                                    statement.execute(userCreateQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    user_create = false;
+                                }
+                                break;
+                            case BRUTE_FORCE:
+                                plugin.logInfo("Executing query <code>{0}</code>", bruteCreateQuery.build());
+                                try {
+                                    statement.execute(bruteCreateQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    brute_create = false;
+                                }
+                                break;
+                        }
+                    }
+                }
 
                 if (acc_create && sess_create && serv_create && user_create && brute_create) {
                     plugin.info("Successfully setup LockLogin sqlite tables");
@@ -173,6 +243,46 @@ public class CSQLDriver implements DataDriver {
                 close(connection, statement);
             }
         }
+    }
+
+    /**
+     * Fetch the existing tables
+     *
+     * @return the existing tables
+     */
+    @Override
+    public List<Table> fetchTables() {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        Database database = plugin.configuration().database();
+
+        List<Table> tables = new ArrayList<>();
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = source.getConnection();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery("SELECT `name` AS 'table' FROM `sqlite_master` WHERE `type`='table'")) {
+                while (result.next()) {
+                    String tableName = result.getString("table");
+                    if (!StringUtils.isNullOrEmpty(tableName)) {
+                        for (Table table : Table.values()) {
+                            String tbName = database.tableName(table);
+                            if (tbName.equals(tableName) && !tables.contains(table)) {
+                                tables.add(table);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            plugin.log(ex, "Failed to fetch created tables");
+            plugin.info("An error occurred while executing a sql query");
+        } finally {
+            close(connection, statement);
+        }
+
+        return Collections.unmodifiableList(tables);
     }
 
     /**

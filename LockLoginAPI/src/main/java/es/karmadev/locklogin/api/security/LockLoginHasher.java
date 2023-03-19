@@ -35,6 +35,13 @@ public interface LockLoginHasher {
     PluginHash getMethod(final String name);
 
     /**
+     * Get all the compatible hashing method
+     *
+     * @return the hashing methods
+     */
+    String[] getMethods();
+
+    /**
      * Get the plugin virtual ID
      *
      * @return the plugin virtual ID

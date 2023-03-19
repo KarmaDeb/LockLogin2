@@ -3,16 +3,21 @@ package es.karmadev.locklogin.common.api.protection.virtual;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.section.SecretStore;
+import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
+import ml.karmaconfigs.api.common.security.file.FileEncryptor;
 import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.string.StringUtils;
 
+import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +26,29 @@ import java.util.stream.Stream;
 public class CVirtualId implements VirtualID {
 
     private final String virtualID;
+    static {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+    }
 
     public CVirtualId() {
         LockLogin plugin = CurrentPlugin.getPlugin();
+        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+
         Configuration configuration = plugin.configuration();
 
+        SecretStore store = configuration.secretKey();
+
         Path virtual_id = plugin.workingDirectory().resolve("data").resolve("virtual.kf");
+        FileEncryptor encryptor = new FileEncryptor(virtual_id, store.token());
+        if (Files.exists(virtual_id)) {
+            try {
+                encryptor.tryDecrypt(new IvParameterSpec(store.iv()));
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
+
         KarmaMain main = new KarmaMain(virtual_id);
 
         main.create();
@@ -45,6 +67,14 @@ public class CVirtualId implements VirtualID {
         }
 
         virtualID = tmpId;
+
+        if (Files.exists(virtual_id)) {
+            try {
+                encryptor.tryEncrypt(new IvParameterSpec(store.iv()));
+            } catch (Throwable ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -82,22 +112,21 @@ public class CVirtualId implements VirtualID {
      * Virtualize the input
      *
      * @param input      the input to virtualize
-     * @param refferences the refferences to force
+     * @param references the references to force
      * @return the vritualized input
      *
-     * @throws IllegalStateException if the input doesn't match the refferences length
+     * @throws IllegalStateException if the input doesn't match the references length
      */
     @Override
-    public VirtualizedInput virtualize(final String input, final int[] refferences) throws IllegalStateException {
+    public VirtualizedInput virtualize(final String input, final int[] references) throws IllegalStateException {
         String tmp = virtualID + input;
-        int startIndex = refferences[0];
 
         char[] provided = tmp.toCharArray();
         char[] converted = new char[provided.length];
 
         try {
             for (int i = 0; i < provided.length; i++) {
-                int r = refferences[i + 1];
+                int r = references[i + 1];
                 converted[r] = provided[i];
             }
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -106,6 +135,6 @@ public class CVirtualId implements VirtualID {
 
         String raw = Stream.of(converted)
                 .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append).toString();
-        return CVirtualInput.of(refferences, true, raw.getBytes(StandardCharsets.UTF_8));
+        return CVirtualInput.of(references, true, raw.getBytes(StandardCharsets.UTF_8));
     }
 }

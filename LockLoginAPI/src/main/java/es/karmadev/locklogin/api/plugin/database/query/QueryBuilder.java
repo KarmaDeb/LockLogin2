@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.common.api.sql;
+package es.karmadev.locklogin.api.plugin.database.query;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -6,7 +6,6 @@ import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
 import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -18,6 +17,7 @@ import java.nio.file.Paths;
 /**
  * Query builder
  */
+@SuppressWarnings("unused")
 public final class QueryBuilder {
 
     /**
@@ -98,6 +98,15 @@ public final class QueryBuilder {
      * @return the query
      */
     public static QueryBuilder createQuery(final Driver driver) {
+        return new QueryBuilder(driver);
+    }
+
+    /**
+     * Create a new query
+     *
+     * @return the new query
+     */
+    public QueryBuilder newQuery() {
         return new QueryBuilder(driver);
     }
 
@@ -219,6 +228,110 @@ public final class QueryBuilder {
         String finalRow = StringUtils.replaceLast(rowBuilder.toString(), ", ", "");
 
         rawQuery.append("SELECT ").append(finalRow).append(" ").append("FROM `").append(tableName).append("` ");
+        return this;
+    }
+
+    /**
+     * Alter a table
+     *
+     * @param table the table
+     * @return the query
+     */
+    public QueryBuilder alter(final Table table) {
+        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        queryType = "alter";
+
+        this.table = table;
+        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+
+        rawQuery.append("ALTER TABLE `").append(tableName).append("` ");
+        return this;
+    }
+
+    /**
+     * Add a row
+     *
+     * @param row the row
+     * @param type the row type
+     * @param modifiers the row modifiers
+     * @return the query
+     */
+    public QueryBuilder add(final Row row, final RowType type, final QueryModifier... modifiers) {
+        if (table == null || !queryType.equals("alter")) return this;
+
+        StringBuilder customModifiers = new StringBuilder();
+        for (QueryModifier modifier : modifiers) {
+            String modifiedRaw = modifier.getRaw();
+            if (driver.equals(Driver.SQLite)) {
+                if (modifiedRaw.equals("AUTO_INCREMENT")) {
+                    modifiedRaw = "AUTOINCREMENT";
+                }
+            }
+
+            if (modifiedRaw.matches("\\([0-9]*\\)") && driver.equals(Driver.SQLite)) {
+                continue;
+            }
+
+            customModifiers.append(" ").append(modifiedRaw);
+        }
+        String rawCustom = customModifiers.toString();
+        if (firstRow) {
+            rawQuery.append("ADD COLUMN ");
+            firstRow = false;
+        } else {
+            return this;
+        }
+
+        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        RowType modifiedType = type;
+
+        if (driver.equals(Driver.SQLite)) {
+            switch (type) {
+                case VARCHAR:
+                case LONGTEXT:
+                    modifiedType = RowType.TEXT;
+                    break;
+                case TINY_INTEGER:
+                case BIG_INTEGER:
+                    modifiedType = RowType.INTEGER;
+                    break;
+                case LONG:
+                case DOUBLE:
+                case FLOAT:
+                case TIMESTAMP:
+                    modifiedType = RowType.NUMERIC;
+                    break;
+            }
+        } else {
+            if (type.equals(RowType.NUMERIC)) {
+                modifiedType = RowType.DOUBLE;
+            }
+        }
+
+        rawQuery.append("`").append(rowName).append("` ").append(modifiedType).append(rawCustom);
+
+        return this;
+    }
+
+    /**
+     * Remove a row
+     *
+     * @param row the row
+     * @return the query
+     */
+    public QueryBuilder remove(final Row row) {
+        if (table == null || !queryType.equals("alter")) return this;
+
+        if (firstRow) {
+            rawQuery.append("DROP COLUMN ");
+            firstRow = false;
+        } else {
+            return this;
+        }
+
+        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        rawQuery.append("`").append(rowName).append("`");
+
         return this;
     }
 
@@ -638,7 +751,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public String build() {
-        if (queryType.equals("update") || queryType.equals("fetch")) {
+        if (queryType.equals("update") || queryType.equals("fetch") || queryType.equals("alter")) {
             return rawQuery.toString();
         }
 
@@ -728,9 +841,13 @@ public final class QueryBuilder {
      */
     public final static QueryModifier UNIQUE = QueryModifier.of("UNIQUE");
     /**
-     * Primary key
+     * Auto increment key
      */
     public final static QueryModifier AUTO_INCREMENT = QueryModifier.of("AUTO_INCREMENT");
+    /**
+     * Primary key
+     */
+    public final static QueryModifier PRIMARY = QueryModifier.of("PRIMARY KEY");
     /**
      * True value
      */

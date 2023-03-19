@@ -24,7 +24,6 @@ public class InternalPack {
      */
     public Messages getMessenger() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-
         Configuration configuration = CurrentPlugin.getPlugin().configuration();
         String lang = configuration.language();
 

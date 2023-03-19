@@ -162,6 +162,18 @@
       },
       "download": [],
       "plugin": true
+    },
+    {
+      "id": "spartan",
+      "name": "Spartan",
+      "file": "Spartan.jar",
+      "test": "",
+      "version": {
+        "project": "${spartan.version}",
+        "required": "${spartan.version}"
+      },
+      "download": [],
+      "plugin": true
     }
   ],
   "version": {
@@ -176,9 +188,6 @@
     "download": []
   },
   "checksum": [
-    "https://karmadev.es/locklogin/checksum/${locklogin.checksum.version}/checksum.lldb",
-    "https://backup.karmadev.es/locklogin/checksum/${locklogin.checksum.version}/checksum.lldb",
-    "https://reddo.es/repository/locklogin/${locklogin.checksum.version}/checksum.lldb",
-    "https://github.io/karmadeb/updates/locklogin/data/${locklogin.checksum.version}/checksum.lldb"
+    "https://reddo.es/repository/locklogin/${locklogin.checksum.version}/checksum.kf"
   ]
 }

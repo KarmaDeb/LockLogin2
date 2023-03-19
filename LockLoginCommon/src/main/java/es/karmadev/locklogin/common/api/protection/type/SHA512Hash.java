@@ -185,9 +185,9 @@ public class SHA512Hash extends PluginHash {
         String finalProduct = hashInput(pwd);
 
         if (encryption.applyBase64()) {
-            virtualized = CVirtualInput.of(virtualized.refferences(), virtualized.valid(), base64(finalProduct).getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.of(virtualized.references(), virtualized.valid(), base64(finalProduct).getBytes(StandardCharsets.UTF_8));
         } else {
-            virtualized = CVirtualInput.of(virtualized.refferences(), virtualized.valid(), finalProduct.getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.of(virtualized.references(), virtualized.valid(), finalProduct.getBytes(StandardCharsets.UTF_8));
         }
 
         return CHash.of(this, virtualized);
@@ -226,7 +226,7 @@ public class SHA512Hash extends PluginHash {
         String password = input;
         if (virtualized.valid()) {
             try {
-                VirtualizedInput clone = hasher.virtualID().virtualize(input, virtualized.refferences());
+                VirtualizedInput clone = hasher.virtualID().virtualize(input, virtualized.references());
                 password = new String(clone.product(), StandardCharsets.UTF_8);
             } catch (IllegalStateException i) {
                 return false;

@@ -22,6 +22,18 @@ public class CFloodGate implements FloodGateService {
     }
 
     /**
+     * Get if this service must be
+     * obtained via a service provider
+     *
+     * @return if the service depends
+     * on a service provider
+     */
+    @Override
+    public boolean useProvider() {
+        return false;
+    }
+
+    /**
      * Get if the client is a bedrock client
      *
      * @param uniqueId the client id

@@ -3,7 +3,9 @@ package es.karmadev.locklogin.common.api.plugin.file;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
@@ -19,6 +21,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
 
 public class CPluginConfiguration implements Configuration {
@@ -27,6 +30,7 @@ public class CPluginConfiguration implements Configuration {
     private final KarmaYamlManager yaml;
 
     private final CProxyConfiguration proxy_config;
+    private final CDatabaseConfiguration database_config;
 
     /**
      * Initialize the plugin configuration
@@ -43,6 +47,22 @@ public class CPluginConfiguration implements Configuration {
 
         yaml = new KarmaYamlManager(file);
         proxy_config = new CProxyConfiguration();
+        Driver driver;
+        String rawDriver = yaml.getString("DataDriver", "SQLITE").toLowerCase();
+        switch (rawDriver) {
+            case "mysql":
+                driver = Driver.MySQL;
+                break;
+            case "mariadb":
+                driver = Driver.MariaDB;
+                break;
+            case "sqlite":
+            default:
+                driver = Driver.SQLite;
+                break;
+        }
+
+        database_config = new CDatabaseConfiguration(driver);
     }
 
     /**
@@ -127,7 +147,8 @@ public class CPluginConfiguration implements Configuration {
     public SecretStore secretKey() {
         String raw = yaml.getString("SecretKey", "");
 
-        if (StringUtils.isNullOrEmpty(raw)) {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        if (StringUtils.isNullOrEmpty(raw) || !raw.contains("$")) {
             String password = TokenGenerator.generateLiteral(16);
             byte[] salt = new byte[16];
             SecureRandom secure = new SecureRandom();
@@ -136,25 +157,28 @@ public class CPluginConfiguration implements Configuration {
             SecretKey secret = FileEncryptor.generateSecureKey(password, new String(salt));
             IvParameterSpec parameter = FileEncryptor.generateSecureSpec();
             if (secret == null) {
-                LockLogin plugin = CurrentPlugin.getPlugin();
                 plugin.err("Failed to generate plugin secret key. This will be harmfull in the future");
 
                 return null;
             }
 
             SecretStore store = CSecretStore.of(secret.getEncoded(), parameter.getIV());
-            raw = StringUtils.serialize(store);
+            String tokenBase = Base64.getEncoder().encodeToString(secret.getEncoded());
+            String ivBase = Base64.getEncoder().encodeToString(parameter.getIV());
 
-            yaml.set("SecretKey", raw);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
+            yaml.set("SecretKey", tokenBase + "$" + ivBase);
+            yaml.save(file.toFile(), (KarmaSource) plugin, "plugin/yaml/config.yml");
 
             return store;
         }
+        String[] data = raw.split("\\$");
+        String tokenBase = data[0];
+        String ivBase = data[1];
 
-        Object obj = StringUtils.load(raw);
-        if (obj instanceof SecretStore) return (SecretStore) obj;
+        byte[] token = Base64.getDecoder().decode(tokenBase);
+        byte[] iv = Base64.getDecoder().decode(ivBase);
 
-        return null;
+        return CSecretStore.of(token, iv);
     }
 
     /**
@@ -515,6 +539,17 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public String language() {
         return yaml.getString("Lang", "English");
+    }
+
+    /**
+     * Get the plugin database
+     * configuration
+     *
+     * @return the database configuration
+     */
+    @Override
+    public Database database() {
+        return database_config;
     }
 
     /**

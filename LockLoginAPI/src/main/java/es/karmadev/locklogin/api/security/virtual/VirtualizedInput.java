@@ -8,11 +8,11 @@ import java.io.Serializable;
 public interface VirtualizedInput extends Serializable {
 
     /**
-     * Get the virtualization refferences
+     * Get the virtualization references
      *
-     * @return the refferences
+     * @return the references
      */
-    int[] refferences();
+    int[] references();
 
     /**
      * Get if the virtualization input is
