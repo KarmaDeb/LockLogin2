@@ -39,3 +39,9 @@ build/
 
 ### Deprecated code
 deprecated.txt
+/LockLoginSpigot/v2.0.0/
+/LockLoginCommon/v2.0.0/
+/LockLoginCommon/config.yml
+/LockLoginCommon/database.yml
+/LockLoginAPI/v2.0.0/
+/v2.0.0/
