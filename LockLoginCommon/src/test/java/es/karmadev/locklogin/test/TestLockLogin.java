@@ -10,7 +10,7 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.ServerHash;
-import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.license.License;
@@ -25,7 +25,6 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
@@ -51,7 +50,7 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     private final InternalPack pack = new InternalPack();
 
     private final ModuleManager manager = new CModuleManager();
-    public final DataDriver sqlite = new CSQLDriver(Driver.SQLite);
+    public final DataDriver sqlite = new CSQLDriver();
     public final LockLoginRuntime runtime = new CRuntime(manager);
     public final CPluginNetwork network = new CPluginNetwork(sqlite);
     public final CAccountFactory default_account_factory = new CAccountFactory(sqlite);

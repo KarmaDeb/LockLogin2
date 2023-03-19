@@ -39,10 +39,16 @@ public abstract class PluginHash {
         protected_properties.addAll(Arrays.asList(properties));
     }
 
+    protected final Set<String> protected_properties = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    protected final Map<String, String> temporal_properties = new ConcurrentHashMap<>();
+    protected final Map<String, String> permanent_properties = new ConcurrentHashMap<>();
+
     /**
      * Initialize the plugin hash
      */
-    public PluginHash() {}
+    public PluginHash(final String... properties) {
+        protected_properties.addAll(Arrays.asList(properties));
+    }
 
     /**
      * Get the hashing name

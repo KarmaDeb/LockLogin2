@@ -68,7 +68,7 @@
 
         <locklogin.checksum.generate>false</locklogin.checksum.generate>
         <locklogin.checksum.print>false</locklogin.checksum.print>
-        <locklogin.checksum.version>v5</locklogin.checksum.version>
+        <locklogin.checksum.version>v6</locklogin.checksum.version>
 
         <locklogin.karmaapi.version>1.3.4-SNAPSHOT</locklogin.karmaapi.version>
         <locklogin.karmaapi.platform>1.3.4-10</locklogin.karmaapi.platform>

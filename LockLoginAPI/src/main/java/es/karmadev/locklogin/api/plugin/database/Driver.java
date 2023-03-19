@@ -17,26 +17,32 @@ public enum Driver {
             "https://dbschema.com/jdbc-drivers/SqliteJdbcDriver.zip",
             "jdbc:sqlite:{0}",
             "sqlite-jdbc"),
+
     /**
      * MySQL driver
      */
     MySQL(
             "com.mysql.cj.jdbc.Driver",
             "https://dbschema.com/jdbc-drivers/MySqlJdbcDriver.zip",
+            "jdbc:mysql://{0}:{1}/{2}?useSSL={3}?verifyServerCertificate={4}",
             "mysql-connector"),
+
     /**
      * MariaDB driver
      */
     MariaDB(
             "org.mariadb.jdbc.Driver",
             "https://dbschema.com/jdbc-drivers/MariaDbJdbcDriver.zip",
+            "",
             "mariadb-java-client"),
+
     /**
      * MongoDB driver
      */
     MongoDB(
             "com.wisecoders.dbschema.mongodb.JdbcDriver",
             "https://dbschema.com/jdbc-drivers/MongoDbJdbcDriver.zip",
+            "",
             "bson",
             "bson-record",
             "graal-sdk",
