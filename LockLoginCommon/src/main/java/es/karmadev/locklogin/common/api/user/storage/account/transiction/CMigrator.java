@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 import es.karmadev.locklogin.api.user.account.migration.Transitional;
