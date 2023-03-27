@@ -28,6 +28,22 @@ public interface Messages {
     String prefix();
 
     /**
+     * Get a plugin message
+     *
+     * @param entity message replace
+     * @return plugin message
+     */
+    String join(final NetworkClient entity);
+
+    /**
+     * Get a plugin message
+     *
+     * @param entity message replace
+     * @return plugin message
+     */
+    String leave(final NetworkClient entity);
+
+    /**
      * Get a plugin message for modules
      *
      * @param permission message replace
@@ -541,7 +557,7 @@ public interface Messages {
      *
      * @return plugin message
      */
-    String gAuthenticate();
+    String gAuthRequired();
 
     /**
      * Get a plugin message

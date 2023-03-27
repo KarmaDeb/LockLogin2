@@ -1,0 +1,22 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under RedDo GPL license  #
+#               https://reddo.es/license                  #
+#                                                         #
+#                                                         #
+#                   For more help                         #
+#             go to: https://rb.gy/simfd2                 #
+#                                                         #
+###########################################################
+
+#Mailer host settings. We highly recommend taking a
+#look at those (NOT SPONSORED)
+#
+# SendinBlue:   https://es.sendinblue.com/
+# ElasticEmail: https://elasticemail.com/
+# MooSend:      https://moosend.com/
+SMTP:
+  Host: 'smtp.myserver.net'
+  Port: 25
+  TTLS: true
+  TrustHost: 'smtp.myserver.net'

@@ -37,15 +37,15 @@ public class VaultPermissionManager {
         }
     }
 
-    public boolean hasPermission(final OfflinePlayer player, final PermissionObject permission) {
-        if (player.isOnline()) return this.permission.playerHas(player.getPlayer(), permission.node());
+    public boolean hasPermission(final OfflinePlayer player, final String permission) {
+        if (player.isOnline()) return this.permission.playerHas(player.getPlayer(), permission);
 
         for (World world : Bukkit.getWorlds()) {
-            if (this.permission.playerHas(world.getName(), player, permission.node())) return true;
+            if (this.permission.playerHas(world.getName(), player, permission)) return true;
         }
 
         try {
-            return this.permission.playerHas(null, player, permission.node());
+            return this.permission.playerHas(null, player, permission);
         } catch (NullPointerException ex) {
             return false;
         }

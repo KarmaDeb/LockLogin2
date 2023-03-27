@@ -58,6 +58,10 @@
             <artifactId>ProtocolLib</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.inventivetalent.packetlistenerapi</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.games647</groupId>
             <artifactId>craftapi</artifactId>
         </dependency>
