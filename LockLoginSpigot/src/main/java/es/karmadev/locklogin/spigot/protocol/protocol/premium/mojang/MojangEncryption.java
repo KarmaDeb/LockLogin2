@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium.mojang;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -31,7 +31,7 @@ import com.google.common.primitives.Longs;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.spigot.SpigotPlugin;
-import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import javax.crypto.*;

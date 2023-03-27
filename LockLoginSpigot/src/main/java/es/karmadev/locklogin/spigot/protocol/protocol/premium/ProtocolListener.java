@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -38,10 +38,11 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.spigot.premium.handler.EncryptionHandler;
-import es.karmadev.locklogin.spigot.premium.handler.LoginHandler;
-import es.karmadev.locklogin.spigot.premium.mojang.MojangEncryption;
-import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
+import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.EncryptionHandler;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.LoginHandler;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
 import ml.karmaconfigs.api.common.string.StringUtils;
@@ -70,7 +71,7 @@ import static com.comphenix.protocol.PacketType.Login.Client.START;
 @SuppressWarnings("unused")
 public class ProtocolListener extends PacketAdapter {
 
-    private final static LockLogin plugin = CurrentPlugin.getPlugin();
+    private final static LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
     private final static Messages messages = plugin.messages();
 
     private final SecureRandom random = new SecureRandom();
@@ -81,7 +82,7 @@ public class ProtocolListener extends PacketAdapter {
 
     public ProtocolListener() {
         super(params()
-                .plugin((JavaPlugin) plugin.plugin())
+                .plugin(plugin.plugin())
                 .types(START, ENCRYPTION_BEGIN)
                 .optionAsync());
     }
@@ -137,7 +138,7 @@ public class ProtocolListener extends PacketAdapter {
 
             event.getAsyncMarker().incrementProcessingDelay();
             Runnable task = new LoginHandler(random, player, event, name, client.orElse(null), keyPair.getPublic());
-            Bukkit.getServer().getScheduler().runTaskAsynchronously((JavaPlugin) plugin.plugin(), task);
+            Bukkit.getServer().getScheduler().runTaskAsynchronously(plugin.plugin(), task);
         } else {
             byte[] sharedSecret = event.getPacket().getByteArrays().read(0);
             if (sessions.containsKey(address)) {
@@ -149,7 +150,7 @@ public class ProtocolListener extends PacketAdapter {
                     event.getAsyncMarker().incrementProcessingDelay();
 
                     Runnable runnable = new EncryptionHandler(event, player, session, sharedSecret, keyPair);
-                    Bukkit.getServer().getScheduler().runTaskAsynchronously((JavaPlugin) plugin.plugin(), runnable);
+                    Bukkit.getServer().getScheduler().runTaskAsynchronously(plugin.plugin(), runnable);
                 } else {
                     player.kickPlayer(StringUtils.toColor(messages.premiumFailEncryption()));
                 }

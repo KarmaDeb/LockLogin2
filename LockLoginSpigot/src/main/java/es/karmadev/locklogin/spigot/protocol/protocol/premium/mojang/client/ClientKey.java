@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium.mojang.client;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client;
 
 import lombok.Value;
 import lombok.experimental.Accessors;

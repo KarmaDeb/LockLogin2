@@ -5,10 +5,13 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
+import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
+import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
+import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -46,6 +49,8 @@ import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
+import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
+import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
@@ -53,21 +58,26 @@ import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 import ml.karmaconfigs.api.common.security.token.TokenGenerator;
 import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandMap;
+import org.bukkit.entity.Player;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LockLoginSpigot implements LockLogin, KarmaSource {
+public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
 
     private final CSQLDriver driver;
     private final KarmaPlugin plugin;
@@ -95,7 +105,9 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
 
     private License license;
 
-    public LockLoginSpigot(final KarmaPlugin plugin) {
+    private final Instant startup = Instant.now();
+
+    public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) {
         this.plugin = plugin;
 
         Class<CurrentPlugin> instance = CurrentPlugin.class;
@@ -130,6 +142,10 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
 
         driver = new CSQLDriver();
         CurrentPlugin.updateState();
+
+        SpigotCommandManager manager = new SpigotCommandManager(this, map);
+        moduleManager.onCommandRegistered = manager;
+        moduleManager.onCommandUnregistered = manager;
     }
 
     void installDriver() {
@@ -165,7 +181,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public Object plugin() throws SecurityException {
+    public KarmaPlugin plugin() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return plugin;
     }
@@ -255,7 +271,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public LockLoginRuntime runtime() throws SecurityException {
+    public CRuntime runtime() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return runtime;
     }
@@ -654,6 +670,37 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
     }
 
     /**
+     * Get the entity address
+     *
+     * @return the entity address
+     */
+    @Override
+    public InetSocketAddress address() {
+        return InetSocketAddress.createUnresolved("127.0.0.1", plugin.getServer().getPort());
+    }
+
+    /**
+     * Get when the entity was created
+     *
+     * @return the entity creation date
+     */
+    @Override
+    public Instant creation() {
+        return startup;
+    }
+
+    /**
+     * Get if this entity has the specified permission
+     *
+     * @param permission the permission
+     * @return if the entity has the permission
+     */
+    @Override
+    public boolean hasPermission(final PermissionObject permission) {
+        return true;
+    }
+
+    /**
      * Karma source version
      *
      * @return the source version
@@ -691,5 +738,107 @@ public class LockLoginSpigot implements LockLogin, KarmaSource {
     @Override
     public String updateURL() {
         return plugin.updateURL();
+    }
+
+    /**
+     * Get the server id
+     *
+     * @return the server id
+     */
+    @Override
+    public int id() {
+        return 0;
+    }
+
+    /**
+     * Update the server name
+     *
+     * @param name the server name
+     */
+    @Override
+    public void setName(final String name) {
+        throw new UnsupportedOperationException("Cannot define bukkit server name");
+    }
+
+    /**
+     * Update the server address
+     *
+     * @param address the server new address
+     */
+    @Override
+    public void setAddress(final InetSocketAddress address) {
+        throw new UnsupportedOperationException("Cannot define bukkit server address");
+    }
+
+    /**
+     * Get all the clients that are connected
+     * in this server
+     *
+     * @return all the connected clients
+     */
+    @Override
+    public Collection<NetworkClient> connected() {
+        return network.getOnlinePlayers();
+    }
+
+    /**
+     * Get all the offline clients that
+     * are connected in this server
+     *
+     * @return all the offline clients
+     */
+    @Override
+    public Collection<LocalNetworkClient> offlineClients() {
+        return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
+    }
+
+    /**
+     * Get the server packet queue
+     *
+     * @return the server packet queue
+     */
+    @Override
+    public NetworkChannel channel() {
+        return null;
+    }
+
+    /**
+     * Send a message to the client
+     *
+     * @param message the message to send
+     */
+    @Override
+    public void sendMessage(final String message) {
+        plugin.console().send(message);
+    }
+
+    /**
+     * Send an actionbar to the client
+     *
+     * @param actionbar the actionbar to send
+     */
+    @Override
+    public void sendActionBar(final String actionbar) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            BarMessage bar = new BarMessage(online, actionbar);
+            bar.send(false);
+        }
+    }
+
+    /**
+     * Send a title to the client
+     *
+     * @param title    the title
+     * @param subtitle the subtitle
+     * @param fadeIn   the title fade in time
+     * @param showTime the title show time
+     * @param fadeOut  the title fade out time
+     */
+    @Override
+    public void sendTitle(final String title, final String subtitle, final int fadeIn, final int showTime, final int fadeOut) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            TitleMessage bar = new TitleMessage(online, title, subtitle);
+            bar.send(fadeIn, showTime, fadeOut);
+        }
     }
 }

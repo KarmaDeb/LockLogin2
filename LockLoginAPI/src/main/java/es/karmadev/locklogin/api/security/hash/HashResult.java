@@ -22,4 +22,17 @@ public interface HashResult extends Serializable {
      * @return the hash
      */
     VirtualizedInput product();
+
+    /**
+     * Verify the input
+     *
+     * @param input the input
+     * @return if the input is valid
+     */
+    default boolean verify(final String input) {
+        PluginHash hasher = hasher();
+        if (hasher != null) return hasher.verify(input, this);
+
+        return false;
+    }
 }

@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
-import es.karmadev.locklogin.spigot.premium.mojang.MojangEncryption;
-import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.entity.Player;
 

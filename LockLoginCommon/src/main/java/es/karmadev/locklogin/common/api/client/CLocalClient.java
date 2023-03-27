@@ -30,7 +30,7 @@ public class CLocalClient implements LocalNetworkClient {
     protected final int id;
     protected final DataDriver pool;
 
-    public Function<PermissionObject, Boolean> hasPermission;
+    public Function<String, Boolean> hasPermission;
 
     public CLocalClient(final int id, final DataDriver pool) {
         this.id = id;
@@ -125,11 +125,11 @@ public class CLocalClient implements LocalNetworkClient {
      * Get if this entity has the specified permission
      *
      * @param permission the permission
-     * @return if the entity has the perimssion
+     * @return if the entity has the permission
      */
     @Override
     public boolean hasPermission(final PermissionObject permission) {
-        return hasPermission != null && hasPermission.apply(permission);
+        return hasPermission != null && hasPermission.apply(permission.node());
     }
 
     /**
@@ -479,6 +479,16 @@ public class CLocalClient implements LocalNetworkClient {
         } finally {
             pool.close(connection ,statement);
         }
+    }
+
+    /**
+     * Get if the client is op
+     *
+     * @return if the client has op
+     */
+    @Override
+    public boolean isOp() {
+        return hasPermission != null && hasPermission.apply("op");
     }
 
     /**

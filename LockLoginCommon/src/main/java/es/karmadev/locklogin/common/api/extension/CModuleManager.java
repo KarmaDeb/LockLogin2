@@ -3,15 +3,21 @@ package es.karmadev.locklogin.common.api.extension;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
+import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.command.error.CommandRuntimeException;
+import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
 import es.karmadev.locklogin.api.extension.manager.ModuleLoader;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
+import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
+import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -20,12 +26,16 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class CModuleManager implements ModuleManager {
 
     private final CModuleLoader loader = new CModuleLoader(this);
     private final CCommandMap commands = new CCommandMap(this);
     private final Map<Module, Set<Class<? extends LockLoginEvent>>> module_events = new ConcurrentHashMap<>();
+
+    public Function<ModuleCommand, Boolean> onCommandRegistered;
+    public Consumer<ModuleCommand> onCommandUnregistered;
 
     /**
      * Get the module loader
@@ -151,10 +161,77 @@ public class CModuleManager implements ModuleManager {
      *
      * @param issuer  the entity command issuer
      * @param command the command
+     * @param arguments the command arguments
+     * @return if the command was able to be executed
+     *
+     * @throws CommandRuntimeException if the command fails to execute
      */
     @Override
-    public void executeCommand(final NetworkEntity issuer, final String command) {
+    public boolean executeCommand(final NetworkEntity issuer, final String command, final String... arguments) throws CommandRuntimeException {
+        Map<String, ModuleCommand> registeredCommands = commands.commands;
+        String targetCommand = command;
+        if (targetCommand.startsWith("/")) {
+            targetCommand = command.substring(1);
+        }
+        if (targetCommand.contains(":")) {
+            String[] data = targetCommand.split(":");
+            String module = data[0];
 
+            targetCommand = targetCommand.replaceFirst(module + ":", "");
+        }
+
+        for (String commandSpace : registeredCommands.keySet()) {
+            ModuleCommand modCommand = registeredCommands.get(commandSpace);
+
+            String[] data = commandSpace.split(":");
+            String module = data[0];
+            String realCommand = commandSpace.replaceFirst(module + ":", "");
+
+            if (realCommand.equalsIgnoreCase(targetCommand)) {
+                CommandExecutor executor = modCommand.getExecutor();
+                Module owner = modCommand.getModule();
+
+                List<String> stringArguments = new ArrayList<>();
+                for (String argument : arguments)
+                    if (argument != null && !StringUtils.isNullOrEmpty(argument))
+                        stringArguments.add(argument);
+
+                try {
+                    if (executor != null) {
+                        LockLogin plugin = CurrentPlugin.getPlugin();
+                        LockLoginRuntime runtime = plugin.runtime();
+                        Path caller = runtime.caller();
+
+                        Module moduleCaller = loader.findByFile(caller);
+                        StringBuilder commandBuilder = new StringBuilder("/").append(command);
+                        for (int i = 0; i < arguments.length; i++) {
+                            commandBuilder.append(arguments[i]);
+                            if (i != arguments.length - 1) commandBuilder.append(" ");
+                        }
+
+                        CommandProcessEvent event = new CommandProcessEvent(moduleCaller, issuer, commandBuilder.toString(), command, stringArguments.toArray(new String[0]));
+                        fireEvent(event);
+
+                        if (!event.isCancelled()) {
+                            String finalCommand = event.getCommand();
+                            String[] finalArguments = event.getArguments();
+
+                            executor.execute(issuer, finalCommand, finalArguments);
+                            return true;
+                        } else {
+                            if (issuer instanceof TextContainer) {
+                                TextContainer container = (TextContainer) issuer;
+                                container.sendMessage("&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
+                            }
+                        }
+                    }
+                } catch (Throwable ex) {
+                    throw new CommandRuntimeException(ex, "Nag author(s) of module " + owner.name() + " (" + owner.authors(false, ",") + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

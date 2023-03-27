@@ -22,10 +22,10 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium;
 
 import com.github.games647.craftapi.model.skin.SkinProperty;
-import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
 import lombok.Getter;
 import lombok.Setter;
 

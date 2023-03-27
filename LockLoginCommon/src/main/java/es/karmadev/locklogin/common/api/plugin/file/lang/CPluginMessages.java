@@ -24,13 +24,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class CPluginMessages implements Messages {
 
-    private final Path file;
     private final KarmaYamlManager yaml;
     private final InternalPack parser;
 
 
     public CPluginMessages(final Path file, final InternalPack parser) {
-        this.file = file;
         yaml = new KarmaYamlManager(file);
         this.parser = parser;
     }
@@ -57,6 +55,30 @@ public class CPluginMessages implements Messages {
     @Override
     public String prefix() {
         return parser.parse(yaml.getString("Prefix", "&eLockLogin &7>> "));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param entity message replace
+     * @return plugin message
+     */
+    @Override
+    public String join(final NetworkClient entity) {
+        String str = yaml.getString("PlayerJoin", "&8&l[&e&o+&8&l] &f{player}");
+        return parser.parse(str.replace("{player}", entity.name()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param entity message replace
+     * @return plugin message
+     */
+    @Override
+    public String leave(final NetworkClient entity) {
+        String str = yaml.getString("PlayerLeave", "&8&l[&3&o-&8&l] &f{player}");
+        return parser.parse(str.replace("{player}", entity.name()));
     }
 
     /**
@@ -1158,7 +1180,7 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String gAuthenticate() {
+    public String gAuthRequired() {
         return parser.parse(yaml.getString("2FaAuthenticate", "&5&oPlease, use /2fa to start playing"));
     }
 
@@ -1622,7 +1644,7 @@ public class CPluginMessages implements Messages {
     /**
      * Get a plugin message
      *
-     * @param name
+     * @param name message replace
      * @return plugin message
      */
     @Override
@@ -1645,7 +1667,7 @@ public class CPluginMessages implements Messages {
     /**
      * Get a plugin message
      *
-     * @param name
+     * @param name message replace
      * @return plugin message
      */
     @Override

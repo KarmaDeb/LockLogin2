@@ -51,6 +51,20 @@ public interface UserAccount {
     void updateName(final String name);
 
     /**
+     * Get the account email address
+     *
+     * @return the account email address
+     */
+    String email();
+
+    /**
+     * Update the account email address
+     *
+     * @param email the account email address
+     */
+    void updateEmail(final String email);
+
+    /**
      * Get the account unique ID
      *
      * @return the account unique ID

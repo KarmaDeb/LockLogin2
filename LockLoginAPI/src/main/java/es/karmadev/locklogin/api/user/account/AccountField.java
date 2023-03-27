@@ -5,9 +5,13 @@ package es.karmadev.locklogin.api.user.account;
  */
 public enum AccountField {
     /**
-     * A field containing the user name
+     * A field containing the username
      */
     USERNAME,
+    /**
+     * A field containing the user email address
+     */
+    EMAIL,
     /**
      * A field containing the user unique id
      */

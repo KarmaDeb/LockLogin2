@@ -32,6 +32,26 @@ public final class LockLoginPermission {
     public final static PermissionObject PERMISSION_RELOAD = DummyPermission.of("locklogin.reload", false);
 
     /**
+     * LockLogin join in unauthorized server permission
+     * For example, a logged player trying to join the auth server. Without
+     * this permission, it will be impossible for him
+     * <p>locklogin.join.unauthorized</p>
+     */
+    public final static PermissionObject PERMISSION_JOIN_UNAUTHORIZED = DummyPermission.of("locklogin.join.unauthorized", false);
+
+    /**
+     * LockLogin leave the server silently permission
+     * <p>locklogin.join.silent</p>
+     */
+    public final static PermissionObject PERMISSION_JOIN_SILENT = DummyPermission.of("locklogin.join.silent", false);
+
+    /**
+     * LockLogin leave the server silently permission
+     * <p>locklogin.leave.silent</p>
+     */
+    public final static PermissionObject PERMISSION_EXIT_SILENT = DummyPermission.of("locklogin.leave.silent", false);
+
+    /**
      * LockLogin location management permission
      * <p>locklogin.location</p>
      */
@@ -156,14 +176,6 @@ public final class LockLoginPermission {
      * <p>locklogin.module.list</p>
      */
     public final static PermissionObject PERMISSION_MODULE_LIST = DummyPermission.of("locklogin.module.list", false);
-
-    /**
-     * LockLogin join in unauthorized server permission
-     * For example, a logged player trying to join the auth server. Without
-     * this permission, it will be impossible for him
-     * <p>locklogin.join.unauthorized</p>
-     */
-    public final static PermissionObject PERMISSION_JOIN_UNAUTHORIZED = DummyPermission.of("locklogin.join.unauthorized", false);
 
     /**
      * LockLogin unsafe password permission

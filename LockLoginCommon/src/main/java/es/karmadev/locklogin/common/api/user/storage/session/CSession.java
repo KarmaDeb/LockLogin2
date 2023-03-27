@@ -20,6 +20,8 @@ public class CSession implements UserSession {
     private final int session_id;
     private final DataDriver pool;
 
+    private boolean valid = false;
+
     private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
 
     /**
@@ -61,7 +63,7 @@ public class CSession implements UserSession {
      */
     @Override
     public void validate() {
-
+        valid = true;
     }
 
     /**
@@ -69,7 +71,7 @@ public class CSession implements UserSession {
      */
     @Override
     public void invalidate() {
-
+        valid = false;
     }
 
     /**
@@ -79,7 +81,7 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isValid() {
-        return false;
+        return valid;
     }
 
     /**

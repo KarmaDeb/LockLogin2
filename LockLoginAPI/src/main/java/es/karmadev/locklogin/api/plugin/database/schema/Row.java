@@ -59,6 +59,10 @@ public enum Row {
     /**
      * LockLogin row
      */
+    EMAIL("email"),
+    /**
+     * LockLogin row
+     */
     ADDRESS("address"),
     /**
      * LockLogin row

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package es.karmadev.locklogin.spigot.premium.handler;
+package es.karmadev.locklogin.spigot.protocol.protocol.premium.handler;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
@@ -48,15 +48,15 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
-import es.karmadev.locklogin.spigot.premium.LoginSession;
-import es.karmadev.locklogin.spigot.premium.mojang.MojangEncryption;
-import es.karmadev.locklogin.spigot.premium.mojang.client.ClientKey;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
+import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
 import ml.karmaconfigs.api.bukkit.server.BukkitServer;
 import ml.karmaconfigs.api.bukkit.server.Version;
+import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
+import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
 import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.uuid.OKAResponse;
 import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDUtil;
 import org.bukkit.entity.Player;
 
 import javax.crypto.Cipher;
@@ -176,10 +176,15 @@ public final class EncryptionHandler implements Runnable {
                         UUID offline_id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + session.getUsername()).getBytes());
                         UUID online_uid = premium.onlineId(username);
                         if (online_uid == null) {
-                            OKAResponse oka_response = UUIDUtil.fetchOKA(username);
+                            /*OKAResponse oka_response = UUIDUtil.fetchOKA(username);
                             online_uid = oka_response.getId(UUIDType.ONLINE);
 
-                            premium.saveId(username, online_uid);
+                            premium.saveId(username, online_uid);*/
+                            OKARequest request = MineAPI.fetchAndWait(username);
+                            online_uid = request.getUUID(UUIDType.ONLINE);
+                            if (online_uid != null) {
+                                premium.saveId(username, online_uid);
+                            }
                         }
 
                         LocalNetworkClient offline = CurrentPlugin.getPlugin().network().getOfflinePlayer(offline_id);

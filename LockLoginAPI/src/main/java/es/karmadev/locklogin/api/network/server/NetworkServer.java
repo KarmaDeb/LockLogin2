@@ -1,7 +1,9 @@
 package es.karmadev.locklogin.api.network.server;
 
 import es.karmadev.locklogin.api.network.NetworkEntity;
+import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 
 import java.net.InetSocketAddress;
@@ -11,7 +13,7 @@ import java.util.Collection;
  * Network server
  */
 @SuppressWarnings("unused")
-public interface NetworkServer extends NetworkEntity {
+public interface NetworkServer extends NetworkEntity, TextContainer {
 
     /**
      * Get the server id
@@ -43,12 +45,12 @@ public interface NetworkServer extends NetworkEntity {
     Collection<NetworkClient> connected();
 
     /**
-     * Get all the online clients that
+     * Get all the offline clients that
      * are connected in this server
      *
-     * @return all the connected clients
+     * @return all the offline clients
      */
-    Collection<NetworkClient> onlineClients();
+    Collection<LocalNetworkClient> offlineClients();
 
     /**
      * Get the server packet queue

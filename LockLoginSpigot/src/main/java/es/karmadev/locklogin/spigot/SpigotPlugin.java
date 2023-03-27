@@ -10,18 +10,22 @@ import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.protection.type.*;
+import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import ml.karmaconfigs.api.bukkit.KarmaPlugin;
 import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.KarmaAPI;
 import ml.karmaconfigs.api.common.utils.enums.Level;
 import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -32,9 +36,13 @@ public class SpigotPlugin extends KarmaPlugin {
 
     LockLoginSpigot spigot;
 
-    public SpigotPlugin() {
+    public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException {
         super(false);
-        spigot = new LockLoginSpigot(this);
+        Field commandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+        commandMap.setAccessible(true);
+        CommandMap map = (CommandMap) commandMap.get(Bukkit.getServer());
+
+        spigot = new LockLoginSpigot(this, map);
     }
 
     /**
@@ -141,7 +149,7 @@ public class SpigotPlugin extends KarmaPlugin {
                         } else {
                             if (offlinePlayer.isOnline()) {
                                 Player player = offlinePlayer.getPlayer();
-                                return player != null && player.hasPermission(permissionObject.node());
+                                return player != null && player.hasPermission(permissionObject);
                             }
                         }
 
@@ -175,6 +183,17 @@ public class SpigotPlugin extends KarmaPlugin {
             long end = System.currentTimeMillis();
             long diff = end - start;
             console().send("LockLogin initialized in {0}ms ({1} seconds)", Level.INFO, diff, TimeUnit.MILLISECONDS.toSeconds(diff));
+
+            spigot.getSessionFactory(false).getSessions().forEach((session) -> {
+                session.invalidate();
+                session.captchaLogin(false);
+                session.login(false);
+                session.pinLogin(false);
+                session._2faLogin(false);
+            });
+
+            ProtocolAssistant.registerListener();
+            spigot.runtime().booted = true;
         } else {
             console().send("LockLogin won't initialize due an internal error. Please report this to discord {0}", Level.WARNING, "https://discord.gg/77p8KZNfqE");
         }

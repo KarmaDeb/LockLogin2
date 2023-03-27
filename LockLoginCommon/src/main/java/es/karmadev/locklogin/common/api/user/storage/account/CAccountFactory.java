@@ -110,8 +110,6 @@ public class CAccountFactory implements AccountFactory<CAccount> {
             connection = driver.retrieve();
             statement = connection.createStatement();
 
-            long now = Instant.now().toEpochMilli();
-
             try (ResultSet fetch_result = statement.executeQuery("SELECT `id`,`account_id` FROM `user` WHERE `account_id` NOT IN (" + not_in + ")")) {
                 while (fetch_result.next()) {
                     int account_id = fetch_result.getInt("account_id");

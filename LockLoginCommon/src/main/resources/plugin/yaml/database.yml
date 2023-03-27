@@ -105,6 +105,7 @@ Tables:
     Columns:
       id:         "id"
       name:       "name"
+      email:      "email"
       uuid:       "uuid"
       premium:    "premium_uuid"
       account:    "account_id"

@@ -3,6 +3,7 @@ package es.karmadev.locklogin.api.extension.manager;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
+import es.karmadev.locklogin.api.extension.command.error.CommandRuntimeException;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
 import java.util.function.Consumer;
@@ -50,8 +51,12 @@ public interface ModuleManager {
      *
      * @param issuer the entity command issuer
      * @param command the command
+     * @param arguments the command arguments
+     * @return if the command was able to be executed
+     *
+     * @throws CommandRuntimeException if the command fails to execute
      */
-    void executeCommand(final NetworkEntity issuer, final String command);
+    boolean executeCommand(final NetworkEntity issuer, final String command, final String... arguments) throws CommandRuntimeException;
 
     /**
      * Get the module commands

@@ -56,8 +56,8 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <locklogin.version.type>beta</locklogin.version.type>
-        <locklogin.version.letter>b</locklogin.version.letter>
+        <locklogin.version.type>snapshot</locklogin.version.type>
+        <locklogin.version.letter>a</locklogin.version.letter>
 
         <locklogin.update.id>wu</locklogin.update.id>
         <locklogin.update.name>WebUpdate</locklogin.update.name>
@@ -110,6 +110,7 @@
 
         <placeholder.api.version>2.10.9</placeholder.api.version>
         <protocol.lib.version>4.8.0</protocol.lib.version>
+        <packet.listener.version>3.9.10</packet.listener.version>
         <floodgate.version>2.2.0-SNAPSHOT</floodgate.version>
         <spartan.version>9.1</spartan.version>
 
@@ -175,6 +176,14 @@
                                     <relocation>
                                         <pattern>de.mkammerer.argon2</pattern>
                                         <shadedPattern>es.karmadev.locklogin.shaded.argon2</shadedPattern>
+                                    </relocation>
+                                    <relocation>
+                                        <pattern>org.eclipse.angus.activation</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.mail.activation</shadedPattern>
+                                    </relocation>
+                                    <relocation>
+                                        <pattern>org.eclipse.angus.mail</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.mail.ler</shadedPattern>
                                     </relocation>
                                 </relocations>
                                 <minimizeJar>true</minimizeJar>
@@ -434,6 +443,12 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.inventivetalent.packetlistenerapi</groupId>
+                <artifactId>api</artifactId>
+                <version>3.9.10-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
                 <groupId>com.github.games647</groupId>
                 <artifactId>craftapi</artifactId>
                 <version>0.6</version>
@@ -450,6 +465,14 @@
                 <artifactId>SpartanAPI</artifactId>
                 <version>${spartan.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- Mailing service -->
+            <dependency>
+                <groupId>org.eclipse.angus</groupId>
+                <artifactId>angus-mail</artifactId>
+                <version>2.0.1</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

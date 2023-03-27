@@ -125,4 +125,11 @@ public interface LocalNetworkClient extends NetworkEntity {
      * @param server the new previous server
      */
     void forcePreviousServer(final NetworkServer server);
+
+    /**
+     * Get if the client is op
+     *
+     * @return if the client has op
+     */
+    boolean isOp();
 }

@@ -13,3 +13,9 @@ softdepend:
   - PlaceholderAPI
   - ProtocolLib
   - floodgate
+
+commands:
+  register:
+    description: The principal command to create an account
+  login:
+    description: The principal command to authenticate an user

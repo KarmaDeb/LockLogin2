@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CCommandMap implements CommandRegistrar {
 
-    private final Map<String, ModuleCommand> commands = new ConcurrentHashMap<>();
+    public final Map<String, ModuleCommand> commands = new ConcurrentHashMap<>();
     private final CModuleManager manager;
 
     public CCommandMap(final CModuleManager manager) {
@@ -30,8 +30,10 @@ public class CCommandMap implements CommandRegistrar {
      * @param command the command
      */
     public void register(final Module module, final ModuleCommand command) {
-        String name = command.getName();
-        commands.put(module.name() + ":" + name, command);
+        if (manager.onCommandRegistered != null && manager.onCommandRegistered.apply(command)) {
+            String name = command.getName();
+            commands.put(module.name() + ":" + name, command);
+        }
     }
 
     /**
@@ -50,7 +52,8 @@ public class CCommandMap implements CommandRegistrar {
         }
 
         for (String key : remove) {
-            commands.remove(key);
+            ModuleCommand command = commands.remove(key);
+            if (manager.onCommandUnregistered != null) manager.onCommandUnregistered.accept(command);
         }
     }
 

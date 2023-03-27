@@ -104,25 +104,16 @@ public class JsonDependency implements LockLoginDependency {
         if (plugin) return null; //A plugin cannot be downloaded and injected, it must be loaded by the server itself
 
         JsonArray urls = object.get("download").getAsJsonArray();
-        if (urls.isEmpty()) return null; //No need to iterate over nothing
+        if (urls.size() == 0) return null; //No need to iterate over nothing
 
         for (JsonElement element : urls) {
             if (element.isJsonPrimitive()) {
                 JsonPrimitive primitive = element.getAsJsonPrimitive();
                 if (primitive.isString()) {
-                    String raw_url = primitive.getAsString();
-                    if (!ignored_hosts.contains(raw_url)) {
-                        String domain = URLUtils.getDomainName(raw_url);
-
-                        if (domain != null && URLUtils.exists("https://" + domain)) {
-                            try {
-                                return new URL(raw_url + object.get("id").getAsString() + ".jar");
-                            } catch (MalformedURLException ignored) {}
-                        } else {
-                            CurrentPlugin.getPlugin().info("Ignoring dependency host {0} because checks failed", (domain != null ? domain : raw_url));
-                            ignored_hosts.add(raw_url);
-                        }
-                    }
+                    String raw_url = primitive.getAsString() + object.get("id").getAsString() + ".jar";
+                    try {
+                        return new URL(raw_url);
+                    } catch (MalformedURLException ignored) {}
                 }
             }
         }
