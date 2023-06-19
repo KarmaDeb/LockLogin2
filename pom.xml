@@ -94,7 +94,7 @@
         <log4j.web.version>2.19.0</log4j.web.version>
         <log4j.web.test>org.apache.logging.log4j.web.WebLookup</log4j.web.test>
 
-        <google.guava.version>31.1-jre</google.guava.version>
+        <google.guava.version>32.0.0-jre</google.guava.version>
         <google.guava.test>com.google.common.hash.Hashing</google.guava.test>
         <google.auth.version>1.5.0</google.auth.version>
         <google.auth.test>com.warrenstrange.googleauth.GoogleAuthenticator</google.auth.test>
