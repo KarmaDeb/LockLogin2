@@ -22,12 +22,12 @@
         </dependency>
 
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Common</artifactId>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
         <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Bukkit</artifactId>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Spigot</artifactId>
         </dependency>
 
         <dependency>

@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.common.api.protection;
 
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
@@ -10,9 +12,6 @@ import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.string.random.RandomString;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,14 +29,14 @@ public class CPluginHasher implements LockLoginHasher {
      */
     @Override
     public void registerMethod(final PluginHash hash) throws UnnamedHashException {
-        if (hash == null || StringUtils.isNullOrEmpty(hash.name())) throw new UnnamedHashException();
+        if (hash == null || ObjectUtils.isNullOrEmpty(hash.name())) throw new UnnamedHashException();
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         if (hashes.stream().noneMatch((stored) -> stored.name().equals(hash.name()))) {
             plugin.info("Validating hash {0}", hash.name());
             plugin.logInfo("Preparing to register hash {0}", hash.name());
 
-            String test = new RandomString().create() + TokenGenerator.generateLiteral();
+            String test = StringUtils.generateString();
             try {
                 HashResult result = hash.hash(test);
                 if (result == null) {

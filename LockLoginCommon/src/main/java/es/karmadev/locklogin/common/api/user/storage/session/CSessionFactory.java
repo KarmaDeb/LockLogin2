@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

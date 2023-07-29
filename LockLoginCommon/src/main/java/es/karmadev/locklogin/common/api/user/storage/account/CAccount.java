@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.common.api.user.storage.account;
 
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
@@ -11,7 +13,6 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -62,7 +63,7 @@ public class CAccount implements UserAccount {
 
         String hash_value = StringUtils.serialize(result);
 
-        if (!StringUtils.areNullOrEmpty(field, table) && use_id > -1) {
+        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
             Connection connection = null;
             Statement statement = null;
             try {
@@ -100,7 +101,7 @@ public class CAccount implements UserAccount {
             target = "2fa_token";
         }
 
-        if (!StringUtils.areNullOrEmpty(field, table) && use_id > -1) {
+        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
             Connection connection = null;
             Statement statement = null;
             try {
@@ -138,7 +139,7 @@ public class CAccount implements UserAccount {
             target = "2fa_token";
         }
 
-        if (!StringUtils.areNullOrEmpty(field, table) && use_id > -1) {
+        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
             Connection connection = null;
             Statement statement = null;
             try {
@@ -236,6 +237,26 @@ public class CAccount implements UserAccount {
     }
 
     /**
+     * Get the account email address
+     *
+     * @return the account email address
+     */
+    @Override
+    public String email() {
+        return null;
+    }
+
+    /**
+     * Update the account email address
+     *
+     * @param email the account email address
+     */
+    @Override
+    public void updateEmail(final String email) {
+
+    }
+
+    /**
      * Get the account unique ID
      *
      * @return the account unique ID
@@ -296,7 +317,7 @@ public class CAccount implements UserAccount {
             try (ResultSet result = statement.executeQuery("SELECT `password` FROM `account` WHERE `id` = " + account_id)) {
                 if (result.next()) {
                     String password = result.getString("password");
-                    return StringUtils.loadUnsafe(password);
+                    return StringUtils.loadAndCast(password);
                 }
             }
         } catch (SQLException ex) {
@@ -351,7 +372,7 @@ public class CAccount implements UserAccount {
             try (ResultSet result = statement.executeQuery("SELECT `pin` FROM `account` WHERE `id` = " + account_id)) {
                 if (result.next()) {
                     String pin = result.getString("pin");
-                    return StringUtils.loadUnsafe(pin);
+                    return StringUtils.loadAndCast(pin);
                 }
             }
         } catch (SQLException ex) {
@@ -452,7 +473,7 @@ public class CAccount implements UserAccount {
             try (ResultSet result = statement.executeQuery("SELECT `panic` FROM `account` WHERE `id` = " + account_id)) {
                 if (result.next()) {
                     String panic = result.getString("panic");
-                    return StringUtils.loadUnsafe(panic);
+                    return StringUtils.loadAndCast(panic);
                 }
             }
         } catch (SQLException ex) {

@@ -1,8 +1,8 @@
 package es.karmadev.locklogin.common.api.client;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -31,7 +31,7 @@ public final class CPremiumDataStore implements PremiumDataStore {
                     String name = result.getString("name");
                     String uniqueId = result.getString("uuid");
 
-                    if (!StringUtils.areNullOrEmpty(name, uniqueId)) {
+                    if (!ObjectUtils.areNullOrEmpty(false, name, uniqueId)) {
                         UUID id = UUID.fromString(uniqueId);
                         cached.put(name, id);
                     }
@@ -62,7 +62,7 @@ public final class CPremiumDataStore implements PremiumDataStore {
             try (ResultSet result = statement.executeQuery("SELECT `uuid` FROM `premium` WHERE `name` = '" + name + "'")) {
                 if (result.next()) {
                     String uniqueId = result.getString("uuid");
-                    if (!StringUtils.isNullOrEmpty(uniqueId)) {
+                    if (!ObjectUtils.isNullOrEmpty(uniqueId)) {
                         cache = UUID.fromString(uniqueId);
                         cached.put(name, cache);
                     }

@@ -34,8 +34,9 @@ import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.*;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.model.skin.Textures;
+import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.spigot.server.SpigotServer;
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
@@ -43,12 +44,8 @@ import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.Encryption
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.LoginHandler;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.bukkit.server.BukkitServer;
-import ml.karmaconfigs.api.bukkit.server.Version;
-import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
@@ -115,7 +112,7 @@ public class ProtocolListener extends PacketAdapter {
             String name = getUsername(container);
 
             Optional<ClientKey> client = Optional.empty();
-            if (BukkitServer.isUnder(Version.v1_19_3)) {
+            if (SpigotServer.isUnder(SpigotServer.v1_19_3)) {
                 try {
                     Optional<Optional<WrappedProfilePublicKey.WrappedProfileKeyData>> profile = container.getOptionals(BukkitConverters.getWrappedPublicKeyDataConverter()).optionRead(0);
                     client = profile.flatMap(Function.identity()).flatMap((data) -> {
@@ -129,7 +126,7 @@ public class ProtocolListener extends PacketAdapter {
                     if (clientId.isPresent() && client.isPresent()) {
                         ClientKey key = client.get();
                         if (!MojangEncryption.isValidClient(key, key.expiration(), clientId.get())) {
-                            player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
+                            player.kickPlayer(ConsoleColor.parse(messages.premiumFailSession()));
                             return;
                         }
                     }
@@ -152,10 +149,10 @@ public class ProtocolListener extends PacketAdapter {
                     Runnable runnable = new EncryptionHandler(event, player, session, sharedSecret, keyPair);
                     Bukkit.getServer().getScheduler().runTaskAsynchronously(plugin.plugin(), runnable);
                 } else {
-                    player.kickPlayer(StringUtils.toColor(messages.premiumFailEncryption()));
+                    player.kickPlayer(ConsoleColor.parse(messages.premiumFailEncryption()));
                 }
             } else {
-                player.kickPlayer(StringUtils.toColor(messages.premiumFailPrecocious()));
+                player.kickPlayer(ConsoleColor.parse(messages.premiumFailPrecocious()));
             }
         }
     }
@@ -165,8 +162,7 @@ public class ProtocolListener extends PacketAdapter {
                                 ClientKey clientPublicKey, byte[] expectedToken) {
         if (keyPair == null) return false;
 
-        if (MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 0))
-                && !MinecraftVersion.atOrAbove(new MinecraftVersion(1, 19, 3))) {
+        if (SpigotServer.isBetween(SpigotServer.v1_19_X, SpigotServer.v1_19_3)) {
             Either<byte[], ?> either = packet.getSpecificModifier(Either.class).read(0);
             if (clientPublicKey == null) {
                 Optional<byte[]> left = either.left();

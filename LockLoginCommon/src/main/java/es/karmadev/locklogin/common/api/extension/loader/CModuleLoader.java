@@ -1,5 +1,9 @@
 package es.karmadev.locklogin.common.api.extension.loader;
 
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
@@ -10,9 +14,6 @@ import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 import es.karmadev.locklogin.common.api.extension.command.CModCommand;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class CModuleLoader implements ModuleLoader {
             if (disabled != null) {
                 loadedModules.add(disabled);
 
-                KarmaYamlManager module_yaml = disabled.getModuleYML();
+                YamlFileHandler module_yaml = disabled.getModuleYML();
                 mapCommands(module_yaml, module);
 
                 module.onLoad();
@@ -75,13 +76,13 @@ public class CModuleLoader implements ModuleLoader {
 
         try (JarFile jar = new JarFile(modFile)) {
             JarEntry entry = jar.getJarEntry("module.yml");
-            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.getPrettyPath(file));
+            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.pathString(file));
 
             try (InputStream stream = jar.getInputStream(entry)) {
-                KarmaYamlManager module_yaml = new KarmaYamlManager(stream);
+                YamlFileHandler module_yaml = YamlHandler.load(stream);
                 String clazz = module_yaml.getString("main", null);
 
-                if (!StringUtils.isNullOrEmpty(clazz)) {
+                if (!ObjectUtils.isNullOrEmpty(clazz)) {
                     runtime.dependencyManager().appendExternal(file);
 
                     try {
@@ -98,12 +99,12 @@ public class CModuleLoader implements ModuleLoader {
 
                         module.onLoad();
                     } catch (Exception ex) {
-                        plugin.log(ex, "An unexpected error occurred while fetching a module from {0}", PathUtilities.getPrettyPath(file));
+                        plugin.log(ex, "An unexpected error occurred while fetching a module from {0}", PathUtilities.pathString(file));
                     }
                 }
             }
         } catch (IOException ex) {
-            plugin.log(ex, "Failed to read module from file: {0}", PathUtilities.getPrettyPath(file));
+            plugin.log(ex, "Failed to read module from file: {0}", PathUtilities.pathString(file));
         }
 
         return null;
@@ -124,13 +125,13 @@ public class CModuleLoader implements ModuleLoader {
 
         try (JarFile jar = new JarFile(modFile)) {
             JarEntry entry = jar.getJarEntry("module.yml");
-            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.getPrettyPath(file));
+            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.pathString(file));
 
             try (InputStream stream = jar.getInputStream(entry)) {
-                KarmaYamlManager module_yaml = new KarmaYamlManager(stream);
+                YamlFileHandler module_yaml = YamlHandler.load(stream);
                 String clazz = module_yaml.getString("main", null);
 
-                if (!StringUtils.isNullOrEmpty(clazz)) {
+                if (!ObjectUtils.isNullOrEmpty(clazz)) {
                     URL[] urls = new URL[]{
                             modFile.toURI().toURL(),
                             runtime.file().toUri().toURL()
@@ -140,18 +141,18 @@ public class CModuleLoader implements ModuleLoader {
                             Class<? extends Module> main = loader.loadClass(clazz).asSubclass(Module.class);
 
                             Class<Module> moduleClass = Module.class;
-                            Method init = moduleClass.getDeclaredMethod("initialize", File.class, KarmaYamlManager.class, Class.class);
+                            Method init = moduleClass.getDeclaredMethod("initialize", File.class, YamlFileHandler.class, Class.class);
                             init.setAccessible(true);
 
                             return (Module) init.invoke(moduleClass, modFile, module_yaml, main);
                         } catch (Exception ex) {
-                            plugin.log(ex, "An unexpected error occurred while fetching a module from {0}", PathUtilities.getPrettyPath(file));
+                            plugin.log(ex, "An unexpected error occurred while fetching a module from {0}", PathUtilities.pathString(file));
                         }
                     }
                 }
             }
         } catch (IOException ex) {
-            plugin.log(ex, "Failed to read module from file: {0}", PathUtilities.getPrettyPath(file));
+            plugin.log(ex, "Failed to read module from file: {0}", PathUtilities.pathString(file));
         }
 
         return null;
@@ -198,7 +199,7 @@ public class CModuleLoader implements ModuleLoader {
         for (CModData data : loadedModules) {
             Module module = data.getModule();
 
-            if (module.name().equals(name)) {
+            if (module.sourceName().equals(name)) {
                 match = module;
                 break;
             }
@@ -258,7 +259,7 @@ public class CModuleLoader implements ModuleLoader {
         Module match = null;
 
         for (Module data : unloadedModulesData.keySet()) {
-            if (data.name().equals(name)) {
+            if (data.sourceName().equals(name)) {
                 match = data;
                 break;
             }
@@ -279,7 +280,7 @@ public class CModuleLoader implements ModuleLoader {
         Module match = null;
 
         for (Module data : unloadedModulesData.keySet()) {
-            if (data.getSourceFile().equals(file.toFile())) {
+            if (data.runtime().getFile().equals(file)) {
                 match = data;
                 break;
             }
@@ -331,13 +332,13 @@ public class CModuleLoader implements ModuleLoader {
      * @param yaml the module internal yaml file
      * @param module the module
      */
-    private void mapCommands(final KarmaYamlManager yaml, final Module module) {
+    private void mapCommands(final YamlFileHandler yaml, final Module module) {
         if (yaml.isSet("commands")) {
-            KarmaYamlManager command_section = yaml.getSection("commands");
-            for (String key : command_section.getKeySet()) {
-                KarmaYamlManager command_data = command_section.getSection(key);
+            YamlFileHandler command_section = yaml.getSection("commands");
+            for (String key : command_section.getKeys(false)) {
+                YamlFileHandler command_data = command_section.getSection(key);
                 String description = command_data.getString("description", "A module command");
-                List<String> aliases = command_data.getStringList("aliases");
+                List<String> aliases = command_data.getList("aliases");
 
                 ModuleCommand command = new CModCommand(module, key, description, aliases.toArray(new String[0]));
                 manager.commands().register(module, command);

@@ -1,11 +1,11 @@
 package es.karmadev.locklogin.common.api.plugin.service.backup;
 
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.security.backup.store.BackupStorage;
 import es.karmadev.locklogin.api.security.backup.store.UserBackup;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -56,7 +56,7 @@ public class CBackupStorage implements BackupStorage {
      */
     @Override
     public boolean destroy() {
-        return PathUtilities.destroyWithResults(file);
+        return PathUtilities.destroy(file);
     }
 
     public static BackupStorage forAccounts(final String id, final List<UserBackup> backups, final Instant creation, final Path file) {

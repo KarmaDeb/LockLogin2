@@ -1,14 +1,12 @@
 package es.karmadev.locklogin.api.plugin.database;
 
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.web.WebDownloader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -96,44 +94,51 @@ public interface DataDriver {
             long start = System.currentTimeMillis();
 
             if (!Files.exists(driver_directory)) {
-                ResourceDownloader downloader = ResourceDownloader.toCache((KarmaSource) plugin.plugin(), "driver.zip", driver.getDownloadURL(), "cache");
-                downloader.download();
+                try {
+                    WebDownloader downloader = new WebDownloader(driver.getDownloadURL());
+                    Path destination = plugin.workingDirectory().resolve("cache").resolve("driver.zip");
+                    downloader.download(destination);
 
-                plugin.logInfo("Successfully downloaded driver {0}", driver.name());
+                    /*ResourceDownloader downloader = ResourceDownloader.toCache((KarmaSource) plugin.plugin(), "driver.zip", driver.getDownloadURL(), "cache");
+                    downloader.download();*/
 
-                File destination = downloader.getDestFile();
-                try (ZipFile zip = new ZipFile(destination)) {
-                    Enumeration<? extends ZipEntry> entries = zip.entries();
+                    plugin.logInfo("Successfully downloaded driver {0}", driver.name());
 
-                    do {
-                        ZipEntry element = entries.nextElement();
-                        String name = element.getName();
+                    try (ZipFile zip = new ZipFile(destination.toFile())) {
+                        Enumeration<? extends ZipEntry> entries = zip.entries();
 
-                        if (driver.includes(name)) {
-                            plugin.info("Loading driver {0} dependency {1}", driver.name(), name.replace(".jar", ""));
-                            plugin.logInfo("Loaded driver {0} file {1}", driver.name(), name);
+                        do {
+                            ZipEntry element = entries.nextElement();
+                            String name = element.getName();
 
-                            InputStream stream = zip.getInputStream(element);
+                            if (driver.includes(name)) {
+                                plugin.info("Loading driver {0} dependency {1}", driver.name(), name.replace(".jar", ""));
+                                plugin.logInfo("Loaded driver {0} file {1}", driver.name(), name);
 
-                            Path dependFile = driver_directory.resolve(name);
-                            PathUtilities.create(dependFile);
-                            Files.copy(stream, dependFile, StandardCopyOption.REPLACE_EXISTING);
+                                InputStream stream = zip.getInputStream(element);
 
-                            runtime.dependencyManager().appendExternal(dependFile);
+                                Path dependFile = driver_directory.resolve(name);
+                                PathUtilities.createPath(dependFile);
+                                Files.copy(stream, dependFile, StandardCopyOption.REPLACE_EXISTING);
+
+                                runtime.dependencyManager().appendExternal(dependFile);
+                            }
+                        } while (entries.hasMoreElements());
+                    } catch (IOException err) {
+                        plugin.log(err, "Failed to load {0} zip file driver from {1}", driver.name(), driver.getDownloadURL());
+                        status = false;
+                    } finally {
+                        long end = System.currentTimeMillis();
+                        long elapsed = end - start;
+
+                        if (status) {
+                            plugin.info("Finished driver testing after {0}ms", elapsed);
+                        } else {
+                            plugin.err("Failed driver testing after {0}ms", elapsed);
                         }
-                    } while (entries.hasMoreElements());
-                } catch (IOException err) {
-                    plugin.log(err, "Failed to load {0} zip file driver from {1}", driver.name(), driver.getDownloadURL());
-                    status = false;
-                } finally {
-                    long end = System.currentTimeMillis();
-                    long elapsed = end - start;
-
-                    if (status) {
-                        plugin.info("Finished driver testing after {0}ms", elapsed);
-                    } else {
-                        plugin.err("Failed driver testing after {0}ms", elapsed);
                     }
+                } catch (Throwable ex2) {
+                    throw new RuntimeException(ex2);
                 }
             } else {
                 try(Stream<Path> files = Files.list(driver_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {

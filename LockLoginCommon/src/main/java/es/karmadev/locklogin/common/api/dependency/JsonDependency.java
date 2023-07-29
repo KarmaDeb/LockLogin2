@@ -8,7 +8,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import lombok.RequiredArgsConstructor;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;

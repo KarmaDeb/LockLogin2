@@ -1,15 +1,18 @@
 package es.karmadev.locklogin.api.plugin.database.query;
 
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,7 +61,7 @@ public final class QueryBuilder {
     /**
      * Table and row translator
      */
-    private final KarmaYamlManager tablesConfiguration;
+    private final YamlFileHandler tablesConfiguration;
 
     /**
      * Initialize the query builder
@@ -69,23 +72,26 @@ public final class QueryBuilder {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         Path tmpDatabaseConfig = Paths.get("database.yml");
-        KarmaYamlManager tmp;
+        YamlFileHandler tmp;
         if (Files.exists(tmpDatabaseConfig)) {
-            tmp = new KarmaYamlManager(tmpDatabaseConfig);
+            try {
+                tmp = YamlHandler.load(tmpDatabaseConfig);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         } else {
-            tmp = new KarmaYamlManager("", false);
+            tmp = YamlHandler.load("");
         }
 
         if (plugin != null) {
             Path database_config = plugin.workingDirectory().resolve("database.yml");
-            FileCopy copy = new FileCopy(QueryBuilder.class, "plugin/yaml/database.yml");
-            try {
-                copy.copy(database_config);
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
+            PathUtilities.copy(plugin, "plugin/yaml/database.yml", database_config);
 
-            tmp = new KarmaYamlManager(database_config);
+            try {
+                tmp = YamlHandler.load(database_config);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         tablesConfiguration = tmp;
@@ -118,7 +124,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder createTable(final boolean if_not_exists, final Table table) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "create";
 
         this.table = table;
@@ -137,7 +143,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder insert(final Table table, final Row... rows) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "insert";
 
         this.table = table;
@@ -163,7 +169,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder update(final Table table) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "update";
 
         this.table = table;
@@ -181,7 +187,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder select(final Table table, final Row... rows) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "fetch";
 
         this.table = table;
@@ -207,7 +213,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder select(final Table table, final JoinRow... rows) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "fetch";
         joinSuitable = true;
 
@@ -238,7 +244,7 @@ public final class QueryBuilder {
      * @return the query
      */
     public QueryBuilder alter(final Table table) {
-        if (!StringUtils.isNullOrEmpty(queryType)) return this;
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
         queryType = "alter";
 
         this.table = table;

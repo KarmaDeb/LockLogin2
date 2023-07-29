@@ -2,9 +2,9 @@ package es.karmadev.locklogin.common.api.sql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -29,7 +29,7 @@ public final class SQLiteDriver {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         Path sql_file = plugin.workingDirectory().resolve("data").resolve("accounts.db");
-        PathUtilities.create(sql_file);
+        PathUtilities.createPath(sql_file);
 
         HikariConfig config = new HikariConfig();
         config.setPoolName("locklogin");

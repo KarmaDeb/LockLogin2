@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.common.api.protection.type;
 
 import com.google.common.hash.Hashing;
+import es.karmadev.api.strings.StringOptions;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -12,9 +14,6 @@ import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.CHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
-import ml.karmaconfigs.api.common.string.random.RandomString;
-import ml.karmaconfigs.api.common.string.text.TextContent;
-import ml.karmaconfigs.api.common.string.text.TextType;
 
 import java.nio.charset.StandardCharsets;
 
@@ -31,12 +30,8 @@ public class SHA256Hash extends PluginHash {
     }
 
     private String hashInput(final String password) {
-        String random_salt = new RandomString(RandomString.createBuilder().
-                withSize(64)
-                .withContent(TextContent.ONLY_LETTERS)
-                .withType(TextType.ALL_UPPER)).create();
-
-        return "$SHA256$" + random_salt + "$" + Hashing.sha256().hashString(password, StandardCharsets.UTF_8);
+        String randomSalt = StringUtils.generateString(64, StringOptions.UPPERCASE);
+        return "$SHA256$" + randomSalt + "$" + Hashing.sha256().hashString(password, StandardCharsets.UTF_8);
     }
 
     private boolean auth(final String password, final String token) {

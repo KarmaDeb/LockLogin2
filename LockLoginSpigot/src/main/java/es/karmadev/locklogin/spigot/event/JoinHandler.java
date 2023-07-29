@@ -1,5 +1,14 @@
 package es.karmadev.locklogin.spigot.event;
 
+import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
+import es.karmadev.api.spigot.reflection.title.SpigotTitle;
+import es.karmadev.api.strings.ListSpacer;
+import es.karmadev.api.strings.StringUtils;
+import es.karmadev.api.web.minecraft.MineAPI;
+import es.karmadev.api.web.minecraft.UUIDType;
+import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
@@ -25,17 +34,6 @@ import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.util.PlayerPool;
-import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
-import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
-import ml.karmaconfigs.api.common.string.ListTransformation;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.string.random.OptionsBuilder;
-import ml.karmaconfigs.api.common.string.random.RandomString;
-import ml.karmaconfigs.api.common.string.text.TextContent;
-import ml.karmaconfigs.api.common.string.text.TextType;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -70,7 +68,7 @@ public class JoinHandler implements Listener {
                     "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
-    private final PlayerPool playerKickPool = new PlayerPool((reason, player) -> player.kickPlayer(StringUtils.toColor(reason)));
+    private final PlayerPool playerKickPool = new PlayerPool((reason, player) -> player.kickPlayer(ConsoleColor.parse(reason)));
 
     public JoinHandler() {
         playerKickPool.schedule();
@@ -79,11 +77,11 @@ public class JoinHandler implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPreLogin(AsyncPlayerPreLoginEvent e) {
         if (plugin.runtime().booting()) {
-            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, StringUtils.toColor("&cThe server is booting!"));
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConsoleColor.parse("&cThe server is booting!"));
             return;
         }
 
-        plugin.async().queue("pre_process_player", () -> {
+        plugin.plugin().scheduler("async").schedule(() -> {
             String name = e.getName();
             PremiumDataStore premium = CurrentPlugin.getPlugin().premiumStore();
 
@@ -116,7 +114,7 @@ public class JoinHandler implements Listener {
                 CaptchaConfiguration settings = configuration.captcha();
                 if (settings.enable()) {
                     int size = settings.length();
-                    TextContent content = TextContent.ONLY_NUMBERS;
+                    /*TextContent content = TextContent.ONLY_NUMBERS;
                     if (settings.letters()) {
                         content = TextContent.NUMBERS_AND_LETTERS;
                     }
@@ -125,12 +123,15 @@ public class JoinHandler implements Listener {
                             .withSize(size)
                             .withType(TextType.RANDOM_SIZE)
                             .withContent(content);
-                    RandomString string = new RandomString(rBuilder);
+                    RandomString string = new RandomString(rBuilder);*/
 
-                    String captcha = string.create();
+                    //int random = new Random().nextInt(32);
+                    String captcha = StringUtils.generateString(size);
+
+                    //String captcha = string.create();
                     if (settings.strikethrough()) {
                         if (settings.randomStrike()) {
-                            String last_color = StringUtils.getLastColor(captcha);
+                            String last_color = ConsoleColor.lastColor(captcha);
                             StringBuilder builder = new StringBuilder();
 
                             for (int i = 0; i < captcha.length(); i++) {
@@ -269,7 +270,7 @@ public class JoinHandler implements Listener {
 
                             if (deny) {
                                 //NVP = Name Validator Protector
-                                plugin.logWarn("[NVP] Denied connection from {0} because its name was not valid ({1})", name, StringUtils.stripColor(validator.invalidCharacters()));
+                                plugin.logWarn("[NVP] Denied connection from {0} because its name was not valid ({1})", name, ConsoleColor.strip(validator.invalidCharacters()));
                                 playerKickPool.add(use_uid, messages.illegalName(validator.invalidCharacters()));
                                 return;
                             }
@@ -304,7 +305,7 @@ public class JoinHandler implements Listener {
         String message = e.getJoinMessage();
         e.setJoinMessage("");
 
-        plugin.async().queue("uuid_attachment", () -> {
+        plugin.plugin().scheduler("async").schedule(() -> {
             UUID id = player.getUniqueId();
             if (uuid_translator.containsKey(id)) {
                 id = uuid_translator.getOrDefault(id, null);
@@ -315,25 +316,25 @@ public class JoinHandler implements Listener {
             COnlineClient online = new COnlineClient(offline.id(), plugin.driver(), null)
                     .onMessageRequest((msg) -> {
                         if (!player.isOnline()) return;
-                        player.sendMessage(StringUtils.toColor(msg));
+                        player.sendMessage(ConsoleColor.parse(msg));
                     })
                     .onActionBarRequest((msg) -> {
                         if (!player.isOnline()) return;
 
-                        BarMessage bar = new BarMessage(player, msg);
-                        bar.send(false);
+                        SpigotActionbar bar = new SpigotActionbar(msg);
+                        bar.send(player);
                     })
                     .onTitleRequest((msg) -> {
                         if (!player.isOnline()) return;
 
-                        TitleMessage title = new TitleMessage(player, msg.title(), msg.subtitle());
-                        title.send(msg.fadeIn(), msg.show(), msg.fadeOut());
+                        SpigotTitle title = new SpigotTitle(msg.title(), msg.subtitle());
+                        title.send(player, msg.fadeIn(), msg.show(), msg.fadeOut());
                     })
                     .onKickRequest((msg) -> {
                         if (!player.isOnline()) return;
 
                         List<String> reasons = Arrays.asList(msg);
-                        String reason = StringUtils.listToString(StringUtils.toColor(reasons), ListTransformation.NEW_LINES);
+                        String reason = StringUtils.listToString(ConsoleColor.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE);
 
                         player.kickPlayer(reason);
                     })
@@ -365,15 +366,15 @@ public class JoinHandler implements Listener {
             }
 
             String customMessage = messages.join(online);
-            if (!StringUtils.isNullOrEmpty(customMessage)) {
-                Bukkit.broadcastMessage(StringUtils.toColor(message));
+            if (!ObjectUtils.isNullOrEmpty(customMessage)) {
+                Bukkit.broadcastMessage(ConsoleColor.parse(message));
             }
         });
     }
 
     private boolean invalidIP(final InetAddress address) {
         if (configuration.verifyIpAddress()) {
-            if (StringUtils.isNullOrEmpty(address)) {
+            if (ObjectUtils.isNullOrEmpty(address)) {
                 return true;
             }
 

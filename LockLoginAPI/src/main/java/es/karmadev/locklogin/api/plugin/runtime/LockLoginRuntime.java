@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.plugin.runtime;
 
-import ml.karmaconfigs.api.bukkit.server.BukkitServer;
+import es.karmadev.api.spigot.server.SpigotServer;
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -91,7 +91,7 @@ public abstract class LockLoginRuntime {
 
             return Platform.BUNGEE.version(version);
         } catch (Throwable ex) {
-            return Platform.BUKKIT.version(BukkitServer.getFullVersion());
+            return Platform.BUKKIT.version(SpigotServer.getVersion().toString());
         }
     }
 }

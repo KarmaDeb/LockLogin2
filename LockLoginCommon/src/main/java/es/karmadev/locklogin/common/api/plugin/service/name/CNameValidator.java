@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.plugin.service.name;
 
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;

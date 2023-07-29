@@ -1,5 +1,8 @@
 package es.karmadev.locklogin.common.api.extension;
 
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.ListSpacer;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
@@ -17,7 +20,6 @@ import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -76,7 +78,7 @@ public class CModuleManager implements ModuleManager {
                                 method.invoke(handler, event);
                             } catch (IllegalAccessException | InvocationTargetException ex) {
                                 plugin.log(ex, "An exception has raised while trying to fire event " + event.getClass().getSimpleName());
-                                ex.printStackTrace();
+                                //ex.printStackTrace();
                             }
                         }
                     }
@@ -193,7 +195,7 @@ public class CModuleManager implements ModuleManager {
 
                 List<String> stringArguments = new ArrayList<>();
                 for (String argument : arguments)
-                    if (argument != null && !StringUtils.isNullOrEmpty(argument))
+                    if (argument != null && !ObjectUtils.isNullOrEmpty(argument))
                         stringArguments.add(argument);
 
                 try {
@@ -226,7 +228,7 @@ public class CModuleManager implements ModuleManager {
                         }
                     }
                 } catch (Throwable ex) {
-                    throw new CommandRuntimeException(ex, "Nag author(s) of module " + owner.name() + " (" + owner.authors(false, ",") + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
+                    throw new CommandRuntimeException(ex, "Nag author(s) of module " + owner.sourceName() + " (" + StringUtils.listToString(owner.sourceAuthors(), ListSpacer.COMMA) + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
                 }
             }
         }

@@ -1,5 +1,11 @@
 package es.karmadev.locklogin.common.api.plugin.file;
 
+import es.karmadev.api.file.FileEncryptor;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -9,16 +15,10 @@ import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karma.file.yaml.YamlReloader;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.security.file.FileEncryptor;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -27,7 +27,7 @@ import java.util.List;
 public class CPluginConfiguration implements Configuration {
 
     private final Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("config.yml");
-    private final KarmaYamlManager yaml;
+    private final YamlFileHandler yaml;
 
     private final CProxyConfiguration proxy_config;
     private final CDatabaseConfiguration database_config;
@@ -37,15 +37,13 @@ public class CPluginConfiguration implements Configuration {
      */
     public CPluginConfiguration() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        FileCopy copy = new FileCopy(CPluginConfiguration.class, "plugin/yaml/config.yml");
-        try {
-            copy.copy(file);
-        } catch (Throwable ex) {
-            plugin.log(ex, "Failed to generate configuration file");
-            plugin.err("Failed to generate configuration file. Default values will be used");
-        }
+        PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
 
-        yaml = new KarmaYamlManager(file);
+        try {
+            yaml = YamlHandler.load(file);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
         proxy_config = new CProxyConfiguration();
         Driver driver;
         String rawDriver = yaml.getString("DataDriver", "SQLITE").toLowerCase();
@@ -73,13 +71,7 @@ public class CPluginConfiguration implements Configuration {
      */
     @Override
     public boolean reload() {
-        YamlReloader reloader = yaml.getReloader();
-        if (reloader != null) {
-            reloader.reload();
-            return true;
-        }
-
-        return false;
+        return yaml.reload();
     }
 
     /**
@@ -101,10 +93,14 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public String server() {
         String name = yaml.getString("ServerName", "");
-        if (StringUtils.isNullOrEmpty(name)) {
+        if (ObjectUtils.isNullOrEmpty(name)) {
             name = "My server";
             yaml.set("ServerName", name);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
+            try {
+                yaml.save();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
 
         return name;
@@ -120,7 +116,7 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public CommunicationSection communications() {
         String host = yaml.getString("Communications.Server", "karmadev.es");
-        int port = yaml.getInt("Communications.Port", 2053);
+        int port = yaml.getInteger("Communications.Port", 2053);
         boolean ssl = yaml.getBoolean("Communications.SSL", true);
 
         return CComSection.of(host, port, ssl);
@@ -148,8 +144,8 @@ public class CPluginConfiguration implements Configuration {
         String raw = yaml.getString("SecretKey", "");
 
         LockLogin plugin = CurrentPlugin.getPlugin();
-        if (StringUtils.isNullOrEmpty(raw) || !raw.contains("$")) {
-            String password = TokenGenerator.generateLiteral(16);
+        if (ObjectUtils.isNullOrEmpty(raw) || !raw.contains("$")) {
+            String password = StringUtils.generateString(16);
             byte[] salt = new byte[16];
             SecureRandom secure = new SecureRandom();
             secure.nextBytes(salt);
@@ -167,7 +163,11 @@ public class CPluginConfiguration implements Configuration {
             String ivBase = Base64.getEncoder().encodeToString(parameter.getIV());
 
             yaml.set("SecretKey", tokenBase + "$" + ivBase);
-            yaml.save(file.toFile(), (KarmaSource) plugin, "plugin/yaml/config.yml");
+            try {
+                yaml.save();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
 
             return store;
         }
@@ -202,9 +202,9 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public BackupConfiguration backup() {
         boolean enabled = yaml.getBoolean("Backup.Enable", true);
-        int max = yaml.getInt("Backup.Max", 5);
-        int period = yaml.getInt("Backup.Period", 30);
-        int purge = yaml.getInt("Backup.Purge", 7);
+        int max = yaml.getInteger("Backup.Max", 5);
+        int period = yaml.getInteger("Backup.Period", 30);
+        int purge = yaml.getInteger("Backup.Purge", 7);
 
         return CBackupSection.of(enabled, max, period, purge);
     }
@@ -243,8 +243,8 @@ public class CPluginConfiguration implements Configuration {
     public RegisterConfiguration register() {
         boolean boss = yaml.getBoolean("Register.Boss", true);
         boolean blind = yaml.getBoolean("Register.Blind", false);
-        int timeout = yaml.getInt("Register.Timeout", 60);
-        int max = yaml.getInt("Register.Max", 2);
+        int timeout = yaml.getInteger("Register.Timeout", 60);
+        int max = yaml.getInteger("Register.Max", 2);
 
         return CRegisterSection.of(boss, blind, timeout, max);
     }
@@ -258,7 +258,7 @@ public class CPluginConfiguration implements Configuration {
     public LoginConfiguration login() {
         boolean boss = yaml.getBoolean("Login.Boss", true);
         boolean blind = yaml.getBoolean("Login.Blind", false);
-        int timeout = yaml.getInt("Login.Timeout", 60);
+        int timeout = yaml.getInteger("Login.Timeout", 60);
 
         return CLoginSection.of(boss, blind, timeout);
     }
@@ -271,7 +271,7 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public SessionConfiguration session() {
         boolean enable = yaml.getBoolean("Sessions.Enabled", true);
-        int time = Math.max(0, Math.min(120, yaml.getInt("Sessions.Time", 30)));
+        int time = Math.max(0, Math.min(120, yaml.getInteger("Sessions.Time", 30)));
 
         return CSessionSection.of(enable, time);
     }
@@ -321,8 +321,8 @@ public class CPluginConfiguration implements Configuration {
         RegisterConfiguration register = register();
         LoginConfiguration login = login();
 
-        int registration = Math.min(yaml.getInt("MessagesInterval.Registration", 10), register.timeout());
-        int logging = Math.min(yaml.getInt("MessagesInterval.Logging", 10), login.timeout());
+        int registration = Math.min(yaml.getInteger("MessagesInterval.Registration", 10), register.timeout());
+        int logging = Math.min(yaml.getInteger("MessagesInterval.Logging", 10), login.timeout());
 
         return CMessageSection.of(registration, logging);
     }
@@ -336,7 +336,7 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public CaptchaConfiguration captcha() {
         boolean enabled = yaml.getBoolean("Captcha.Enabled", false);
-        int length = Math.max(8, Math.min(16, yaml.getInt("Captcha.Difficulty.Length", 8)));
+        int length = Math.max(8, Math.min(16, yaml.getInteger("Captcha.Difficulty.Length", 8)));
         boolean letters = yaml.getBoolean("Captcha.Difficulty.Letters", true);
         boolean strikethrough = yaml.getBoolean("Captcha.Strikethrough.Enabled", true);
         boolean randomStrike = yaml.getBoolean("Captcha.Strikethrough.Random", true);
@@ -354,9 +354,9 @@ public class CPluginConfiguration implements Configuration {
         String algorithm = yaml.getString("Encryption.Algorithm", "argon2id");
         boolean encrypt = yaml.getBoolean("Encryption.Encrypt", true);
         boolean virtualID = yaml.getBoolean("Encryption.VirtualID", false);
-        int memCost = yaml.getInt("Encryption.HashCost.MemoryCost", 1024);
-        int parallelism = yaml.getInt("Encryption.HashCost.Parallelism", 22);
-        int iterations = yaml.getInt("Encryption.HashCost.Iterations", 2);
+        int memCost = yaml.getInteger("Encryption.HashCost.MemoryCost", 1024);
+        int parallelism = yaml.getInteger("Encryption.HashCost.Parallelism", 22);
+        int iterations = yaml.getInteger("Encryption.HashCost.Iterations", 2);
 
         return CEncryptionSection.of(algorithm, encrypt, virtualID, memCost, parallelism, iterations);
     }
@@ -371,8 +371,8 @@ public class CPluginConfiguration implements Configuration {
         boolean block_op = yaml.getBoolean("Permissions.BlockOperator", true);
         boolean remove_every = yaml.getBoolean("Permissions.RemoveEverything", true);
         boolean allow_wildcard = yaml.getBoolean("Permissions.AllowWildcard", false);
-        List<String> unlog = yaml.getStringList("Permissions.UnLogged");
-        List<String> log = yaml.getStringList("Permissions.Logged");
+        List<String> unlog = yaml.getList("Permissions.UnLogged");
+        List<String> log = yaml.getList("Permissions.Logged");
 
         return CPermissionSection.of(block_op, remove_every, allow_wildcard, unlog.toArray(new String[0]), log.toArray(new String[0]));
     }
@@ -388,11 +388,11 @@ public class CPluginConfiguration implements Configuration {
         boolean block = yaml.getBoolean("Password.BlockUnsafe", true);
         boolean warn = yaml.getBoolean("Password.WarnUnsafe", true);
         boolean ignore = yaml.getBoolean("Password.IgnoreCommon", false);
-        int length = yaml.getInt("Password.Safety.MinLength", 10);
-        int chars = yaml.getInt("Password.Safety.Characters", 1);
-        int numbers = yaml.getInt("Password.Safety.Numbers", 2);
-        int upper = yaml.getInt("Password.Safety.Letters.Upper", 2);
-        int lower = yaml.getInt("Password.Safety.Letters.Lower", 5);
+        int length = yaml.getInteger("Password.Safety.MinLength", 10);
+        int chars = yaml.getInteger("Password.Safety.Characters", 1);
+        int numbers = yaml.getInteger("Password.Safety.Numbers", 2);
+        int upper = yaml.getInteger("Password.Safety.Letters.Upper", 2);
+        int lower = yaml.getInteger("Password.Safety.Letters.Lower", 5);
 
         int realMax = chars + numbers + upper + lower;
         if (realMax > length) {
@@ -459,7 +459,7 @@ public class CPluginConfiguration implements Configuration {
     public UpdaterSection updater() {
         String channel = yaml.getString("Updater.Channel", "release").toLowerCase();
         boolean check = yaml.getBoolean("Updater.Check", true);
-        int checkTime = yaml.getInt("Updater.CheckTime", 10);
+        int checkTime = yaml.getInteger("Updater.CheckTime", 10);
 
         String oChannel = channel;
         switch (channel) {
@@ -477,7 +477,11 @@ public class CPluginConfiguration implements Configuration {
         }
         if (!oChannel.equals(channel)) {
             yaml.set("Updater.Channel", channel);
-            yaml.save(file.toFile(), (KarmaSource) CurrentPlugin.getPlugin(), "plugin/yaml/config.yml");
+            try {
+                yaml.save();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
 
         return CUpdaterSection.of(BuildType.valueOf(channel.toUpperCase()), check, checkTime);
@@ -493,7 +497,7 @@ public class CPluginConfiguration implements Configuration {
     public SpawnSection spawn() {
         boolean manage = yaml.getBoolean("Spawn.Manage", false);
         boolean back = yaml.getBoolean("Spawn.TakeBack", false);
-        int distance = yaml.getInt("Spawn.SpawnDistance", 30);
+        int distance = yaml.getInteger("Spawn.SpawnDistance", 30);
 
         return CSpawnSection.of(manage, back, distance);
     }
@@ -528,7 +532,7 @@ public class CPluginConfiguration implements Configuration {
      */
     @Override
     public int checkProtocol() {
-        return yaml.getInt("NameCheckProtocol", 2);
+        return yaml.getInteger("NameCheckProtocol", 2);
     }
 
     /**
@@ -569,7 +573,7 @@ public class CPluginConfiguration implements Configuration {
      */
     @Override
     public void load(final String serialized) {
-        KarmaYamlManager instance = new KarmaYamlManager(serialized, false);
-        yaml.update(instance, true, "ServerName", "SecretKey");
+        YamlFileHandler instance = YamlHandler.load(serialized);
+        yaml.importFrom(instance, false);
     }
 }

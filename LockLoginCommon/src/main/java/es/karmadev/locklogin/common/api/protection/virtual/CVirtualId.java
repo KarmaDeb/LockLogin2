@@ -1,5 +1,8 @@
 package es.karmadev.locklogin.common.api.protection.virtual;
 
+import es.karmadev.api.file.FileEncryptor;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -11,9 +14,6 @@ import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
 import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
-import ml.karmaconfigs.api.common.security.file.FileEncryptor;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
@@ -60,8 +60,8 @@ public class CVirtualId implements VirtualID {
             tmpId = primitive.asString();
         }
 
-        if (StringUtils.isNullOrEmpty(tmpId) || tmpId.equalsIgnoreCase("null")) {
-            tmpId = TokenGenerator.generateLiteral();
+        if (ObjectUtils.isNullOrEmpty(tmpId) || tmpId.equalsIgnoreCase("null")) {
+            tmpId = StringUtils.generateString();
             main.set("id", new KarmaPrimitive(tmpId));
             main.save();
         }

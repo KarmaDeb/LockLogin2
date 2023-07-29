@@ -1,17 +1,13 @@
 package es.karmadev.locklogin.common.api.plugin.service.brute;
 
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
+import es.karmadev.api.schedule.runner.event.TaskEvent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.security.brute.BruteForceService;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.timer.SchedulerUnit;
-import ml.karmaconfigs.api.common.timer.SourceScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.SimpleScheduler;
-import ml.karmaconfigs.api.common.timer.scheduler.errors.IllegalTimerAccess;
-import ml.karmaconfigs.api.common.timer.scheduler.errors.TimerNotFound;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -24,12 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 public class CBruteForce implements BruteForceService {
 
     private final DataDriver driver;
-    private final Map<String, Integer> schedulers = new ConcurrentHashMap<>();
+    private final Map<String, Long> schedulers = new ConcurrentHashMap<>();
 
     private boolean loaded = false;
 
@@ -168,13 +165,14 @@ public class CBruteForce implements BruteForceService {
 
                         statement.executeUpdate("UPDATE `brute` SET `blocked` = true WHERE `id` = " + id);
 
-                        KarmaSource source = (KarmaSource) plugin;
-                        SimpleScheduler scheduler = new SourceScheduler(source, time, SchedulerUnit.MINUTE, false)
-                                .endAction(() -> markUnblocked(address))
-                                .cancelAction((t) -> markUnblocked(address));
+                        AsyncTaskExecutor executor = new AsyncTaskExecutor(time, TimeUnit.MINUTES);
+                        executor.setRepeating(false);
 
-                        scheduler.start();
-                        schedulers.put(address.getHostAddress(), scheduler.getId());
+                        executor.on(TaskEvent.END, () -> markUnblocked(address));
+                        executor.on(TaskEvent.STOP, () -> markUnblocked(address));
+
+                        executor.start();
+                        schedulers.put(address.getHostAddress(), executor.id());
                     }
                 }
             }
@@ -194,15 +192,10 @@ public class CBruteForce implements BruteForceService {
     public void unblock(final InetAddress address) {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
-        Integer id = schedulers.remove(address.getHostAddress());
-        if (id != null) {
-            try {
-                KarmaSource source = (KarmaSource) plugin;
-                SimpleScheduler scheduler = new SourceScheduler(source, id);
-                scheduler.cancel();
-            } catch (TimerNotFound | IllegalTimerAccess ex) {
-                plugin.log(ex, "Failed to cancel block scheduler");
-            }
+        long id = schedulers.remove(address.getHostAddress());
+        AsyncTaskExecutor executor = AsyncTaskExecutor.getExecutor(id);
+        if (executor != null) {
+            executor.stop();
         }
     }
 
@@ -309,18 +302,12 @@ public class CBruteForce implements BruteForceService {
     @Override
     public long banTimeLeft(final InetAddress address) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        Integer id = schedulers.getOrDefault(address.getHostAddress(), null);
+        long id = schedulers.getOrDefault(address.getHostAddress(), null);
 
-        if (id != null) {
-            try {
-                SimpleScheduler scheduler = new SourceScheduler((KarmaSource) plugin, id);
-                return scheduler.getMillis();
-            } catch (TimerNotFound | IllegalTimerAccess ex) {
-                plugin.log(ex, "Failed to access address timer {0}", address.getHostAddress());
-            }
-        }
+        AsyncTaskExecutor executor = AsyncTaskExecutor.getExecutor(id);
+        if (executor == null) return -1;
 
-        return -1;
+        return executor.timeLeft();
     }
 
     /**
@@ -399,32 +386,31 @@ public class CBruteForce implements BruteForceService {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         for (String address : schedulers.keySet()) {
-            Integer id = schedulers.getOrDefault(address, null);
-            if (id != null) {
-                SimpleScheduler scheduler = new SourceScheduler((KarmaSource) plugin, id);
+            long id = schedulers.getOrDefault(address, null);
+            AsyncTaskExecutor scheduler = AsyncTaskExecutor.getExecutor(id);
+            if (scheduler == null) return;
 
-                Connection connection = null;
-                Statement statement = null;
-                try {
-                    connection = driver.retrieve();
-                    statement = connection.createStatement();
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = driver.retrieve();
+                statement = connection.createStatement();
 
-                    try (ResultSet result = statement.executeQuery("SELECT `id` FROM `brute` WHERE `address` = '" + address + "'")) {
-                        if (result.next()) {
-                            int brute_id = result.getInt("id");
-                            if (!result.wasNull()) {
-                                driver.close(null, statement);
-                                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery("SELECT `id` FROM `brute` WHERE `address` = '" + address + "'")) {
+                    if (result.next()) {
+                        int brute_id = result.getInt("id");
+                        if (!result.wasNull()) {
+                            driver.close(null, statement);
+                            statement = connection.createStatement();
 
-                                statement.executeUpdate("UPDATE `brute` SET `remaining` = " + scheduler.getMillis() + " WHERE `id` = " + brute_id);
-                            }
+                            statement.executeUpdate("UPDATE `brute` SET `remaining` = " + scheduler.timeLeft() + " WHERE `id` = " + brute_id);
                         }
                     }
-                } catch (SQLException | TimerNotFound | IllegalTimerAccess ex) {
-                    plugin.log(ex, "Failed to store address {0} brute force data", address);
-                } finally {
-                    driver.close(connection, statement);
                 }
+            } catch (SQLException ex) {
+                plugin.log(ex, "Failed to store address {0} brute force data", address);
+            } finally {
+                driver.close(connection, statement);
             }
         }
     }
@@ -451,7 +437,7 @@ public class CBruteForce implements BruteForceService {
                     if (result.wasNull()) continue;
 
                     String address = result.getString("address");
-                    if (StringUtils.isNullOrEmpty(address)) continue;
+                    if (ObjectUtils.isNullOrEmpty(address)) continue;
 
                     boolean blocked = result.getBoolean("blocked");
                     if (result.wasNull()) continue;
@@ -462,17 +448,16 @@ public class CBruteForce implements BruteForceService {
                     if (blocked) {
                         try {
                             InetAddress inet = InetAddress.getByName(address);
-                            SimpleScheduler scheduler = new SourceScheduler((KarmaSource) plugin, remaining, SchedulerUnit.MILLISECOND, false)
-                                    .endAction(() -> markUnblocked(inet))
-                                    .cancelAction((t) -> markUnblocked(inet));
-                            scheduler.start();
+                            AsyncTaskExecutor executor = new AsyncTaskExecutor(remaining, TimeUnit.MINUTES);
+                            executor.on(TaskEvent.END, () -> markUnblocked(inet));
+                            executor.on(TaskEvent.STOP, () -> markUnblocked(inet));
 
-                            schedulers.put(address, scheduler.getId());
+                            schedulers.put(address, executor.id());
                         } catch (UnknownHostException ignored) {}
                     }
                 }
             }
-        } catch (SQLException | TimerNotFound | IllegalTimerAccess ex) {
+        } catch (SQLException ex) {
             plugin.log(ex, "Failed to load stored brute force data");
             loaded = false;
         } finally {

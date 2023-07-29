@@ -1,5 +1,9 @@
 package es.karmadev.locklogin.common.api.plugin.file.lang;
 
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -10,10 +14,8 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
 import es.karmadev.locklogin.api.security.check.CheckResult;
 import es.karmadev.locklogin.api.security.check.CheckType;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karma.file.yaml.YamlReloader;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
@@ -24,12 +26,19 @@ import java.util.concurrent.TimeUnit;
  */
 public class CPluginMessages implements Messages {
 
-    private final KarmaYamlManager yaml;
+    private final YamlFileHandler yaml;
     private final InternalPack parser;
 
 
     public CPluginMessages(final Path file, final InternalPack parser) {
-        yaml = new KarmaYamlManager(file);
+        YamlFileHandler tmpYaml;
+        try {
+            tmpYaml = YamlHandler.load(file);
+        } catch (IOException ex) {
+            tmpYaml = YamlHandler.create(file);
+        }
+
+        this.yaml = tmpYaml;
         this.parser = parser;
     }
 
@@ -38,13 +47,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public boolean reload() {
-        YamlReloader reloader = yaml.getReloader();
-        if (reloader != null) {
-            reloader.reload();
-            return true;
-        }
-
-        return false;
+        return yaml.reload();
     }
 
     /**
@@ -274,7 +277,7 @@ public class CPluginMessages implements Messages {
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -351,7 +354,7 @@ public class CPluginMessages implements Messages {
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -392,18 +395,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -506,18 +509,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -557,18 +560,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -598,7 +601,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String maxRegisters() {
-        List<String> messages = yaml.getStringList("MaxRegisters");
+        List<String> messages = yaml.getList("MaxRegisters");
         StringBuilder builder = new StringBuilder();
 
         Configuration config = CurrentPlugin.getPlugin().configuration();
@@ -624,7 +627,7 @@ public class CPluginMessages implements Messages {
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -665,18 +668,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -756,18 +759,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -807,18 +810,18 @@ public class CPluginMessages implements Messages {
 
         String format;
         if (time <= 59) {
-            format = time + " " + StringUtils.stripColor("second(s)");
+            format = time + " " + ConsoleColor.strip("second(s)");
         } else {
             if (minutes <= 59) {
-                format = minutes + " " + StringUtils.stripColor("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + StringUtils.stripColor("sec(s)");
+                format = minutes + " " + ConsoleColor.strip("minute(s)") + " and " + Math.abs((minutes * 60) - time) + " " + ConsoleColor.strip("sec(s)");
             } else {
-                format = hours + " " + StringUtils.stripColor("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + StringUtils.stripColor("min(s)");
+                format = hours + " " + ConsoleColor.strip("hour(s)") + " and " + Math.abs((hours * 60) - minutes) + " " + ConsoleColor.strip("min(s)");
             }
         }
         String captcha = code;
         if (config.captcha().strikethrough()) {
             if (config.captcha().randomStrike()) {
-                String last_color = StringUtils.getLastColor(str);
+                String last_color = ConsoleColor.lastColor(str);
 
                 StringBuilder builder = new StringBuilder();
 
@@ -848,7 +851,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String premiumEnabled() {
-        List<String> messages = yaml.getStringList("PremiumEnabled");
+        List<String> messages = yaml.getList("PremiumEnabled");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str).append("\n");
@@ -863,7 +866,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String premiumDisabled() {
-        List<String> messages = yaml.getStringList("PremiumDisabled");
+        List<String> messages = yaml.getList("PremiumDisabled");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str).append("\n");
@@ -907,7 +910,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String premiumWarning() {
-        List<String> messages = yaml.getStringList("PremiumWarning");
+        List<String> messages = yaml.getList("PremiumWarning");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str).append("\n");
@@ -1292,7 +1295,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthScratchCodes(final List<Integer> codes) {
-        List<String> messages = yaml.getStringList("2FAScratchCodes");
+        List<String> messages = yaml.getList("2FAScratchCodes");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str).append("\n");
@@ -1316,14 +1319,14 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthInstructions() {
-        List<String> messages = yaml.getStringList("2FaInstructions");
+        List<String> messages = yaml.getList("2FaInstructions");
         StringBuilder builder = new StringBuilder();
 
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
         for (String str : messages)
             builder.append(str
-                    .replace("{message}", gAuthLink() + StringUtils.getLastColor(str))
+                    .replace("{message}", gAuthLink() + ConsoleColor.lastColor(str))
                     .replace("{account}", "{player} (" + config.server() + ")")).append("\n");
 
         return parser.parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
@@ -1406,7 +1409,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String panicRequested() {
-        List<String> messages = yaml.getStringList("PanicRequested");
+        List<String> messages = yaml.getList("PanicRequested");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)
@@ -1422,7 +1425,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String panicEnabled() {
-        List<String> messages = yaml.getStringList("PanicEnabled");
+        List<String> messages = yaml.getList("PanicEnabled");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)
@@ -1598,12 +1601,12 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String forcedAccountRemoval(final String administrator) {
-        List<String> messages = yaml.getStringList("ForcedAccountRemoval");
+        List<String> messages = yaml.getList("ForcedAccountRemoval");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)
             builder.append(str
-                    .replace("{player}", StringUtils.stripColor(administrator))).append("\n");
+                    .replace("{player}", ConsoleColor.strip(administrator))).append("\n");
 
         return parser.parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
     }
@@ -1841,7 +1844,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String ipBlocked(final long time) {
-        List<String> messages = yaml.getStringList("IpBlocked");
+        List<String> messages = yaml.getList("IpBlocked");
         StringBuilder builder = new StringBuilder();
 
         long seconds = TimeUnit.SECONDS.toSeconds(time);
@@ -1880,7 +1883,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String illegalName(final String chars) {
-        List<String> messages = yaml.getStringList("IllegalName");
+        List<String> messages = yaml.getList("IllegalName");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str.replace("{chars}", chars)).append("\n");
@@ -1897,7 +1900,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String multipleNames(final String name, final String... knownNames) {
-        List<String> messages = yaml.getStringList("MultipleNames");
+        List<String> messages = yaml.getList("MultipleNames");
         StringBuilder nameBuilder = new StringBuilder();
 
         for (String known : knownNames)
@@ -1920,7 +1923,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String uuidFetchError() {
-        List<String> messages = yaml.getStringList("UUIDFetchError");
+        List<String> messages = yaml.getList("UUIDFetchError");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages) builder.append(str).append("\n");
@@ -1935,7 +1938,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String ipProxyError() {
-        List<String> messages = yaml.getStringList("IpProxyError");
+        List<String> messages = yaml.getList("IpProxyError");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)
@@ -1951,7 +1954,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String bedrockJava() {
-        List<String> messages = yaml.getStringList("BedrockJavaError");
+        List<String> messages = yaml.getList("BedrockJavaError");
         StringBuilder builder = new StringBuilder();
 
         for (String str : messages)
@@ -1977,7 +1980,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public void load(final String serialized) {
-        KarmaYamlManager instance = new KarmaYamlManager(serialized, false);
-        yaml.update(instance, true);
+        YamlFileHandler instance = YamlHandler.load(serialized);
+        yaml.importFrom(instance, false);
     }
 }

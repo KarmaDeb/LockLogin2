@@ -1,8 +1,8 @@
 package es.karmadev.locklogin.api.user.account;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.security.hash.HashResult;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -148,7 +148,7 @@ public interface UserAccount {
      */
     default boolean isRegistered() {
         HashResult value = password();
-        return !StringUtils.isNullOrEmpty(value);
+        return !ObjectUtils.isNullOrEmpty(value);
     }
 
     /**
@@ -158,7 +158,7 @@ public interface UserAccount {
      */
     default boolean hasPin() {
         HashResult value = pin();
-        return !StringUtils.isNullOrEmpty(value);
+        return !ObjectUtils.isNullOrEmpty(value);
     }
 
     /**
@@ -176,7 +176,7 @@ public interface UserAccount {
      */
     default boolean _2faSet() {
         String token = _2FA();
-        return !StringUtils.isNullOrEmpty(token);
+        return !ObjectUtils.isNullOrEmpty(token);
     }
 
     /**
@@ -186,7 +186,7 @@ public interface UserAccount {
      */
     default boolean isProtected() {
         HashResult value = panic();
-        return !StringUtils.isNullOrEmpty(value);
+        return !ObjectUtils.isNullOrEmpty(value);
     }
 
     /**

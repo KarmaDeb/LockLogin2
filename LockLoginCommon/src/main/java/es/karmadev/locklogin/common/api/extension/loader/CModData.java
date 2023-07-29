@@ -1,8 +1,8 @@
 package es.karmadev.locklogin.common.api.extension.loader;
 
+import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.locklogin.api.extension.Module;
 import lombok.Getter;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -23,9 +23,9 @@ class CModData {
     private final Module module;
 
     @Getter
-    private final KarmaYamlManager moduleYML;
+    private final YamlFileHandler moduleYML;
 
-    public CModData(final Path file, final Module module, final KarmaYamlManager yaml) {
+    public CModData(final Path file, final Module module, final YamlFileHandler yaml) {
         this.file = file;
         this.module = module;
         this.moduleYML = yaml;

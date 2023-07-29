@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api;
 
+import es.karmadev.api.file.yaml.handler.ResourceLoader;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
@@ -10,8 +11,6 @@ import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.api.plugin.license.License;
-import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -29,7 +28,7 @@ import java.nio.file.Path;
  * LockLogin plugin
  */
 @SuppressWarnings("unused")
-public interface LockLogin {
+public interface LockLogin extends ResourceLoader {
 
     /**
      * Get the LockLogin plugin instance
@@ -174,20 +173,6 @@ public interface LockLogin {
     PluginService getService(final String name);
 
     /**
-     * Get the license provider
-     *
-     * @return the license provider
-     */
-    LicenseProvider licenseProvider();
-
-    /**
-     * Get the current license
-     *
-     * @return the license
-     */
-    License license();
-
-    /**
      * Get the plugin module manager
      *
      * @return the plugin module manager
@@ -226,14 +211,6 @@ public interface LockLogin {
      * @throws UnsupportedOperationException if the service is plugin internal
      */
     void unregisterService(final String name) throws UnsupportedOperationException;
-
-    /**
-     * Updates the plugin license
-     *
-     * @param new_license the new plugin license
-     * @throws SecurityException if the action was not performed by the plugin
-     */
-    void updateLicense(final License new_license) throws SecurityException;
 
     /**
      * Define the plugin account factory

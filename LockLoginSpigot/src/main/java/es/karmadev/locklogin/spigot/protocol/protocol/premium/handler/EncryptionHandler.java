@@ -42,6 +42,11 @@ import com.comphenix.protocol.wrappers.WrappedProfilePublicKey;
 import com.github.games647.craftapi.model.auth.Verification;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.resolver.MojangResolver;
+import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.spigot.server.SpigotServer;
+import es.karmadev.api.web.minecraft.MineAPI;
+import es.karmadev.api.web.minecraft.UUIDType;
+import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -51,12 +56,6 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.bukkit.server.BukkitServer;
-import ml.karmaconfigs.api.bukkit.server.Version;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import org.bukkit.entity.Player;
 
 import javax.crypto.Cipher;
@@ -148,7 +147,7 @@ public final class EncryptionHandler implements Runnable {
                     encrypt.invoke(networkManager, decrypt_cipher, encrypt_cipher);
                 }
             } catch (Exception ex) {
-                ex.printStackTrace();
+                CurrentPlugin.getPlugin().log(ex, "Failed to encrypt premium connection");
                 kick(messages.premiumFailInternal());
                 return;
             }
@@ -209,7 +208,7 @@ public final class EncryptionHandler implements Runnable {
                         }
 
                         PacketContainer start;
-                        if (BukkitServer.isOver(Version.v1_19)) {
+                        if (SpigotServer.isOver(SpigotServer.v1_19_X)) {
                             start = new PacketContainer(START);
                             start.getStrings().write(0, name);
 
@@ -231,13 +230,13 @@ public final class EncryptionHandler implements Runnable {
 
                         ProtocolLibrary.getProtocolManager().receiveClientPacket(player, start, false);
                     } else {
-                        kick(StringUtils.toColor(messages.premiumFailAuth()));
+                        kick(ConsoleColor.parse(messages.premiumFailAuth()));
                     }
                 } catch (IOException e) {
-                    kick(StringUtils.toColor(messages.premiumFailConnection()));
+                    kick(ConsoleColor.parse(messages.premiumFailConnection()));
                 }
             } else {
-                kick(StringUtils.toColor(messages.premiumFailAddress()));
+                kick(ConsoleColor.parse(messages.premiumFailAddress()));
             }
         } finally {
             synchronized (packet.getAsyncMarker().getProcessingLock()) {
@@ -250,10 +249,10 @@ public final class EncryptionHandler implements Runnable {
 
     private void kick(final String reason) {
         PacketContainer kick_packet = new PacketContainer(DISCONNECT);
-        kick_packet.getChatComponents().write(0, WrappedChatComponent.fromText(StringUtils.toColor(reason)));
+        kick_packet.getChatComponents().write(0, WrappedChatComponent.fromText(ConsoleColor.parse(reason)));
 
         ProtocolLibrary.getProtocolManager().sendServerPacket(player, kick_packet);
-        player.kickPlayer(StringUtils.toColor(reason));
+        player.kickPlayer(ConsoleColor.parse(reason));
     }
 
     private Object manager() {

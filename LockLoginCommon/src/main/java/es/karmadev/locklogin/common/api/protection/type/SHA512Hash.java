@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.common.api.protection.type;
 
+import es.karmadev.api.strings.StringOptions;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -11,9 +13,6 @@ import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.CHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
-import ml.karmaconfigs.api.common.string.random.RandomString;
-import ml.karmaconfigs.api.common.string.text.TextContent;
-import ml.karmaconfigs.api.common.string.text.TextType;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -50,9 +49,7 @@ public class SHA512Hash extends PluginHash {
     /**
      * Prefix for our hash, every user should change this
      */
-    private final String ID = "$" + new RandomString(
-            RandomString.createBuilder().withSize(16).withType(TextType.ALL_LOWER).withContent(TextContent.ONLY_LETTERS)
-    ).create() + "$";
+    private final String ID = "$" + StringUtils.generateString(16, StringOptions.LOWERCASE) + "$";
 
     /**
      * Initialize codification class

@@ -1,12 +1,11 @@
 package es.karmadev.locklogin.common.api.runtime;
 
+import es.karmadev.api.web.WebDownloader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.runtime.DependencyManager;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
-import ml.karmaconfigs.api.common.ResourceDownloader;
-import ml.karmaconfigs.api.common.karma.loader.BruteLoader;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -45,12 +44,17 @@ public class CDependencyManager implements DependencyManager {
                         return;
                     }
 
-                    ResourceDownloader downloader = new ResourceDownloader(dependency.file(), url);
-                    downloader.download();
+                    WebDownloader downloader = new WebDownloader(url);
+                    try {
+                        downloader.download(dependency.file());
+                    } catch (Throwable ex2) {
+                        ex2.printStackTrace();
+                    }
                 }
 
-                BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
-                loader.add(dependency.file());
+                //TODO: Use KarmaAPI2's brute loader
+                /*BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
+                loader.add(dependency.file());*/
                 dependencies.add(dependency);
 
                 plugin.info("Loaded dependency {0}", dependency.name());
@@ -65,8 +69,9 @@ public class CDependencyManager implements DependencyManager {
      */
     @Override
     public void appendExternal(final Path library) {
-        BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
-        loader.add(library);
+        //TODO: Use KarmaAPI2's brute loader
+        /*BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
+        loader.add(library);*/
     }
 
     /**

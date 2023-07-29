@@ -52,6 +52,8 @@ public interface NetworkServer extends NetworkEntity, TextContainer {
      */
     Collection<LocalNetworkClient> offlineClients();
 
+    Collection<NetworkClient> onlineClients();
+
     /**
      * Get the server packet queue
      *

@@ -2,6 +2,7 @@ package es.karmadev.locklogin.common.plugin.web.communication;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.communication.CommunicationService;
@@ -13,7 +14,6 @@ import es.karmadev.locklogin.common.plugin.web.SocketService;
 import es.karmadev.locklogin.common.plugin.web.communication.packet.CInPacket;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -241,7 +241,7 @@ public class WebSocketPacketHandler implements CommunicationService {
                                 } catch (IOException ignored) {}
 
                                 if (write) {
-                                    plugin.logErr("Failed to send packet to websocket server after 3 tries (30 seconds). The packet will be stored at: {0}", packetId, PathUtilities.getPrettyPath(packetStore));
+                                    plugin.logErr("Failed to send packet to websocket server after 3 tries (30 seconds). The packet will be stored at: {0}", packetId, PathUtilities.pathString(packetStore));
                                 } else {
                                     plugin.logErr("Failed to send packet with id {0} to server", packetId);
                                 }
@@ -273,7 +273,7 @@ public class WebSocketPacketHandler implements CommunicationService {
                         } catch (IOException ignored) {}
 
                         if (write) {
-                            plugin.log(ex, "Failed to send packet to websocket server. The packet will be stored at: {0}", PathUtilities.getPrettyPath(packetStore));
+                            plugin.log(ex, "Failed to send packet to websocket server. The packet will be stored at: {0}", PathUtilities.pathString(packetStore));
                         } else {
                             plugin.log(ex, "Failed to send packet to websocket server. The packet had an ID of {0}, and was unable to be stored", packetId);
                         }

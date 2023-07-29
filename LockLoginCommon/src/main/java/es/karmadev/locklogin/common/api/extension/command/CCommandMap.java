@@ -32,7 +32,7 @@ public class CCommandMap implements CommandRegistrar {
     public void register(final Module module, final ModuleCommand command) {
         if (manager.onCommandRegistered != null && manager.onCommandRegistered.apply(command)) {
             String name = command.getName();
-            commands.put(module.name() + ":" + name, command);
+            commands.put(module.sourceName() + ":" + name, command);
         }
     }
 
@@ -44,7 +44,7 @@ public class CCommandMap implements CommandRegistrar {
     public void unregisterAll(final Module module) {
         List<String> remove = new ArrayList<>();
 
-        String name = module.name();
+        String name = module.sourceName();
         for (String key : commands.keySet()) {
             if (key.startsWith(name + ":")) {
                 remove.add(key);
@@ -74,7 +74,7 @@ public class CCommandMap implements CommandRegistrar {
             Module module = manager.loader().findByFile(caller);
             if (module == null) throw new RuntimeException("Cannot get command from invalid module");
 
-            tmpName = module.name() + ":" + name;
+            tmpName = module.sourceName() + ":" + name;
         } else {
             String[] data = name.split(":");
             String modName = data[0];

@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
+import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -8,7 +9,6 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -44,7 +44,7 @@ public class LoginCommand implements CommandExecutor {
                 UserSession session = client.session();
 
                 if (account.isRegistered()) {
-                    String captcha = StringUtils.stripColor(session.captcha());
+                    String captcha = ConsoleColor.strip(session.captcha());
 
                     switch (args.length) {
                         case 1: validate(client, account, args[0]);
@@ -67,7 +67,7 @@ public class LoginCommand implements CommandExecutor {
                     client.sendMessage(messages.prefix() + messages.register(session.captcha()));
                 }
             } else {
-                player.sendMessage(StringUtils.toColor(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(ConsoleColor.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
             plugin.info("This command is for players only!");

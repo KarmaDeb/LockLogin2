@@ -1,8 +1,8 @@
 package es.karmadev.locklogin.api.event.handler;
 
 import es.karmadev.locklogin.api.extension.Module;
-import ml.karmaconfigs.api.common.collection.list.ConcurrentList;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +30,7 @@ public final class EventHandlerList {
      * @return the event handlers of the module
      */
     public EventHandler[] getHandlers(final Module module) {
-        List<EventHandler> data = handlers.getOrDefault(module, new ConcurrentList<>());
+        List<EventHandler> data = handlers.getOrDefault(module, new ArrayList<>());
         return data.toArray(new EventHandler[0]);
     }
 
@@ -44,7 +44,7 @@ public final class EventHandlerList {
         Set<Module> modules = handlers.keySet();
 
         for (Module module : modules) {
-            List<EventHandler> data = handlers.getOrDefault(module, new ConcurrentList<>());
+            List<EventHandler> data = handlers.getOrDefault(module, new ArrayList<>());
             data.remove(handler);
 
             handlers.put(module, data);
@@ -67,7 +67,7 @@ public final class EventHandlerList {
      * @param module the module
      */
     public void addHandler(final EventHandler handler, final Module module) {
-        List<EventHandler> data = handlers.getOrDefault(module, new ConcurrentList<>());
+        List<EventHandler> data = handlers.getOrDefault(module, new ArrayList<>());
         data.add(handler);
 
         handlers.put(module, data);

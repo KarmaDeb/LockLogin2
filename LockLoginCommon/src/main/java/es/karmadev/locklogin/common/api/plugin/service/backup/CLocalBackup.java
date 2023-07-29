@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.common.api.plugin.service.backup;
 
 import com.google.gson.*;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
@@ -16,9 +18,6 @@ import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -65,7 +64,7 @@ public class CLocalBackup implements BackupService {
      */
     @Override
     public ScheduledBackup performBackup() {
-        String id = TokenGenerator.generateLiteral();
+        String id = StringUtils.generateString();
         return performBackup(id);
     }
 
@@ -123,7 +122,7 @@ public class CLocalBackup implements BackupService {
                 error_catcher = task.error;
                 try {
                     Path destination = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups").resolve(name + ".json");
-                    PathUtilities.create(destination);
+                    PathUtilities.createPath(destination);
 
                     String json = gson.toJson(backup);
                     Files.write(destination, json.getBytes(StandardCharsets.UTF_8));
@@ -169,7 +168,7 @@ public class CLocalBackup implements BackupService {
                     List<UserBackup> backups = new ArrayList<>();
                     for (JsonElement element : serial_accounts) {
                         String serialized = element.getAsString();
-                        backups.add(StringUtils.loadUnsafe(serialized));
+                        backups.add(StringUtils.loadAndCast(serialized));
                     }
 
                     fetched.add(CBackupStorage.forAccounts(id, backups, created, backup));
@@ -209,7 +208,7 @@ public class CLocalBackup implements BackupService {
                         List<UserBackup> backups = new ArrayList<>();
                         for (JsonElement element : serial_accounts) {
                             String serialized = element.getAsString();
-                            backups.add(StringUtils.loadUnsafe(serialized));
+                            backups.add(StringUtils.loadAndCast(serialized));
                         }
 
                         fetched = CBackupStorage.forAccounts(id, backups, created, backup);
@@ -240,7 +239,7 @@ public class CLocalBackup implements BackupService {
             List<Path> backup_files = files.collect(Collectors.toList());
 
             for (Path backup : backup_files) {
-                if (PathUtilities.destroyWithResults(backup)) {
+                if (PathUtilities.destroy(backup)) {
                     success++;
                 }
             }
@@ -276,7 +275,7 @@ public class CLocalBackup implements BackupService {
 
                     Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
                     if (created.isAfter(start) && created.isBefore(end)) {
-                        if (PathUtilities.destroyWithResults(backup)) {
+                        if (PathUtilities.destroy(backup)) {
                             purged++;
                         }
                     }
@@ -312,7 +311,7 @@ public class CLocalBackup implements BackupService {
 
                     Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
                     if (created.isAfter(start)) {
-                        if (PathUtilities.destroyWithResults(backup)) {
+                        if (PathUtilities.destroy(backup)) {
                             purged++;
                         }
                     }
@@ -348,7 +347,7 @@ public class CLocalBackup implements BackupService {
 
                     Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
                     if (created.isBefore(end)) {
-                        if (PathUtilities.destroyWithResults(backup)) {
+                        if (PathUtilities.destroy(backup)) {
                             purged++;
                         }
                     }

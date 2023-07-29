@@ -1,14 +1,14 @@
 package es.karmadev.locklogin.common.api.dependency;
 
 import com.google.gson.*;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.url.URLUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -49,7 +49,7 @@ public class CPluginDependency {
                         urls[i] = checksum_urls.get(i).getAsString();
                     }
 
-                    URL checksum_url = URLUtils.getOrBackup(urls);
+                    URL checksum_url = URLUtilities.getOptional(urls).orElse(null);
                     if (checksum_url != null) {
                         HttpURLConnection connection = (HttpURLConnection) checksum_url.openConnection();
                         connection.setRequestMethod("GET");
@@ -62,7 +62,7 @@ public class CPluginDependency {
                             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
                             BufferedReader bf = new BufferedReader(reader);
 
-                            PathUtilities.create(dataFile);
+                            PathUtilities.createPath(dataFile);
 
                             BufferedWriter writer = Files.newBufferedWriter(dataFile, StandardCharsets.UTF_8);
                             String line;
@@ -101,7 +101,7 @@ public class CPluginDependency {
                         }
 
                         String testClass = dependency.testClass();
-                        if (StringUtils.isNullOrEmpty(testClass)) continue;
+                        if (ObjectUtils.isNullOrEmpty(testClass)) continue;
                         try {
                             Class.forName(dependency.testClass());
                             ignore.add(dependency);

@@ -1,5 +1,16 @@
 package es.karmadev.locklogin.spigot;
 
+import es.karmadev.api.core.KarmaPlugin;
+import es.karmadev.api.database.DatabaseManager;
+import es.karmadev.api.database.model.JsonDatabase;
+import es.karmadev.api.database.model.json.JsonConnection;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
+import es.karmadev.api.spigot.reflection.title.SpigotTitle;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -16,8 +27,6 @@ import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.api.plugin.license.License;
-import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
@@ -47,27 +56,17 @@ import es.karmadev.locklogin.common.api.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
-import ml.karmaconfigs.api.bukkit.KarmaPlugin;
-import ml.karmaconfigs.api.bukkit.reflection.BarMessage;
-import ml.karmaconfigs.api.bukkit.reflection.TitleMessage;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.security.token.TokenGenerator;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -77,7 +76,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
+public class LockLoginSpigot implements LockLogin, NetworkServer {
 
     private final CSQLDriver driver;
     private final KarmaPlugin plugin;
@@ -101,13 +100,10 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     private ServerFactory<? extends NetworkServer> provider_server_factory = null;
 
     private final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
-    private final CLicenseProvider license_provider;
-
-    private License license;
 
     private final Instant startup = Instant.now();
 
-    public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) {
+    public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) throws RuntimeException {
         this.plugin = plugin;
 
         Class<CurrentPlugin> instance = CurrentPlugin.class;
@@ -117,13 +113,13 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
 
             initialize.invoke(instance, this);
         } catch (Throwable ex) {
-            ex.printStackTrace();
+            plugin.logger().log(LogLevel.SEVERE, "Failed to initialize LockLogin", ex);
+            throw new RuntimeException("Couldn't initialize LockLogin");
         }
 
         configuration = new CPluginConfiguration();
         messages = new InternalPack();
         hasher = new CPluginHasher();
-        license_provider = new CLicenseProvider();
 
         CLocalBackup backup_service = new CLocalBackup();
         CNameProvider name_service = new CNameProvider();
@@ -136,8 +132,8 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
             CFloodGate floodgate_service = new CFloodGate();
             registerService("floodgate", floodgate_service);
         } catch (ClassNotFoundException ex) {
-            plugin.logger().scheduleLog(Level.INFO, "Ignoring FloodGate service compatibility");
-            plugin.console().send("Failed to detect FloodGate API. FloodGate service will be disabled", Level.WARNING);
+            plugin.logger().log(LogLevel.INFO, "Ignoring FloodGate service compatibility");
+            plugin.logger().send(LogLevel.WARNING, "Failed to detect FloodGate API. FloodGate service will be disabled");
         }
 
         driver = new CSQLDriver();
@@ -196,9 +192,15 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     public boolean bungeeMode() {
         File server_folder = plugin.getServer().getWorldContainer();
         File spigot_yml = new File(server_folder, "spigot.yml");
-        KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
+        try {
+            YamlFileHandler yaml = YamlHandler.load(spigot_yml.toPath());
+            //KarmaYamlManager yaml = new KarmaYamlManager(spigot_yml);
 
-        return yaml.getBoolean("settings.bungeecord", false);
+            return yaml.getBoolean("settings.bungeecord", false);
+        } catch (IOException ex) {
+            plugin.logger().log(LogLevel.SEVERE, "Failed to retrieve bungeecord mode", ex);
+            return false;
+        }
     }
 
     /**
@@ -234,7 +236,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     public InputStream load(final String name) throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
 
-        File pluginFile = plugin.getSourceFile();
+        File pluginFile = plugin.runtime().getFile().toFile();
         try(JarFile jarFile = new JarFile(pluginFile)) {
             JarEntry entry = jarFile.getJarEntry(name);
             try (InputStream stream = jarFile.getInputStream(entry)) {
@@ -261,7 +263,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public Path workingDirectory() {
-        return plugin.getDataPath();
+        return plugin.workingDirectory();
     }
 
     /**
@@ -402,28 +404,6 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     }
 
     /**
-     * Get the license provider
-     *
-     * @return the license provider
-     */
-    @Override
-    public LicenseProvider licenseProvider() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
-        return license_provider;
-    }
-
-    /**
-     * Get the current license
-     *
-     * @return the license
-     */
-    @Override
-    public License license() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
-        return license;
-    }
-
-    /**
      * Get the plugin module manager
      *
      * @return the plugin module manager
@@ -450,32 +430,66 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      * @throws SecurityException if tried to be accessed from any
      *                           external source that's not the self plugin
      */
-    @Override
+    @Override @SuppressWarnings("deprecation")
     public ServerHash server() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
-        Path data = getDataPath().resolve("cache").resolve("server.kf");
-        KarmaMain persistent_hash = new KarmaMain(data);
+        Path data = plugin.workingDirectory().resolve("cache").resolve("server.kf");
+        if (Files.exists(data)) {
+            KarmaMain persistent_hash = new KarmaMain(data);
 
-        Element<?> hash = persistent_hash.get("hash");
-        Element<?> creation = persistent_hash.get("time");
+            Element<?> hash = persistent_hash.get("hash");
+            Element<?> creation = persistent_hash.get("time");
 
-        if (hash.isElementNull() || creation.isElementNull() || !hash.getAsPrimitive().isString() || !creation.getAsPrimitive().isNumber()) {
+            if (hash.isElementNull() || creation.isElementNull() || !hash.getAsPrimitive().isString() || !creation.getAsPrimitive().isNumber()) {
+                SHA512Hash sha = new SHA512Hash();
+                String random = StringUtils.generateString(32);
+
+                HashResult result = sha.hash(random);
+                hash = new KarmaPrimitive(new String(result.product().product()));
+                creation = new KarmaPrimitive(Instant.now().toEpochMilli());
+
+                persistent_hash.set("hash", hash);
+                persistent_hash.set("time", creation);
+
+                persistent_hash.save();
+            }
+            String hash_value = hash.getAsString();
+            long hash_creation = creation.getAsLong();
+
+            JsonDatabase database = (JsonDatabase) DatabaseManager.getEngine("json").orElse(new JsonDatabase());
+            JsonConnection connection = database.grabConnection("cache/info.json");
+
+            JsonConnection server = connection.createTable("server");
+            server.set("hash", hash_value);
+            server.set("time", hash_creation);
+            server.setPrettySave(true);
+
+            if (server.save()) {
+                plugin.logger().send(LogLevel.DEBUG, "Successfully migrated from legacy KarmaMain to JsonDatabase");
+                PathUtilities.destroy(data);
+            }
+        }
+
+        JsonDatabase database = (JsonDatabase) DatabaseManager.getEngine("json").orElse(new JsonDatabase());
+        JsonConnection connection = database.grabConnection("cache/info.json");
+
+        JsonConnection server = connection.createTable("server");
+        if (!server.isSet("hash") || !server.isSet("time")) {
             SHA512Hash sha = new SHA512Hash();
-            String random = TokenGenerator.generateToken();
+            String random = StringUtils.generateString(32);
 
             HashResult result = sha.hash(random);
-            hash = new KarmaPrimitive(new String(result.product().product()));
-            creation = new KarmaPrimitive(Instant.now().toEpochMilli());
+            String hash_value = new String(result.product().product());
+            long hash_creation = Instant.now().toEpochMilli();
 
-            persistent_hash.set("hash", hash);
-            persistent_hash.set("time", creation);
+            server.set("hash", hash_value);
+            server.set("time", hash_creation);
+            server.setPrettySave(true);
 
-            persistent_hash.save();
+            server.save();
         }
-        String hash_value = hash.getAsString();
-        long hash_creation = creation.getAsLong();
 
-        return CPluginHash.of(hash_value, hash_creation);
+        return CPluginHash.of(server.getString("hash"), server.getNumber("time").longValue());
     }
 
     /**
@@ -488,12 +502,12 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     @Override
     public void registerService(final String name, final PluginService service) throws UnsupportedOperationException {
         if (service_provider.containsKey(name)) {
-            plugin.logger().scheduleLog(Level.WARNING, "Tried to register duplicated service name {0}", name);
+            plugin.logger().log(LogLevel.WARNING, "Tried to register duplicated service name {0}", name);
             throw new UnsupportedOperationException("Cannot register service " + name + " because it's already defined by another service");
         }
         Stream<PluginService> filtered_services = service_provider.values().stream().filter((registered) -> service.getClass().equals(registered.getClass()));
         if (filtered_services.findAny().isPresent()) {
-            plugin.logger().scheduleLog(Level.WARNING, "Tried to registered duplicated service provider {0} under name {1}", service.getClass().getName(), name);
+            plugin.logger().log(LogLevel.WARNING, "Tried to registered duplicated service provider {0} under name {1}", service.getClass().getName(), name);
             throw new UnsupportedOperationException("Cannot register service " + name + " because it's already registered under other service name");
         }
 
@@ -504,7 +518,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
             serviceClass = provider.getService().getName();
         }
 
-        plugin.logger().scheduleLog(Level.INFO, "Registered service {0} for provider {1}", name, serviceClass);
+        plugin.logger().log(LogLevel.INFO, "Registered service {0} for provider {1}", name, serviceClass);
     }
 
     /**
@@ -521,19 +535,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
         //if (service instanceof CLocalBackup) throw new UnsupportedOperationException("Cannot unregister plugin internal service: " + name);
 
         service_provider.remove(name);
-        plugin.logger().scheduleLog(Level.INFO, "Unregistered service {0} on provider {1}", name, service.getClass().getName());
-    }
-
-    /**
-     * Updates the plugin license
-     *
-     * @param new_license the new plugin license
-     * @throws SecurityException if the action was not performed by the plugin
-     */
-    @Override
-    public void updateLicense(final License new_license) throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
-        license = new_license;
+        plugin.logger().log(LogLevel.INFO, "Unregistered service {0} on provider {1}", name, service.getClass().getName());
     }
 
     /**
@@ -588,7 +590,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void info(final String message, final Object... replaces) {
-        plugin.console().send(message, Level.INFO, replaces);
+        plugin.logger().send(LogLevel.INFO, message, replaces);
     }
 
     /**
@@ -599,7 +601,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void warn(final String message, final Object... replaces) {
-        plugin.console().send(message, Level.WARNING, replaces);
+        plugin.logger().send(LogLevel.WARNING, message, replaces);
     }
 
     /**
@@ -610,7 +612,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void err(final String message, final Object... replaces) {
-        plugin.console().send(message, Level.GRAVE, replaces);
+        plugin.logger().send(LogLevel.ERROR, message, replaces);
     }
 
     /**
@@ -621,7 +623,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void logInfo(final String message, final Object... replaces) {
-        plugin.logger().scheduleLog(Level.INFO, message, replaces);
+        plugin.logger().log(LogLevel.INFO, message, replaces);
     }
 
     /**
@@ -632,7 +634,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void logWarn(final String message, final Object... replaces) {
-        plugin.logger().scheduleLog(Level.WARNING, message, replaces);
+        plugin.logger().log(LogLevel.WARNING, message, replaces);
     }
 
     /**
@@ -643,7 +645,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void logErr(final String message, final Object... replaces) {
-        plugin.logger().scheduleLog(Level.GRAVE, message, replaces);
+        plugin.logger().log(LogLevel.ERROR, message, replaces);
     }
 
     /**
@@ -655,8 +657,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
-        plugin.logger().scheduleLog(Level.GRAVE, error);
-        plugin.logger().scheduleLog(Level.INFO, message, replaces);
+        plugin.logger().log(error, message, replaces);
     }
 
     /**
@@ -698,46 +699,6 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     @Override
     public boolean hasPermission(final PermissionObject permission) {
         return true;
-    }
-
-    /**
-     * Karma source version
-     *
-     * @return the source version
-     */
-    @Override
-    public String version() {
-        return plugin.version();
-    }
-
-    /**
-     * Karma source description
-     *
-     * @return the source description
-     */
-    @Override
-    public String description() {
-        return "LockLoginSpigot is the spigot version of LockLogin";
-    }
-
-    /**
-     * Karma source authors
-     *
-     * @return the source authors
-     */
-    @Override
-    public String[] authors() {
-        return plugin.authors();
-    }
-
-    /**
-     * Karma source update URL
-     *
-     * @return the source update URL
-     */
-    @Override
-    public String updateURL() {
-        return plugin.updateURL();
     }
 
     /**
@@ -809,7 +770,7 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
      */
     @Override
     public void sendMessage(final String message) {
-        plugin.console().send(message);
+        plugin.logger().send(message);
     }
 
     /**
@@ -820,8 +781,8 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     @Override
     public void sendActionBar(final String actionbar) {
         for (Player online : Bukkit.getOnlinePlayers()) {
-            BarMessage bar = new BarMessage(online, actionbar);
-            bar.send(false);
+            SpigotActionbar sBar = new SpigotActionbar(actionbar);
+            sBar.send(online);
         }
     }
 
@@ -837,8 +798,8 @@ public class LockLoginSpigot implements LockLogin, KarmaSource, NetworkServer {
     @Override
     public void sendTitle(final String title, final String subtitle, final int fadeIn, final int showTime, final int fadeOut) {
         for (Player online : Bukkit.getOnlinePlayers()) {
-            TitleMessage bar = new TitleMessage(online, title, subtitle);
-            bar.send(fadeIn, showTime, fadeOut);
+            SpigotTitle sTitle = new SpigotTitle(title, subtitle);
+            sTitle.send(online, fadeIn, showTime, fadeOut);
         }
     }
 }

@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.user.storage.account.transiction;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
@@ -11,7 +12,6 @@ import es.karmadev.locklogin.api.user.account.migration.Transictionable;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,7 +51,7 @@ public class CMigrator implements AccountMigrator<CAccount> {
             for (AccountField userField : fields) {
                 switch (userField) {
                     case USERNAME:
-                        if (!StringUtils.isNullOrEmpty(transictionable.player())) account.writeStringValue(AccountField.USERNAME, transictionable.player());
+                        if (!ObjectUtils.isNullOrEmpty(transictionable.player())) account.writeStringValue(AccountField.USERNAME, transictionable.player());
                         break;
                     case UNIQUEID:
                         if (transictionable.uniqueId() != null) account.writeStringValue(AccountField.UNIQUEID, transictionable.uniqueId().toString());

@@ -306,14 +306,20 @@
 
             <!-- KarmaAPI -->
             <dependency>
-                <groupId>ml.karmaconfigs</groupId>
-                <artifactId>KarmaAPI-Common</artifactId>
-                <version>${locklogin.karmaapi.version}</version>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Core</artifactId>
+                <version>2.0.0-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Spigot</artifactId>
+                <version>2.0.0-SNAPSHOT</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>ml.karmaconfigs</groupId>
-                <artifactId>KarmaAPI-Bukkit</artifactId>
+                <artifactId>KarmaAPI-Common</artifactId>
                 <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>

@@ -225,6 +225,17 @@ public class CServer implements NetworkServer {
     }
 
     /**
+     * Get all the offline clients that
+     * are connected in this server
+     *
+     * @return all the offline clients
+     */
+    @Override
+    public Collection<LocalNetworkClient> offlineClients() {
+        return null;
+    }
+
+    /**
      * Get all the online clients that
      * are connected in this server
      *
@@ -243,5 +254,39 @@ public class CServer implements NetworkServer {
     @Override
     public NetworkChannel channel() {
         return channel;
+    }
+
+    /**
+     * Send a message to the client
+     *
+     * @param message the message to send
+     */
+    @Override
+    public void sendMessage(String message) {
+
+    }
+
+    /**
+     * Send an actionbar to the client
+     *
+     * @param actionbar the actionbar to send
+     */
+    @Override
+    public void sendActionBar(String actionbar) {
+
+    }
+
+    /**
+     * Send a title to the client
+     *
+     * @param title    the title
+     * @param subtitle the subtitle
+     * @param fadeIn   the title fade in time
+     * @param showTime the title show time
+     * @param fadeOut  the title fade out time
+     */
+    @Override
+    public void sendTitle(String title, String subtitle, int fadeIn, int showTime, int fadeOut) {
+
     }
 }

@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api;
 
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -7,7 +8,6 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

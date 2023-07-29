@@ -1,12 +1,10 @@
 package es.karmadev.locklogin.common.api.plugin.file.lang;
 
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
-import ml.karmaconfigs.api.common.minecraft.rgb.RGBTextComponent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,14 +68,9 @@ public class InternalPack {
                 generate = true;
             }
         } catch (IOException ignored) {}
+
         if (generate) {
-            FileCopy copy = new FileCopy(InternalPack.class, "plugin/yaml/" + name);
-            try {
-                PathUtilities.create(file);
-                copy.copy(file);
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
+            PathUtilities.copy(CurrentPlugin.getPlugin(), "plugin/yaml/" + name, file);
         }
 
         return new CPluginMessages(file, this);
@@ -93,13 +86,16 @@ public class InternalPack {
         Configuration configuration = CurrentPlugin.getPlugin().configuration();
         String tmp = original;
 
-        RGBTextComponent component = new RGBTextComponent(true, true);
+        /*RGBTextComponent component = new RGBTextComponent(true, true);
         if ((original.contains("<captcha>") || original.contains("{captcha}")) && !configuration.captcha().enable())
             tmp = original.replace("<captcha>", "").replace("{captcha}", "");
 
         return component.parse(tmp
                 .replace("{ServerName}", configuration.server())
                 .replace("{newline}", "\n")
-                .replace("{NewLine}", "\n"));
+                .replace("{NewLine}", "\n"));*/
+
+        //TODO: Use KarmaAPI2's RGB components
+        return original;
     }
 }
