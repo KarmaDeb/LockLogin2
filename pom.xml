@@ -102,7 +102,7 @@
         <apache.commons.version>1.15</apache.commons.version>
         <apache.commons.test>org.apache.commons.codec.net.Utils</apache.commons.test>
 
-        <hikari.cp.version>5.0.0</hikari.cp.version>
+        <hikari.cp.version>5.0.1</hikari.cp.version>
         <hikari.cp.test>com.zaxxer.hikari.HikariConfig</hikari.cp.test>
 
         <java.native.version>5.12.1</java.native.version>
