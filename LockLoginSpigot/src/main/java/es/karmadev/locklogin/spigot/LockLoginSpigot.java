@@ -753,6 +753,11 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
+    @Override
+    public Collection<NetworkClient> onlineClients() {
+        return null;
+    }
+
     /**
      * Get the server packet queue
      *
@@ -801,5 +806,10 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             SpigotTitle sTitle = new SpigotTitle(title, subtitle);
             sTitle.send(online, fadeIn, showTime, fadeOut);
         }
+    }
+
+    @Override
+    public InputStream loadResource(final String s) {
+        return LockLoginSpigot.class.getResourceAsStream("/" + s);
     }
 }
