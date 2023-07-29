@@ -1,5 +1,10 @@
 package es.karmadev.locklogin.api.extension;
 
+import es.karmadev.api.core.source.APISource;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.command.ModuleCommand;
@@ -9,16 +14,15 @@ import es.karmadev.locklogin.api.plugin.permission.DummyPermission;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import ml.karmaconfigs.api.common.collection.list.ConcurrentList;
-import ml.karmaconfigs.api.common.data.file.FileUtilities;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -26,12 +30,12 @@ import java.util.jar.JarFile;
  * LockLogin module
  */
 @SuppressWarnings("unused")
-public abstract class Module implements KarmaSource {
+public abstract class Module implements APISource {
 
     /**
      * All the loaded module names
      */
-    private final static List<String> loaded = new ConcurrentList<>();
+    private final static Set<String> loaded = ConcurrentHashMap.newKeySet();
 
     /**
      * Default plugin
@@ -82,25 +86,26 @@ public abstract class Module implements KarmaSource {
      * @throws ExceptionInInitializerError if the module is already loaded
      */
     public Module() throws IllegalStateException, ExceptionInInitializerError {
-        File modFile = getSourceFile();
+        Path modFile = runtime().getFile();
 
-        try (JarFile jar = new JarFile(modFile)) {
+        try (JarFile jar = new JarFile(modFile.toFile())) {
             JarEntry entry = jar.getJarEntry("module.yml");
-            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", FileUtilities.getPrettyFile(modFile));
+            if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.pathString(modFile));
 
             try (InputStream stream = jar.getInputStream(entry)) {
-                KarmaYamlManager module_yml = new KarmaYamlManager(stream);
+                YamlFileHandler module_yml = YamlHandler.load(stream);
+                //KarmaYamlManager module_yml = new KarmaYamlManager(stream);
 
                 if (module_yml.isSet("name")) {
                     name = module_yml.getString("name");
                 } else {
-                    throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(modFile) + ". Invalid or nonexistent module name");
+                    throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(modFile) + ". Invalid or nonexistent module name");
                 }
 
                 if (module_yml.isSet("version")) {
                     version = module_yml.getString("version");
                 } else {
-                    throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(modFile) + ". Invalid or nonexistent module version");
+                    throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(modFile) + ". Invalid or nonexistent module version");
                 }
 
                 if (module_yml.isSet("description")) {
@@ -123,7 +128,7 @@ public abstract class Module implements KarmaSource {
 
                     description = tmpDescription;
                 } else {
-                    throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(modFile) + ". Invalid or nonexistent module description");
+                    throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(modFile) + ". Invalid or nonexistent module description");
                 }
 
                 if (module_yml.isSet("authors")) {
@@ -145,25 +150,26 @@ public abstract class Module implements KarmaSource {
 
                     authors = tmpAuthors;
                 } else {
-                    throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(modFile) + ". Invalid or nonexistent module authors");
+                    throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(modFile) + ". Invalid or nonexistent module authors");
                 }
 
                 @SuppressWarnings("all")
                 List<PermissionObject> foundPermissions = new ArrayList<>();
                 if (module_yml.isSet("permissions")) {
-                    KarmaYamlManager permissionSection = module_yml.getSection("permissions");
-                    Set<String> keys = permissionSection.getKeySet();
+                    YamlFileHandler permissionSection = module_yml.getSection("permissions");
+                    //KarmaYamlManager permissionSection = module_yml.getSection("permissions");
+                    Collection<String> keys = permissionSection.getKeys(false);
 
                     for (String permission : keys) {
                         if (permissionSection.isSection(permission)) {
-                            KarmaYamlManager permissionData = permissionSection.getSection(permission);
+                            YamlFileHandler permissionData = permissionSection.getSection(permission);
                             boolean inherits = permissionData.getBoolean("inheritance", false);
 
                             PermissionObject parentObject = DummyPermission.of(permission, inherits);
                             LockLoginPermission.register(parentObject);
 
                             if (permissionData.isSet("children")) {
-                                KarmaYamlManager childSection = permissionData.getSection("children");
+                                YamlFileHandler childSection = permissionData.getSection("children");
                                 mapChildren(childSection, parentObject);
                             }
                         } else {
@@ -254,7 +260,7 @@ public abstract class Module implements KarmaSource {
      * @return the source name
      */
     @Override
-    public final String name() {
+    public final @NotNull String sourceName() {
         return name;
     }
 
@@ -264,8 +270,8 @@ public abstract class Module implements KarmaSource {
      * @return the source version
      */
     @Override
-    public final String version() {
-        return version;
+    public final @NotNull Version sourceVersion() {
+        return Version.parse(version);
     }
 
     /**
@@ -274,7 +280,7 @@ public abstract class Module implements KarmaSource {
      * @return the source description
      */
     @Override
-    public final String description() {
+    public final @NotNull String sourceDescription() {
         return description;
     }
 
@@ -284,7 +290,7 @@ public abstract class Module implements KarmaSource {
      * @return the source authors
      */
     @Override
-    public final String[] authors() {
+    public final String[] sourceAuthors() {
         return authors;
     }
 
@@ -296,7 +302,8 @@ public abstract class Module implements KarmaSource {
      * @param initializer the module class initializer
      * @throws Exception if something goes wrong
      */
-    static Module initialize(final File file, final KarmaYamlManager module_yml, final Class<? extends Module> initializer) throws Exception {
+    static Module initialize(final File file, final YamlFileHandler module_yml, final Class<? extends Module> initializer) throws Exception {
+        Path path = file.toPath();
         String name;
         String version;
         String description;
@@ -306,13 +313,13 @@ public abstract class Module implements KarmaSource {
         if (module_yml.isSet("name")) {
             name = module_yml.getString("name");
         } else {
-            throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(file) + ". Invalid or nonexistent module name");
+            throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(path) + ". Invalid or nonexistent module name");
         }
 
         if (module_yml.isSet("version")) {
             version = module_yml.getString("version");
         } else {
-            throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(file) + ". Invalid or nonexistent module version");
+            throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(path) + ". Invalid or nonexistent module version");
         }
 
         if (module_yml.isSet("description")) {
@@ -335,7 +342,7 @@ public abstract class Module implements KarmaSource {
 
             description = tmpDescription;
         } else {
-            throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(file) + ". Invalid or nonexistent module description");
+            throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(path) + ". Invalid or nonexistent module description");
         }
 
         if (module_yml.isSet("authors")) {
@@ -357,25 +364,25 @@ public abstract class Module implements KarmaSource {
 
             authors = tmpAuthors;
         } else {
-            throw new IllegalStateException("Cannot load module " + FileUtilities.getPrettyFile(file) + ". Invalid or nonexistent module authors");
+            throw new IllegalStateException("Cannot load module " + PathUtilities.pathString(path) + ". Invalid or nonexistent module authors");
         }
 
         @SuppressWarnings("all")
         List<PermissionObject> foundPermissions = new ArrayList<>();
         if (module_yml.isSet("permissions")) {
-            KarmaYamlManager permissionSection = module_yml.getSection("permissions");
-            Set<String> keys = permissionSection.getKeySet();
+            YamlFileHandler permissionSection = module_yml.getSection("permissions");
+            Collection<String> keys = permissionSection.getKeys(false);
 
             for (String permission : keys) {
                 if (permissionSection.isSection(permission)) {
-                    KarmaYamlManager permissionData = permissionSection.getSection(permission);
+                    YamlFileHandler permissionData = permissionSection.getSection(permission);
                     boolean inherits = permissionData.getBoolean("inheritance", false);
 
                     PermissionObject parentObject = DummyPermission.of(permission, inherits);
                     LockLoginPermission.register(parentObject);
 
                     if (permissionData.isSet("children")) {
-                        KarmaYamlManager childSection = permissionData.getSection("children");
+                        YamlFileHandler childSection = permissionData.getSection("children");
                         mapChildren(childSection, parentObject);
                     }
                 } else {
@@ -397,10 +404,10 @@ public abstract class Module implements KarmaSource {
         return superConstructor.newInstance(name, version, description, authors, permissions);
     }
 
-    private static void mapChildren(final KarmaYamlManager section, final PermissionObject... topLevels) {
-        for (String key : section.getKeySet()) {
+    private static void mapChildren(final YamlFileHandler section, final PermissionObject... topLevels) {
+        for (String key : section.getKeys(false)) {
             if (section.isSection(key)) {
-                KarmaYamlManager permissionData = section.getSection(key);
+                YamlFileHandler permissionData = section.getSection(key);
                 boolean inherits = permissionData.getBoolean("inheritance", false);
 
                 PermissionObject parentObject = DummyPermission.of(key, inherits);
@@ -410,7 +417,7 @@ public abstract class Module implements KarmaSource {
                 clone[clone.length - 1] = parentObject;
 
                 if (permissionData.isSet("children")) {
-                    KarmaYamlManager childSection = permissionData.getSection("children");
+                    YamlFileHandler childSection = permissionData.getSection("children");
                     mapChildren(childSection, clone);
                 }
             } else {

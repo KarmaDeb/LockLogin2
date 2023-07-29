@@ -1,20 +1,22 @@
 package es.karmadev.locklogin.common.api.plugin.file;
 
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Database;
-import ml.karmaconfigs.api.common.karma.file.yaml.FileCopy;
-import ml.karmaconfigs.api.common.karma.file.yaml.KarmaYamlManager;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class CDatabaseConfiguration implements Database {
 
     private final Driver driver;
-    private final KarmaYamlManager yaml;
+    private final YamlFileHandler yaml;
 
     /**
      * Initialize the plugin configuration
@@ -24,15 +26,13 @@ public class CDatabaseConfiguration implements Database {
         final Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("database.yml");
 
         LockLogin plugin = CurrentPlugin.getPlugin();
-        FileCopy copy = new FileCopy(CPluginConfiguration.class, "plugin/yaml/database.yml");
-        try {
-            copy.copy(file);
-        } catch (Throwable ex) {
-            plugin.log(ex, "Failed to generate database file");
-            plugin.err("Failed to generate database file. Default values will be used");
-        }
+        PathUtilities.copy(plugin, "plugin/yaml/database.yml", file);
 
-        yaml = new KarmaYamlManager(file);
+        try {
+            yaml = YamlHandler.load(file);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     /**
@@ -72,7 +72,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int port() {
-        return yaml.getInt("Database.Port", 3306);
+        return yaml.getInteger("Database.Port", 3306);
     }
 
     /**
@@ -134,7 +134,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int connectionTimeout() {
-        return yaml.getInt("Pooling.ConnectionTimeout", 60);
+        return yaml.getInteger("Pooling.ConnectionTimeout", 60);
     }
 
     /**
@@ -144,7 +144,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int unusedTimeout() {
-        return yaml.getInt("Pooling.UnusedTimeout", 10);
+        return yaml.getInteger("Pooling.UnusedTimeout", 10);
     }
 
     /**
@@ -154,7 +154,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int leakDetection() {
-        return yaml.getInt("Pooling.LeakDetection", 20);
+        return yaml.getInteger("Pooling.LeakDetection", 20);
     }
 
     /**
@@ -164,7 +164,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int maximumLifetime() {
-        return yaml.getInt("Pooling.MaximumLifeTime", 30);
+        return yaml.getInteger("Pooling.MaximumLifeTime", 30);
     }
 
     /**
@@ -174,7 +174,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int minimumConnections() {
-        return yaml.getInt("Pooling.MinimumConnections", 10);
+        return yaml.getInteger("Pooling.MinimumConnections", 10);
     }
 
     /**
@@ -184,7 +184,7 @@ public class CDatabaseConfiguration implements Database {
      */
     @Override
     public int maximumConnections() {
-        return yaml.getInt("Pooling.MaximumConnections", 50);
+        return yaml.getInteger("Pooling.MaximumConnections", 50);
     }
 
     /**

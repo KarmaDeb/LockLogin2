@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.spigot;
 
+import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.extension.Module;
 import es.karmadev.locklogin.api.extension.command.ModuleCommand;
@@ -11,8 +12,6 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.spigot.command.module.CommandHandler;
 import es.karmadev.locklogin.spigot.command.module.ExecutorHelper;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -45,7 +44,7 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
             CommandHandler handler = handlers.remove(command);
             handler.unregister(map);
 
-            plugin.console().send("Unregistered command {0} from module {1}", Level.INFO, command.getName(), command.getModule().name());
+            plugin.info("Unregistered command {0} from module {1}", command.getName(), command.getModule().sourceName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {
@@ -100,10 +99,10 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
 
                                     executor.execute(entity, label, args);
                                 } else {
-                                    player.sendMessage(StringUtils.toColor(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason()));
+                                    player.sendMessage(ConsoleColor.parse(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason()));
                                 }
                             } else {
-                                player.sendMessage(StringUtils.toColor(messages.prefix() + "&cThere was a problem while performing that command"));
+                                player.sendMessage(ConsoleColor.parse(messages.prefix() + "&cThere was a problem while performing that command"));
                             }
                         } else {
                             CommandProcessEvent event = new CommandProcessEvent(plugin, commandBuilder.toString(), label, args);
@@ -115,15 +114,15 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
 
                                 executor.execute(plugin, label, args);
                             } else {
-                                plugin.console().send(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
+                                plugin.sendMessage(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
                             }
                         }
                     }
                 })).build();
 
-        if (map.register(command.getName(), module.name(), handler)) {
+        if (map.register(command.getName(), module.sourceName(), handler)) {
             handlers.put(command, handler);
-            plugin.console().send("Registered command {0} from module {1}", Level.INFO, command.getName(), module.name());
+            plugin.info("Registered command {0} from module {1}", command.getName(), module.sourceName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {

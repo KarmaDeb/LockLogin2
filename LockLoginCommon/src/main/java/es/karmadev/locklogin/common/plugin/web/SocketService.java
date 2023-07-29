@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.plugin.web;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -8,7 +9,6 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.engineio.client.transports.Polling;
 import io.socket.engineio.client.transports.WebSocket;
-import ml.karmaconfigs.api.common.string.StringUtils;
 import okhttp3.OkHttpClient;
 
 import java.net.URI;
@@ -46,7 +46,7 @@ public class SocketService {
         if (!section.useSSL()) {
             protocol = "ws";
         }
-        if (StringUtils.isNullOrEmpty(host) || port <= 0 || port > 65_535) {
+        if (ObjectUtils.isNullOrEmpty(host) || port <= 0 || port > 65_535) {
             protocol = "wss"; //Default protocol
             host = "karmadev.es"; //Default host
             port = 2053; //Default port

@@ -2,6 +2,7 @@ package es.karmadev.locklogin.common.api.sql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
@@ -13,7 +14,6 @@ import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Database;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -142,7 +142,7 @@ public class CSQLDriver implements DataDriver {
                         String tableName = result.getString("table");
                         String sqlQuery = result.getString("sequence");
 
-                        if (!StringUtils.isNullOrEmpty(tableName) && !StringUtils.isNullOrEmpty(sqlQuery)) {
+                        if (!ObjectUtils.isNullOrEmpty(tableName) && !ObjectUtils.isNullOrEmpty(sqlQuery)) {
                             for (Table table : Table.values()) {
                                 String tbName = database.tableName(table);
                                 if (tbName.equals(tableName)) {
@@ -265,7 +265,7 @@ public class CSQLDriver implements DataDriver {
             try (ResultSet result = statement.executeQuery("SELECT `name` AS 'table' FROM `sqlite_master` WHERE `type`='table'")) {
                 while (result.next()) {
                     String tableName = result.getString("table");
-                    if (!StringUtils.isNullOrEmpty(tableName)) {
+                    if (!ObjectUtils.isNullOrEmpty(tableName)) {
                         for (Table table : Table.values()) {
                             String tbName = database.tableName(table);
                             if (tbName.equals(tableName) && !tables.contains(table)) {
