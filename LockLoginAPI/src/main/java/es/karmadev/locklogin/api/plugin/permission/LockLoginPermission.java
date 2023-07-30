@@ -23,7 +23,7 @@ public final class LockLoginPermission {
      * LockLogin administrators permission
      * <p>locklogin.administrator</p>
      */
-    final static PermissionObject LOCKLOGIN = DummyPermission.of("locklogin.administrator", true);
+    final static PermissionObject LOCKLOGIN = new DummyPermission("locklogin.administrator", true);
 
     /**
      * LockLogin reload permission
@@ -327,9 +327,9 @@ public final class LockLoginPermission {
         if (!module_node_map.containsKey(permission.node()) &&
                 module_node_map.values().stream().noneMatch((np) -> np.getPermission().node().equals(permission.node()))) {
             LockLogin plugin = CurrentPlugin.getPlugin();
-            plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
-            Path caller = plugin.runtime().caller();
+            Path caller = plugin.getRuntime().caller();
             if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
 
             Module module = plugin.moduleManager().loader().load(caller);
@@ -352,9 +352,9 @@ public final class LockLoginPermission {
      */
     public static boolean unregister(final PermissionObject permission) throws SecurityException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
-        Path caller = plugin.runtime().caller();
+        Path caller = plugin.getRuntime().caller();
         if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
 
         Module module = plugin.moduleManager().loader().load(caller);

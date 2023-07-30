@@ -1,5 +1,18 @@
 package es.karmadev.locklogin.test;
 
+import es.karmadev.api.core.CoreModule;
+import es.karmadev.api.core.DefaultRuntime;
+import es.karmadev.api.core.source.APISource;
+import es.karmadev.api.core.source.SourceManager;
+import es.karmadev.api.core.source.runtime.SourceRuntime;
+import es.karmadev.api.file.util.NamedStream;
+import es.karmadev.api.logger.LogManager;
+import es.karmadev.api.logger.SourceLogger;
+import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.schedule.task.TaskScheduler;
+import es.karmadev.api.strings.StringFilter;
+import es.karmadev.api.strings.placeholder.PlaceholderEngine;
+import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -13,8 +26,6 @@ import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.api.plugin.license.License;
-import es.karmadev.locklogin.api.plugin.license.LicenseProvider;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -35,17 +46,17 @@ import es.karmadev.locklogin.common.api.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.common.api.web.license.CLicenseProvider;
-import ml.karmaconfigs.api.common.karma.source.APISource;
-import ml.karmaconfigs.api.common.karma.source.KarmaSource;
-import ml.karmaconfigs.api.common.utils.enums.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @SuppressWarnings("all")
-public class TestLockLogin implements LockLogin, KarmaSource {
+public class TestLockLogin implements LockLogin, APISource {
 
     private final InternalPack pack = new InternalPack();
 
@@ -57,32 +68,36 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     public final CSessionFactory default_session_factory = new CSessionFactory(sqlite);
     public final CUserFactory default_user_factory = new CUserFactory(sqlite);
     public final CServerFactory default_server_factory = new CServerFactory(sqlite);
-    public final CLicenseProvider license_provider = new CLicenseProvider();
     public AccountFactory<UserAccount> account_factory = null;
     public SessionFactory<UserSession> session_factory = null;
     public UserFactory<LocalNetworkClient> user_factory = null;
     public ServerFactory<NetworkServer> server_factory = null;
 
-    public License license = null;
-
-    public final LockLoginHasher hasher;
-    private final Configuration configuration;
+    public LockLoginHasher hasher;
+    private Configuration configuration;
 
     public TestLockLogin() {
-        APISource.addProvider(this);
-
+        System.out.println("Calling constructor");
         Class<CurrentPlugin> instance = CurrentPlugin.class;
         try {
+            System.out.println("Hacking CurrentPlugin");
             Method initialize = instance.getDeclaredMethod("initialize", LockLogin.class);
             initialize.setAccessible(true);
 
             initialize.invoke(instance, this);
+            System.out.println("Hacked CurrentPlugin");
         } catch (Throwable ex) {
+            System.out.println("Error");
             ex.printStackTrace();
         }
 
-        hasher = new CPluginHasher();
+        System.out.println("Creating configuration");
         configuration = new CPluginConfiguration();
+
+        System.out.println("Creating hasher");
+        hasher = new CPluginHasher();
+
+        System.out.println("Boop!");
     }
 
     /**
@@ -136,7 +151,7 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public BuildType build() {
-        return null;
+        return BuildType.BETA;
     }
 
     /**
@@ -149,6 +164,51 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public InputStream load(final String name) throws SecurityException {
+        return TestLockLogin.class.getResourceAsStream("/" + name);
+    }
+
+    @Override
+    public @NotNull String identifier() {
+        return "TEST";
+    }
+
+    @Override
+    public @NotNull String sourceName() {
+        return "LockLogin";
+    }
+
+    @Override
+    public @NotNull Version sourceVersion() {
+        return Version.of(1, 0, 0, "t");
+    }
+
+    @Override
+    public @NotNull String sourceDescription() {
+        return "Test Locklogin";
+    }
+
+    @Override
+    public @NotNull String[] sourceAuthors() {
+        return new String[]{"KarmaDev"};
+    }
+
+    @Override
+    public @Nullable URI sourceUpdateURI() {
+        return null;
+    }
+
+    @Override
+    public @NotNull SourceRuntime runtime() {
+        return new DefaultRuntime(this);
+    }
+
+    @Override
+    public @NotNull PlaceholderEngine placeholderEngine(String s) {
+        return null;
+    }
+
+    @Override
+    public @NotNull TaskScheduler scheduler(String s) {
         return null;
     }
 
@@ -159,7 +219,57 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public Path workingDirectory() {
-        return getDataPath();
+        return Paths.get("./junit/test");
+    }
+
+    @Override
+    public @NotNull Path navigate(String s, String... strings) {
+        Path initial = workingDirectory();
+        for (String str : strings) {
+            initial = initial.resolve(str);
+        }
+
+        return initial.resolve(s);
+    }
+
+    @Override
+    public @Nullable NamedStream findResource(String s) {
+        return null;
+    }
+
+    @Override
+    public @NotNull NamedStream[] findResources(String s, @Nullable StringFilter stringFilter) {
+        return new NamedStream[0];
+    }
+
+    @Override
+    public boolean export(String s, Path path) {
+        return false;
+    }
+
+    @Override
+    public SourceLogger logger() {
+        return LogManager.getLogger(this);
+    }
+
+    @Override
+    public @Nullable CoreModule getModule(String s) {
+        return null;
+    }
+
+    @Override
+    public boolean registerModule(CoreModule coreModule) {
+        return false;
+    }
+
+    @Override
+    public void loadIdentifier(String s) {
+
+    }
+
+    @Override
+    public void saveIdentifier(String s) {
+
     }
 
     /**
@@ -169,7 +279,7 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public LockLoginRuntime runtime() throws SecurityException {
+    public LockLoginRuntime getRuntime() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return runtime;
     }
@@ -201,6 +311,7 @@ public class TestLockLogin implements LockLogin, KarmaSource {
      */
     @Override
     public Configuration configuration() {
+        System.out.println("Configuration: " + configuration);
         return configuration;
     }
 
@@ -284,26 +395,6 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
-     * Get the license provider
-     *
-     * @return the license provider
-     */
-    @Override
-    public LicenseProvider licenseProvider() {
-        return license_provider;
-    }
-
-    /**
-     * Get the current license
-     *
-     * @return the license
-     */
-    @Override
-    public License license() {
-        return license;
-    }
-
-    /**
      * Get the plugin module manager
      *
      * @return the plugin module manager
@@ -359,17 +450,6 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     }
 
     /**
-     * Updates the plugin license
-     *
-     * @param new_license the new plugin license
-     * @throws SecurityException if the action was not performed by the plugin
-     */
-    @Override
-    public void updateLicense(final License new_license) throws SecurityException {
-        license = new_license;
-    }
-
-    /**
      * Define the plugin account factory
      *
      * @param factory the account factory
@@ -412,142 +492,83 @@ public class TestLockLogin implements LockLogin, KarmaSource {
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void info(final String message, final Object... replaces) {
-        console().send(message, Level.INFO, replaces);
+        logger().send(LogLevel.INFO, message, replaces);
     }
 
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void warn(final String message, final Object... replaces) {
-        console().send(message, Level.WARNING, replaces);
+        logger().send(LogLevel.WARNING, message, replaces);
     }
 
     /**
      * Print a message
      *
-     * @param message the message to print
+     * @param message  the message to print
      * @param replaces the message replaces
      */
     @Override
     public void err(final String message, final Object... replaces) {
-        console().send(message, Level.GRAVE, replaces);
+        logger().send(LogLevel.ERROR, message, replaces);
     }
 
     /**
      * Log something that is just informative
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logInfo(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.INFO, message, replaces);
+        logger().log(LogLevel.INFO, message, replaces);
     }
 
     /**
      * Log something that is important
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logWarn(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.WARNING, message, replaces);
+        logger().log(LogLevel.WARNING, message, replaces);
     }
 
     /**
      * Log something that went wrong
      *
-     * @param message the log message
+     * @param message  the log message
      * @param replaces the message replaces
      */
     @Override
     public void logErr(final String message, final Object... replaces) {
-        logger().scheduleLog(Level.GRAVE, message, replaces);
+        logger().log(LogLevel.ERROR, message, replaces);
     }
 
     /**
      * Log an error
      *
-     * @param error   the error
-     * @param message the message
+     * @param error    the error
+     * @param message  the message
      * @param replaces the message replaces
      */
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
-        logger().scheduleLog(Level.GRAVE, error);
-        logger().scheduleLog(Level.INFO, message, replaces);
+        logger().log(error, message, replaces);
     }
 
-
-    /**
-     * Karma source name
-     *
-     * @return the source name
-     */
     @Override
-    public String name() {
-        return "LockLogin";
-    }
-
-    /**
-     * Karma source version
-     *
-     * @return the source version
-     */
-    @Override
-    public String version() {
-        return "1.0.0";
-    }
-
-    /**
-     * Karma source description
-     *
-     * @return the source description
-     */
-    @Override
-    public String description() {
-        return "";
-    }
-
-    /**
-     * Karma source authors
-     *
-     * @return the source authors
-     */
-    @Override
-    public String[] authors() {
-        return new String[]{"KarmaDev"};
-    }
-
-    /**
-     * Karma source update URL
-     *
-     * @return the source update URL
-     */
-    @Override
-    public String updateURL() {
-        return null;
-    }
-
-    /**
-     * Get the authors using a custom separator
-     *
-     * @param firstSeparator if the first object should have separator
-     * @param separator      the separator
-     * @return the authors using the separator options
-     */
-    @Override
-    public String authors(boolean firstSeparator, String separator) {
-        return KarmaSource.super.authors(firstSeparator, separator);
+    public InputStream loadResource(String s) {
+        return TestLockLogin.class.getResourceAsStream("/" + s);
     }
 }

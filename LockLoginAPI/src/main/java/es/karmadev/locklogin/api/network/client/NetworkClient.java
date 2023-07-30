@@ -3,14 +3,13 @@ package es.karmadev.locklogin.api.network.client;
 import com.google.gson.JsonElement;
 import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 
 /**
  * Network client
  */
 @SuppressWarnings("unused")
 public interface NetworkClient extends LocalNetworkClient, TextContainer {
-
-
 
     /**
      * Kick a client
@@ -82,4 +81,11 @@ public interface NetworkClient extends LocalNetworkClient, TextContainer {
      * @param cmd the command to perform
      */
     void performCommand(final String cmd);
+
+    /**
+     * Get the client session checker
+     *
+     * @return the client session checker
+     */
+    SessionChecker getSessionChecker();
 }

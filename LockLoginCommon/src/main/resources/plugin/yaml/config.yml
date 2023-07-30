@@ -252,12 +252,12 @@ Permissions:
   BlockOperator: true
   RemoveEverything: true
   AllowWildcard: false
-  UnLogged:
+  PreLogin:
     - "my.permission.for.unlogged"
-    - "[group]unlogged"
-  Logged:
+    - "group.unlogged"
+  PostLogin:
     - "my.permission.for.logged"
-    - "[group]default"
+    - "group.default"
 
 #Password configuration
 #

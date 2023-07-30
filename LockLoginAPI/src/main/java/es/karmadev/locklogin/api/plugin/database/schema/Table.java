@@ -23,7 +23,11 @@ public enum Table {
     /**
      * Brute force table
      */
-    BRUTE_FORCE("BruteForce");
+    BRUTE_FORCE("BruteForce"),
+    /**
+     * Premium table
+     */
+    PREMIUM("Premium");
 
     /**
      * The table path

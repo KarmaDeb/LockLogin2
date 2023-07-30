@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.runtime;
 
+import es.karmadev.api.core.KarmaAPI;
 import es.karmadev.api.web.WebDownloader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -36,7 +37,7 @@ public class CDependencyManager implements DependencyManager {
 
                 boolean download = generated == null || loaded == null || !generated.matches(loaded);
                 if (download) {
-                    plugin.info("Dependency {0} is not downloaded. Downloading it...", dependency.name());
+                    plugin.info("Dependency {0} is being downloaded...", dependency.name());
 
                     URL url = dependency.downloadURL();
                     if (url == null) {
@@ -52,9 +53,7 @@ public class CDependencyManager implements DependencyManager {
                     }
                 }
 
-                //TODO: Use KarmaAPI2's brute loader
-                /*BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
-                loader.add(dependency.file());*/
+                KarmaAPI.inject(dependency.file(), CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
                 dependencies.add(dependency);
 
                 plugin.info("Loaded dependency {0}", dependency.name());
@@ -69,9 +68,7 @@ public class CDependencyManager implements DependencyManager {
      */
     @Override
     public void appendExternal(final Path library) {
-        //TODO: Use KarmaAPI2's brute loader
-        /*BruteLoader loader = new BruteLoader(CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
-        loader.add(library);*/
+        KarmaAPI.inject(library, CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
     }
 
     /**

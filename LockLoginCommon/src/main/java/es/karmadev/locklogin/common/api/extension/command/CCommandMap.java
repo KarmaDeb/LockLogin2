@@ -66,7 +66,7 @@ public class CCommandMap implements CommandRegistrar {
     @Override
     public ModuleCommand getCommand(final String name) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
         String tmpName = name;
 
         if (!name.contains(":")) {

@@ -45,3 +45,5 @@ deprecated.txt
 /LockLoginCommon/database.yml
 /LockLoginAPI/v2.0.0/
 /v2.0.0/
+/LockLoginCommon/DisabledTests/
+/LockLoginCommon/junit/

@@ -1,0 +1,8 @@
+{
+    "#secret_comment": [
+        "Please note, this contains the plugin secret key used",
+        "for encryption (which is not the same as hashing). Avoid",
+        "any kind of manual modification to this file"
+    ],
+    "secret": ""
+}

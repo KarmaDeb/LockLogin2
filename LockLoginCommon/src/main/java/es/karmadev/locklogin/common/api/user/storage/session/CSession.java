@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
@@ -295,6 +296,8 @@ public class CSession implements UserSession {
      */
     @Override
     public String captcha() {
+        String captcha = null;
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -302,7 +305,7 @@ public class CSession implements UserSession {
             statement = connection.createStatement();
             try (ResultSet result = statement.executeQuery("SELECT `captcha` FROM `session` WHERE `id` = " + session_id)) {
                 if (result.next()) {
-                    return result.getString("captcha");
+                    captcha = result.getString("captcha");
                 }
             }
         } catch (SQLException ex) {
@@ -311,7 +314,7 @@ public class CSession implements UserSession {
             pool.close(connection, statement);
         }
 
-        return null;
+        return captcha;
     }
 
     /**

@@ -17,7 +17,12 @@ public class CommandWhitelist {
     private final static List<String> custom = new ArrayList<>();
 
     public static boolean isBlacklisted(final String cmd) {
-        return !custom.contains(cmd) && !Arrays.asList(DEFAULT).contains(cmd);
+        String checkCMD = cmd;
+        if (checkCMD.startsWith("/")) {
+            checkCMD = checkCMD.substring(1);
+        }
+
+        return !custom.contains(checkCMD) && !Arrays.asList(DEFAULT).contains(checkCMD);
     }
 
     public static void allow(final String... commands) {

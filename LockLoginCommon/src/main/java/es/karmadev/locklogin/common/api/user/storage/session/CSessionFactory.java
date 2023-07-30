@@ -68,6 +68,8 @@ public class CSessionFactory implements SessionFactory<CSession> {
 
                     CSession session = new CSession(client.id(), session_id, driver);
                     session_cache.add(session);
+
+                    return session;
                 }
             }
         } catch (SQLException ex) {

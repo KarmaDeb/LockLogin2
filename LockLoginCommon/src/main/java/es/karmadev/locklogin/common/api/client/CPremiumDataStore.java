@@ -26,10 +26,10 @@ public final class CPremiumDataStore implements PremiumDataStore {
             connection = driver.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `name`,`uuid` FROM `premium`")) {
+            try (ResultSet result = statement.executeQuery("SELECT `name`,`premium_uuid` FROM `user` WHERE `premium_uuid` IS NOT NULL")) {
                 while (result.next()) {
                     String name = result.getString("name");
-                    String uniqueId = result.getString("uuid");
+                    String uniqueId = result.getString("premium_uuid");
 
                     if (!ObjectUtils.areNullOrEmpty(false, name, uniqueId)) {
                         UUID id = UUID.fromString(uniqueId);
@@ -59,9 +59,9 @@ public final class CPremiumDataStore implements PremiumDataStore {
             connection = driver.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `uuid` FROM `premium` WHERE `name` = '" + name + "'")) {
+            try (ResultSet result = statement.executeQuery("SELECT `premium_uuid` FROM `user` WHERE `name` = '" + name + "'")) {
                 if (result.next()) {
-                    String uniqueId = result.getString("uuid");
+                    String uniqueId = result.getString("premium_uuid");
                     if (!ObjectUtils.isNullOrEmpty(uniqueId)) {
                         cache = UUID.fromString(uniqueId);
                         cached.put(name, cache);
@@ -87,6 +87,8 @@ public final class CPremiumDataStore implements PremiumDataStore {
     public void saveId(final String name, final UUID onlineId) {
         if (name == null || onlineId == null) return;
 
+        UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -94,16 +96,15 @@ public final class CPremiumDataStore implements PremiumDataStore {
             statement = connection.createStatement();
 
             UUID cache = cached.getOrDefault(name, null);
-            UUID offline = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
             if (onlineId.equals(cache) || onlineId.equals(offline)) return;
 
             if (cache == null) {
                 driver.close(null, statement);
                 statement = connection.createStatement();
 
-                statement.executeUpdate("UPDATE `premium` SET `uuid` = '" + onlineId + "' WHERE `name` = '" + name + "'");
+                statement.executeUpdate("UPDATE `user` SET `premium_uuid` = '" + onlineId + "' WHERE `name` = '" + name + "'");
             } else {
-                statement.execute("INSERT INTO `premium` (`name`,`uuid`) VALUES ('" + name + "','" + onlineId + "')");
+                statement.execute("INSERT INTO `user` (`name`,`uuid`,`premium_uuid`) VALUES ('" + name + "','" + offline + "','" + onlineId + "')");
             }
         } catch (SQLException ex) {
             ex.printStackTrace();

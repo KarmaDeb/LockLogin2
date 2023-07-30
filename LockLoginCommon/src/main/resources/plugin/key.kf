@@ -1,8 +1,0 @@
-("main"
-
-    *(
-        The plugin secret key, used for internal encryption
-        PLEASE NOTE: TOUCHING THIS COULD RESULT IN PLUGIN MALFUNCTION
-    )*
-    'SecretKey' -> ""
-)

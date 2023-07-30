@@ -28,15 +28,14 @@ public class CVirtualId implements VirtualID {
     private final String virtualID;
     static {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
     }
 
     public CVirtualId() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
         Configuration configuration = plugin.configuration();
-
         SecretStore store = configuration.secretKey();
 
         Path virtual_id = plugin.workingDirectory().resolve("data").resolve("virtual.kf");

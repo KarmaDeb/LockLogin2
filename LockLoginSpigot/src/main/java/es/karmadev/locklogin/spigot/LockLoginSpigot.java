@@ -273,7 +273,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public CRuntime runtime() throws SecurityException {
+    public CRuntime getRuntime() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         return runtime;
     }

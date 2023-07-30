@@ -91,7 +91,7 @@ public interface LockLogin extends ResourceLoader {
      * @return the plugin runtime
      * @throws SecurityException if tried to access from an unauthorized source
      */
-    LockLoginRuntime runtime() throws SecurityException;
+    LockLoginRuntime getRuntime() throws SecurityException;
 
     /**
      * Get the plugin network

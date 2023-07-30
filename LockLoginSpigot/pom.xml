@@ -41,6 +41,10 @@
             <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Minecraft</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>es.karmadev</groupId>
@@ -77,6 +81,11 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
         </dependency>
     </dependencies>
 </project>

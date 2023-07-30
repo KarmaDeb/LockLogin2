@@ -34,7 +34,7 @@ public abstract class LockLoginEvent {
         this.caller = caller;
         if (caller == null) {
             LockLogin plugin = CurrentPlugin.getPlugin();
-            plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
         }
     }
 

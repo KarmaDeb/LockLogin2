@@ -3,6 +3,7 @@ package es.karmadev.locklogin.api.plugin.database.query;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -75,7 +76,8 @@ public final class QueryBuilder {
         YamlFileHandler tmp;
         if (Files.exists(tmpDatabaseConfig)) {
             try {
-                tmp = YamlHandler.load(tmpDatabaseConfig);
+                YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
+                tmp = YamlHandler.load(tmpDatabaseConfig, reader);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -88,7 +90,8 @@ public final class QueryBuilder {
             PathUtilities.copy(plugin, "plugin/yaml/database.yml", database_config);
 
             try {
-                tmp = YamlHandler.load(database_config);
+                YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
+                tmp = YamlHandler.load(database_config, reader);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

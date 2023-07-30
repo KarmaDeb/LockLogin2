@@ -8,7 +8,9 @@ import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.plugin.permission.DummyPermission;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.server.channel.SPacket;
+import es.karmadev.locklogin.common.api.user.session.CSessionChecker;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -18,6 +20,7 @@ import java.util.function.Function;
 
 public final class COnlineClient extends CLocalClient implements NetworkClient {
 
+    private final CSessionChecker checker;
     private Consumer<String> sendMessage;
     private Consumer<String> sendActionbar;
     private Consumer<ClientTitle> sendTitle;
@@ -31,6 +34,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     public COnlineClient(final int id, final DataDriver pool, final NetworkServer current) {
         super(id, pool);
         server = current;
+        checker = new CSessionChecker(this);
     }
 
     public COnlineClient onMessageRequest(final Consumer<String> function) {
@@ -170,8 +174,18 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void performCommand(final String cmd) {
-        CurrentPlugin.getPlugin().runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
         if (performCommand != null) performCommand.accept(cmd);
+    }
+
+    /**
+     * Get the client session checker
+     *
+     * @return the client session checker
+     */
+    @Override
+    public SessionChecker getSessionChecker() {
+        return checker;
     }
 
     /**

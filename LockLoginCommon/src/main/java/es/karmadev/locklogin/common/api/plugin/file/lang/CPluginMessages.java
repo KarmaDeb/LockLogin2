@@ -2,6 +2,7 @@ package es.karmadev.locklogin.common.api.plugin.file.lang;
 
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -16,6 +17,7 @@ import es.karmadev.locklogin.api.security.check.CheckResult;
 import es.karmadev.locklogin.api.security.check.CheckType;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
@@ -32,13 +34,17 @@ public class CPluginMessages implements Messages {
 
     public CPluginMessages(final Path file, final InternalPack parser) {
         YamlFileHandler tmpYaml;
+        InputStream stream = CurrentPlugin.getPlugin().loadResource("plugin/yaml/" + parser.packFileName());
         try {
-            tmpYaml = YamlHandler.load(file);
+            YamlReader reader = new YamlReader(stream);
+            tmpYaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             tmpYaml = YamlHandler.create(file);
         }
 
         this.yaml = tmpYaml;
+        yaml.validate();
+
         this.parser = parser;
     }
 
@@ -270,7 +276,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String captcha(final String code) {
+    public String captcha(String code) {
+        if (code == null) code = "";
+
         String str = yaml.getString("Captcha", "&7Your captcha code is: &e{captcha}");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -295,6 +303,9 @@ public class CPluginMessages implements Messages {
             } else {
                 captcha = "&m" + code;
             }
+        }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
         }
 
         return parser.parse(str.replace("{captcha}", captcha));
@@ -347,7 +358,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String register(final String code) {
+    public String register(String code) {
+        if (code == null) code = "";
+
         String str = yaml.getString("Register", "&5&oPlease, use /register <password> <password> <captcha>");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -373,6 +386,9 @@ public class CPluginMessages implements Messages {
                 captcha = "&m" + code;
             }
         }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
+        }
 
         return parser.parse(str.replace("{captcha}", captcha));
     }
@@ -386,7 +402,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String registerBar(final String code, final String color, final long time) {
+    public String registerBar(String code, final String color, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("RegisterBar", "{color}You have &7{time}{color} to register");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -424,6 +442,9 @@ public class CPluginMessages implements Messages {
             } else {
                 captcha = "&m" + code;
             }
+        }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
         }
 
         return parser.parse(str.replace("{color}", color).replace("{time}", format).replace("{captcha}", captcha));
@@ -500,7 +521,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String registerTitle(final String code, final long time) {
+    public String registerTitle(String code, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("RegisterTitle", "&7You have");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -539,6 +562,9 @@ public class CPluginMessages implements Messages {
                 captcha = "&m" + code;
             }
         }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
+        }
 
         return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
     }
@@ -551,7 +577,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String registerSubtitle(final String code, final long time) {
+    public String registerSubtitle(String code, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("RegisterSubtitle", "&b{time} &7to register");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -590,6 +618,9 @@ public class CPluginMessages implements Messages {
                 captcha = "&m" + code;
             }
         }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
+        }
 
         return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
     }
@@ -620,7 +651,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String login(final String code) {
+    public String login(String code) {
+        if (code == null) code = "";
+
         String str = yaml.getString("Captcha", "&7Your captcha code is: &e{captcha}");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -646,6 +679,9 @@ public class CPluginMessages implements Messages {
                 captcha = "&m" + code;
             }
         }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
+        }
 
         return parser.parse(str.replace("{captcha}", captcha));
     }
@@ -659,7 +695,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String loginBar(final String code, final String color, final long time) {
+    public String loginBar(String code, final String color, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("LoginBar", "{color}You have &7{time}{color} to login");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -697,6 +735,9 @@ public class CPluginMessages implements Messages {
             } else {
                 captcha = "&m" + code;
             }
+        }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
         }
 
         return parser.parse(str.replace("{color}", color).replace("{time}", format).replace("{captcha}", captcha));
@@ -750,7 +791,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String loginTitle(final String code, final long time) {
+    public String loginTitle(String code, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("RegisterTitle", "&7You have");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -789,6 +832,9 @@ public class CPluginMessages implements Messages {
                 captcha = "&m" + code;
             }
         }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
+        }
 
         return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
     }
@@ -801,7 +847,9 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String loginSubtitle(final String code, final long time) {
+    public String loginSubtitle(String code, final long time) {
+        if (code == null) code = "";
+
         String str = yaml.getString("LoginSubtitle", "&b{time} &7to login");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
@@ -839,6 +887,9 @@ public class CPluginMessages implements Messages {
             } else {
                 captcha = "&m" + code;
             }
+        }
+        if (captcha.isEmpty()) {
+            str = str.replace("<captcha>", "");
         }
 
         return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));

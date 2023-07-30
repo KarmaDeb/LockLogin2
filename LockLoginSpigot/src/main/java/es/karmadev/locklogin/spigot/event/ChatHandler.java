@@ -54,7 +54,9 @@ public class ChatHandler implements Listener {
             if (!session.isLogged() || !session.isPinLogged() || !session.is2FALogged()) {
                 if (CommandMask.mustMask(command)) {
                     UUID commandId = CommandMask.mask(message, arguments);
-                    e.setMessage(CommandMask.getCommand(commandId) + " " + commandId);
+
+                    String masked = CommandMask.getCommand(commandId) + " " + commandId;
+                    e.setMessage(masked);
                 }
 
                 Messages messages = plugin.messages();

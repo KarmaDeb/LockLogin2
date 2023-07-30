@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.user.storage.account;
 
+import es.karmadev.api.core.ExceptionCollector;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -19,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 public class CAccount implements UserAccount {
@@ -185,7 +187,7 @@ public class CAccount implements UserAccount {
      */
     @Override
     public boolean destroy(final NetworkEntity issuer) throws SecurityException {
-        CurrentPlugin.getPlugin().runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
         return true;
     }

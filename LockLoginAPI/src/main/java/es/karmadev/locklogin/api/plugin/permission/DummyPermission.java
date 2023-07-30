@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.api.plugin.permission;
 
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
-import lombok.Value;
+import lombok.Getter;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
 
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static lombok.ToString.Exclude;
 
 @Accessors(fluent = true)
-@Value(staticConstructor = "of")
+@Getter
 @SuppressWarnings("unused")
 public class DummyPermission implements PermissionObject {
 
@@ -29,6 +29,10 @@ public class DummyPermission implements PermissionObject {
     @Exclude
     Set<PermissionObject> parent = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+    DummyPermission(final String node, final boolean inheritance) {
+        this.node = node;
+        this.inheritance = inheritance;
+    }
 
     /**
      * Set the top level permission
@@ -72,7 +76,13 @@ public class DummyPermission implements PermissionObject {
      */
     @Override
     public PermissionObject[] children() {
-        return children.toArray(new PermissionObject[0]);
+        PermissionObject[] child = new PermissionObject[0];
+        for (PermissionObject sub : children) {
+            child = Arrays.copyOf(child, child.length + 1);
+            child[child.length - 1] = sub;
+        }
+
+        return child;
     }
 
     /**
@@ -82,7 +92,13 @@ public class DummyPermission implements PermissionObject {
      */
     @Override
     public PermissionObject[] parent() {
-        return parent.toArray(new PermissionObject[0]);
+        PermissionObject[] supper = new PermissionObject[0];
+        for (PermissionObject sup : parent) {
+            supper = Arrays.copyOf(supper, supper.length + 1);
+            supper[supper.length - 1] = sup;
+        }
+
+        return supper;
     }
 
     /**
@@ -92,7 +108,7 @@ public class DummyPermission implements PermissionObject {
      */
     @Override
     public PermissionObject topLevel() {
-        return null;
+        return topLevel;
     }
 
     /**
@@ -104,6 +120,10 @@ public class DummyPermission implements PermissionObject {
      */
     @Override
     public boolean isChildOf(final PermissionObject permission) {
+        for (PermissionObject child : children) {
+            if (child.node().equals(permission.node())) return true;
+        }
+
         return false;
     }
 
@@ -116,6 +136,10 @@ public class DummyPermission implements PermissionObject {
      */
     @Override
     public boolean isParentOf(final PermissionObject permission) {
+        for (PermissionObject supper : parent) {
+            if (supper.node().equals(permission.node())) return true;
+        }
+
         return false;
     }
 
@@ -127,6 +151,9 @@ public class DummyPermission implements PermissionObject {
      * @return the permission
      */
     public static DummyPermission of(final String node, final boolean inheritance) {
-        return DummyPermission.of(node, inheritance, LockLoginPermission.LOCKLOGIN);
+        DummyPermission n = new DummyPermission(node, inheritance);
+        n.topLevel = LockLoginPermission.LOCKLOGIN;
+
+        return n;
     }
 }

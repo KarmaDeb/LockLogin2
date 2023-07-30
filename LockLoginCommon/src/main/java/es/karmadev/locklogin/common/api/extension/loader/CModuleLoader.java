@@ -70,7 +70,7 @@ public class CModuleLoader implements ModuleLoader {
     @Override
     public Module load(final Path file) throws IllegalStateException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
 
         File modFile = file.toFile();
 
@@ -119,7 +119,7 @@ public class CModuleLoader implements ModuleLoader {
     @Override
     public Module get(final Path file) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
 
         File modFile = file.toFile();
 

@@ -96,7 +96,7 @@ public class CModuleManager implements ModuleManager {
     public void addEventHandler(final EventHandler handler) {
         Method[] methods = handler.getClass().getDeclaredMethods();
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
         Path caller = runtime.caller();
 
         Module module = loader.findByFile(caller);
@@ -132,7 +132,7 @@ public class CModuleManager implements ModuleManager {
     @Override
     public <T extends LockLoginEvent> EventHandler addEventHandler(final T event, final Consumer<T> listener) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
         Path caller = runtime.caller();
 
         Module module = loader.findByFile(caller);
@@ -201,7 +201,7 @@ public class CModuleManager implements ModuleManager {
                 try {
                     if (executor != null) {
                         LockLogin plugin = CurrentPlugin.getPlugin();
-                        LockLoginRuntime runtime = plugin.runtime();
+                        LockLoginRuntime runtime = plugin.getRuntime();
                         Path caller = runtime.caller();
 
                         Module moduleCaller = loader.findByFile(caller);

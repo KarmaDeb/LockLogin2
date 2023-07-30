@@ -78,6 +78,7 @@
         </dependency>
 
         <!-- Test dependencies -->
+        <!--
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
@@ -90,5 +91,6 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+        -->
     </dependencies>
 </project>

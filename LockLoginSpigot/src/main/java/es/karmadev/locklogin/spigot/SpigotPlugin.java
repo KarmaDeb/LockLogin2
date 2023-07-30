@@ -1,5 +1,11 @@
 package es.karmadev.locklogin.spigot;
 
+import es.karmadev.api.core.KarmaAPI;
+import es.karmadev.api.core.KarmaPlugin;
+import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
@@ -10,16 +16,17 @@ import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.protection.type.*;
+import es.karmadev.locklogin.spigot.command.LoginCommand;
+import es.karmadev.locklogin.spigot.command.RegisterCommand;
+import es.karmadev.locklogin.spigot.event.ChatHandler;
+import es.karmadev.locklogin.spigot.event.JoinHandler;
+import es.karmadev.locklogin.spigot.event.QuitHandler;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
-import ml.karmaconfigs.api.bukkit.KarmaPlugin;
-import ml.karmaconfigs.api.common.data.path.PathUtilities;
-import ml.karmaconfigs.api.common.karma.KarmaAPI;
-import ml.karmaconfigs.api.common.utils.enums.Level;
-import ml.karmaconfigs.api.common.version.comparator.VersionComparator;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -36,7 +43,7 @@ public class SpigotPlugin extends KarmaPlugin {
 
     LockLoginSpigot spigot;
 
-    public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException {
+    public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException, AlreadyRegisteredException {
         super(false);
         Field commandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
         commandMap.setAccessible(true);
@@ -50,7 +57,7 @@ public class SpigotPlugin extends KarmaPlugin {
      */
     @Override
     public void enable() {
-        console().send("Preparing to inject dependencies. Please wait...", Level.WARNING);
+        logger().send(LogLevel.WARNING, "Preparing to inject dependencies. Please wait...");
         long start = System.currentTimeMillis();
         CPluginDependency.load();
 
@@ -59,25 +66,24 @@ public class SpigotPlugin extends KarmaPlugin {
         for (LockLoginDependency dependency : CPluginDependency.getAll()) {
             if (dependency.isPlugin()) {
                 String name = dependency.name();
-                String version = dependency.version().plugin();
+                Version version = Version.parse(dependency.version().plugin());
 
                 if (name.equalsIgnoreCase("KarmaAPI")) {
-                    String platform = dependency.version().project();
+                    Version platform = Version.parse(dependency.version().project());
 
-                    String API_VERSION = KarmaAPI.getVersion();
-                    String PLUGIN_VERSION = KarmaAPI.getPluginVersion();
+                    Version API_VERSION = Version.parse(KarmaAPI.VERSION);
+                    Version PLUGIN_VERSION = Version.parse(KarmaAPI.BUILD);
 
                     if (API_VERSION.equals(platform)) {
-                        VersionComparator comparator = new VersionComparator(PLUGIN_VERSION.replace("-", "."), version.replace("-", "."));
-                        if (comparator.isUpToDate()) {
-                            console().send("KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
+                        if (API_VERSION.compareTo(version) >= 1) {
+                            logger().send(LogLevel.INFO, "KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
                         } else {
-                            console().send("Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", Level.GRAVE, version, PLUGIN_VERSION);
+                            logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", version, PLUGIN_VERSION);
                             boot = false;
                             break;
                         }
                     } else {
-                        console().send("Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", Level.GRAVE, platform, API_VERSION);
+                        logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", platform, API_VERSION);
                         boot = false;
                         break;
                     }
@@ -85,13 +91,12 @@ public class SpigotPlugin extends KarmaPlugin {
                     if (pluginManager.isPluginEnabled(name)) {
                         Plugin plugin = pluginManager.getPlugin(name);
                         if (plugin != null) {
-                            String pluginVersion = plugin.getDescription().getVersion();
+                            Version pluginVersion = Version.parse(plugin.getDescription().getVersion());
 
-                            VersionComparator comparator = new VersionComparator(pluginVersion, version);
-                            if (!comparator.isUpToDate()) {
-                                console().send("Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", Level.WARNING, name, version, pluginVersion);
+                            if (pluginVersion.compareTo(version) < 0) {
+                                logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
                             } else {
-                                console().send("Plugin dependency {0} has been successfully hooked", Level.INFO, name);
+                                logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
                                 if (name.equalsIgnoreCase("Spartan")) {
                                     spigot.registerService("spartan", new SpartanService());
                                 }
@@ -101,7 +106,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 }
             } else {
                 //console().send("Injecting dependency {0}", Level.INFO, dependency.name());
-                spigot.runtime().dependencyManager().append(dependency);
+                spigot.getRuntime().dependencyManager().append(dependency);
             }
         }
 
@@ -122,7 +127,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 return;
             }
 
-            console().send("LockLogin has been booted", Level.OK);
+            logger().send(LogLevel.SUCCESS, "LockLogin has been booted");
 
             PremiumDataStore store = spigot.premiumStore();
             VaultPermissionManager vaultTmpManager = null;
@@ -159,17 +164,16 @@ public class SpigotPlugin extends KarmaPlugin {
                 }
             }
 
-            Path legacy_mod_directory = getDataPath().resolve("plugin").resolve("modules");
+            Path legacy_mod_directory = workingDirectory().resolve("plugin").resolve("modules");
             if (Files.exists(legacy_mod_directory)) {
                 try(Stream<Path> files = Files.list(legacy_mod_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {
                     if (files.findAny().isPresent()) {
-                        console().send("LockLogin has detected presence of legacy modules folder. Those won't be loaded as they used an unsupported plugin API. Please refer to {0} to update the modules and install them in the /mods plugin directory",
-                                Level.WARNING,
+                        logger().send(LogLevel.WARNING, "LockLogin has detected presence of legacy modules folder. Those won't be loaded as they used an unsupported plugin API. Please refer to {0} to update the modules and install them in the /mods plugin directory",
                                 "https://reddo.es/karmadev/locklogin/community/products/");
                     }
                 } catch (IOException ignored) {}
             }
-            Path modules_directory = getDataPath().resolve("mods");
+            Path modules_directory = workingDirectory().resolve("mods");
             PathUtilities.createDirectory(modules_directory);
 
             try(Stream<Path> files = Files.list(modules_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {
@@ -182,7 +186,7 @@ public class SpigotPlugin extends KarmaPlugin {
 
             long end = System.currentTimeMillis();
             long diff = end - start;
-            console().send("LockLogin initialized in {0}ms ({1} seconds)", Level.INFO, diff, TimeUnit.MILLISECONDS.toSeconds(diff));
+            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", diff, TimeUnit.MILLISECONDS.toSeconds(diff));
 
             spigot.getSessionFactory(false).getSessions().forEach((session) -> {
                 session.invalidate();
@@ -193,19 +197,28 @@ public class SpigotPlugin extends KarmaPlugin {
             });
 
             ProtocolAssistant.registerListener();
-            spigot.runtime().booted = true;
+            spigot.getRuntime().booted = true;
+
+            PluginCommand login = getCommand("login");
+            PluginCommand register = getCommand("register");
+            if (login != null) {
+                login.setExecutor(new LoginCommand());
+            }
+            if (register != null) {
+                register.setExecutor(new RegisterCommand());
+            }
+
+            PluginManager manager = getServer().getPluginManager();
+            manager.registerEvents(new JoinHandler(), this);
+            manager.registerEvents(new ChatHandler(), this);
+            manager.registerEvents(new QuitHandler(), this);
         } else {
-            console().send("LockLogin won't initialize due an internal error. Please report this to discord {0}", Level.WARNING, "https://discord.gg/77p8KZNfqE");
+            logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
         }
     }
 
-    /**
-     * Karma source update URL
-     *
-     * @return the source update URL
-     */
     @Override
-    public String updateURL() {
-        return null;
+    public void disable() {
+
     }
 }

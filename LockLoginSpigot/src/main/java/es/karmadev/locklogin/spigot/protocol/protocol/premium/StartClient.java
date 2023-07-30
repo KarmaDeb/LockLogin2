@@ -29,9 +29,9 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
+import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.common.string.StringUtils;
 import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
@@ -98,7 +98,7 @@ public final class StartClient {
         ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
 
         PacketContainer kickPacket = new PacketContainer(DISCONNECT);
-        kickPacket.getChatComponents().write(0, WrappedChatComponent.fromText(StringUtils.toColor(reason)));
+        kickPacket.getChatComponents().write(0, WrappedChatComponent.fromText(ConsoleColor.parse(reason)));
 
         try {
             //send kick packet at login state
@@ -106,7 +106,7 @@ public final class StartClient {
             protocolManager.sendServerPacket(player, kickPacket);
         } finally {
             //tell the server that we want to close the connection
-            player.kickPlayer(StringUtils.toColor(reason));
+            player.kickPlayer(ConsoleColor.parse(reason));
         }
     }
 

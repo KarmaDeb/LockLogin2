@@ -151,7 +151,7 @@ public class CPluginHasher implements LockLoginHasher {
     @Override
     public VirtualID virtualID() throws SecurityException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
         return virtualID;
     }

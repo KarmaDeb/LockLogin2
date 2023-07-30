@@ -32,7 +32,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.spigot.SpigotPlugin;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.common.utils.enums.Level;
 
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
@@ -284,7 +283,7 @@ public final class MojangEncryption {
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException ex) {
             if (!signed_nonce_warned) {
                 signed_nonce_warned = true;
-                plugin.err("It seems that your server is not compatible with SHA256WithRSA. Don't expect premium support", Level.GRAVE);
+                plugin.err("It seems that your server is not compatible with SHA256WithRSA. Don't expect premium support");
             }
 
             plugin.log(ex, "Failed to verify integrity of a signed message");

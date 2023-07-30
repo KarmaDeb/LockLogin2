@@ -9,11 +9,13 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.server.CServer;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.session.CSession;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 
 import java.net.InetSocketAddress;
 import java.sql.Connection;
@@ -424,7 +426,9 @@ public class CLocalClient implements LocalNetworkClient {
             try (ResultSet result = statement.executeQuery("SELECT `session_id` FROM `user` WHERE `id` = " + id)) {
                 if (result.next()) {
                     int session_id = result.getInt("session_id");
-                    return new CSession(id, session_id, pool);
+                    if (!result.wasNull()) {
+                        return new CSession(id, session_id, pool);
+                    }
                 }
             }
         } catch (SQLException ex) {

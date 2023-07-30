@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.spigot.event;
 
+import es.karmadev.api.core.scheduler.SpigotTask;
 import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
 import es.karmadev.api.spigot.reflection.title.SpigotTitle;
@@ -11,11 +13,11 @@ import es.karmadev.api.web.minecraft.UUIDType;
 import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
+import es.karmadev.locklogin.api.event.entity.client.EntitySessionCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
-import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.CaptchaConfiguration;
@@ -27,7 +29,9 @@ import es.karmadev.locklogin.api.plugin.service.floodgate.FloodGateService;
 import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
 import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
+import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
@@ -76,7 +80,7 @@ public class JoinHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPreLogin(AsyncPlayerPreLoginEvent e) {
-        if (plugin.runtime().booting()) {
+        if (plugin.getRuntime().booting()) {
             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConsoleColor.parse("&cThe server is booting!"));
             return;
         }
@@ -89,11 +93,6 @@ public class JoinHandler implements Listener {
             UUID offline_uid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
             UUID online_uid = premium.onlineId(name);
             if (online_uid == null) {
-                /*OKAResponse response = UUIDUtil.fetchOKA(name);
-                if (response != null) {
-                    online_uid = response.getId(UUIDType.ONLINE);
-                    premium.saveId(name, online_uid);
-                }*/
                 OKARequest request = MineAPI.fetchAndWait(name);
                 online_uid = request.getUUID(UUIDType.ONLINE);
 
@@ -102,30 +101,26 @@ public class JoinHandler implements Listener {
                 }
             }
 
-            LocalNetworkClient offline = plugin.network().getOfflinePlayer(offline_uid);
+            CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(offline_uid);
             if (offline == null) {
-                offline = plugin.getUserFactory(false).create(name, offline_uid);
+                offline = (CLocalClient) plugin.getUserFactory(false).create(name, offline_uid);
                 EntityCreatedEvent event = new EntityCreatedEvent(offline);
                 plugin.moduleManager().fireEvent(event);
             }
 
             UserSession session = offline.session();
+            if (session == null) {
+                SessionFactory<? extends UserSession> factory = plugin.getSessionFactory(false);
+                session = factory.create(offline);
+
+                EntitySessionCreatedEvent event = new EntitySessionCreatedEvent(offline, session);
+                plugin.moduleManager().fireEvent(event);
+            }
+
             if (!session.isCaptchaLogged()) {
                 CaptchaConfiguration settings = configuration.captcha();
                 if (settings.enable()) {
                     int size = settings.length();
-                    /*TextContent content = TextContent.ONLY_NUMBERS;
-                    if (settings.letters()) {
-                        content = TextContent.NUMBERS_AND_LETTERS;
-                    }
-
-                    OptionsBuilder rBuilder = RandomString.createBuilder()
-                            .withSize(size)
-                            .withType(TextType.RANDOM_SIZE)
-                            .withContent(content);
-                    RandomString string = new RandomString(rBuilder);*/
-
-                    //int random = new Random().nextInt(32);
                     String captcha = StringUtils.generateString(size);
 
                     //String captcha = string.create();
@@ -190,15 +185,17 @@ public class JoinHandler implements Listener {
                 session.validate();
 
                 MultiAccountManager multi = plugin.accountManager();
-                if (multi.allow(address, configuration.register().maxAccounts())) {
-                    multi.assign(offline, address);
+                if (multi == null || multi.allow(address, configuration.register().maxAccounts())) {
+                    if (multi != null) {
+                        multi.assign(offline, address);
 
-                    int amount = multi.getAccounts(address).size();
-                    int max = configuration.register().maxAccounts();
-                    if (amount >= max && max > 1) { //We only want to send a warning if the maximum amount of accounts is over 1
-                        for (NetworkClient client : plugin.network().getOnlinePlayers()) {
-                            if (client.hasPermission(LockLoginPermission.PERMISSION_INFO_ALT_ALERT)) {
-                                client.sendMessage(messages.prefix() + messages.altFound(name, amount));
+                        int amount = multi.getAccounts(address).size();
+                        int max = configuration.register().maxAccounts();
+                        if (amount >= max && max > 1) { //We only want to send a warning if the maximum amount of accounts is over 1
+                            for (NetworkClient client : plugin.network().getOnlinePlayers()) {
+                                if (client.hasPermission(LockLoginPermission.PERMISSION_INFO_ALT_ALERT)) {
+                                    client.sendMessage(messages.prefix() + messages.altFound(name, amount));
+                                }
                             }
                         }
                     }
@@ -291,10 +288,9 @@ public class JoinHandler implements Listener {
                     }
                 }
 
-                if (online_uid != null && !online_uid.equals(offline_uid)) uuid_translator.put(online_uid, use_uid);
+                if (online_uid != null && !online_uid.equals(offline_uid)) uuid_translator.put(online_uid, offline_uid);
             }
         });
-
         e.allow();
     }
 
@@ -316,27 +312,39 @@ public class JoinHandler implements Listener {
             COnlineClient online = new COnlineClient(offline.id(), plugin.driver(), null)
                     .onMessageRequest((msg) -> {
                         if (!player.isOnline()) return;
-                        player.sendMessage(ConsoleColor.parse(msg));
+                        player.sendMessage(ColorComponent.parse(msg)
+                                .replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()));
                     })
                     .onActionBarRequest((msg) -> {
                         if (!player.isOnline()) return;
 
-                        SpigotActionbar bar = new SpigotActionbar(msg);
+                        SpigotActionbar bar = new SpigotActionbar(msg.replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()));
                         bar.send(player);
                     })
                     .onTitleRequest((msg) -> {
                         if (!player.isOnline()) return;
 
-                        SpigotTitle title = new SpigotTitle(msg.title(), msg.subtitle());
+                        SpigotTitle title = new SpigotTitle(msg.title().replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()), msg.subtitle().replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()));
                         title.send(player, msg.fadeIn(), msg.show(), msg.fadeOut());
                     })
                     .onKickRequest((msg) -> {
                         if (!player.isOnline()) return;
 
                         List<String> reasons = Arrays.asList(msg);
-                        String reason = StringUtils.listToString(ConsoleColor.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE);
+                        String reason = StringUtils.listToString(ColorComponent.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE).replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server());
 
-                        player.kickPlayer(reason);
+                        SpigotTask task = plugin.plugin().scheduler("sync").schedule(() -> player.kickPlayer(reason));
+                        task.markSynchronous();
                     })
                     .onCommandRequest((command) -> {
                         if (!player.isOnline()) return;
@@ -359,6 +367,8 @@ public class JoinHandler implements Listener {
             network.appendClient(online);
 
             player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
+            SessionChecker checker = online.getSessionChecker();
+            plugin.plugin().scheduler("async").schedule(checker);
 
             if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
             if (configuration.clearChat()) {
@@ -367,7 +377,7 @@ public class JoinHandler implements Listener {
 
             String customMessage = messages.join(online);
             if (!ObjectUtils.isNullOrEmpty(customMessage)) {
-                Bukkit.broadcastMessage(ConsoleColor.parse(message));
+                Bukkit.broadcastMessage(ColorComponent.parse(message));
             }
         });
     }

@@ -7,15 +7,13 @@ import org.bukkit.command.CommandSender;
 /**
  * LockLogin plugin command
  */
+@Getter
 @Value(staticConstructor = "of")
 public class PluginCommand {
 
-    @Getter
     CommandSender sender;
 
-    @Getter
     String label;
 
-    @Getter
     String[] args;
 }

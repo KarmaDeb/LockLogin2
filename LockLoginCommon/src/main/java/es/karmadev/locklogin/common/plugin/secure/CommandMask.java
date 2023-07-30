@@ -83,10 +83,19 @@ public class CommandMask {
     public static String getCommand(final UUID id) {
         String command = commands.getOrDefault(id, null);
         if (command != null) {
-            return commands.remove(id);
+            return command;
         }
 
         return "";
+    }
+
+    /**
+     * Consume a command
+     *
+     * @param id the command ID
+     */
+    public static void consume(final UUID id) {
+        commands.remove(id);
     }
 
     /**

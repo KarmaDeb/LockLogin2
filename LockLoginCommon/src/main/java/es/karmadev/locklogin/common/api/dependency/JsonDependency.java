@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.dependency;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import es.karmadev.api.shaded.google.gson.JsonArray;
+import es.karmadev.api.shaded.google.gson.JsonElement;
+import es.karmadev.api.shaded.google.gson.JsonObject;
+import es.karmadev.api.shaded.google.gson.JsonPrimitive;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
@@ -24,6 +24,16 @@ public class JsonDependency implements LockLoginDependency {
     private final Checksum generated_checksum = new Checksum(this);
 
     private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    /**
+     * Get the dependency id
+     *
+     * @return the dependency id
+     */
+    @Override
+    public String id() {
+        return object.get("id").getAsString();
+    }
 
     /**
      * Get the dependency name
@@ -103,7 +113,7 @@ public class JsonDependency implements LockLoginDependency {
         if (plugin) return null; //A plugin cannot be downloaded and injected, it must be loaded by the server itself
 
         JsonArray urls = object.get("download").getAsJsonArray();
-        if (urls.size() == 0) return null; //No need to iterate over nothing
+        if (urls.isEmpty()) return null; //No need to iterate over nothing
 
         for (JsonElement element : urls) {
             if (element.isJsonPrimitive()) {

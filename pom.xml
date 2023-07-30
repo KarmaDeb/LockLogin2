@@ -70,21 +70,8 @@
         <locklogin.checksum.print>false</locklogin.checksum.print>
         <locklogin.checksum.version>v6</locklogin.checksum.version>
 
-        <locklogin.karmaapi.version>1.3.4-SNAPSHOT</locklogin.karmaapi.version>
+        <locklogin.karmaapi.version>2.0.0-SNAPSHOT</locklogin.karmaapi.version>
         <locklogin.karmaapi.platform>1.3.4-10</locklogin.karmaapi.platform>
-        <!--
-        locklogin karmaapi platform version changelog
-
-         Since 10/03/2023 - Changed version from 1.3.4-8 to 1.3.4-10
-
-                            The reason of this change is due the previous
-                            version was not working very well when encrypting
-                            or decrypting files. 1.3.4-10 improves the way the
-                            files are encrypted, by providing a way to generate
-                            the secret key (password based) and an IvParameterSpect
-                            used for encryption and decryption
-         -->
-
 
         <socket.io.version>2.1.0</socket.io.version>
         <socket.io.test>io.socket.client.IO</socket.io.test>
@@ -102,7 +89,7 @@
         <apache.commons.version>1.15</apache.commons.version>
         <apache.commons.test>org.apache.commons.codec.net.Utils</apache.commons.test>
 
-        <hikari.cp.version>5.0.0</hikari.cp.version>
+        <hikari.cp.version>4.0.3</hikari.cp.version>
         <hikari.cp.test>com.zaxxer.hikari.HikariConfig</hikari.cp.test>
 
         <java.native.version>5.12.1</java.native.version>
@@ -113,10 +100,14 @@
         <packet.listener.version>3.9.10</packet.listener.version>
         <floodgate.version>2.2.0-SNAPSHOT</floodgate.version>
         <spartan.version>9.1</spartan.version>
+        <luckperms.version>5.4.40</luckperms.version>
+        <vault.version>1.7.3</vault.version>
 
         <maven.build.timestamp.format>hhmmss</maven.build.timestamp.format>
+        <!--
         <spigot.main>es.karmadev.locklogin.s${locklogin.update.id}_${maven.build.timestamp}R.SpigotPlugin</spigot.main>
         <bungee.main>es.karmadev.locklogin.b${locklogin.update.id}_${maven.build.timestamp}R.BungeePlugin</bungee.main>
+        -->
     </properties>
 
     <build>
@@ -147,6 +138,7 @@
                                 <createDependencyReducedPom>false</createDependencyReducedPom>
 
                                 <relocations>
+                                    <!--
                                     <relocation>
                                         <pattern>es.karmadev.locklogin.spigot</pattern>
                                         <shadedPattern>es.karmadev.locklogin.s${locklogin.update.id}_${maven.build.timestamp}R</shadedPattern>
@@ -159,7 +151,6 @@
                                         <pattern>es.karmadev.locklogin.common</pattern>
                                         <shadedPattern>es.karmadev.locklogin.v${locklogin.update.id}_${locklogin.version.letter}_${maven.build.timestamp}R</shadedPattern>
                                     </relocation>
-                                    <!--
                                     <relocation>
                                         <pattern>com.sun.jna</pattern>
                                         <shadedPattern>es.karmadev.locklogin.shaded.jna</shadedPattern>
@@ -308,15 +299,23 @@
             <dependency>
                 <groupId>es.karmadev</groupId>
                 <artifactId>KarmaAPI-Core</artifactId>
-                <version>2.0.0-SNAPSHOT</version>
+                <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>es.karmadev</groupId>
                 <artifactId>KarmaAPI-Spigot</artifactId>
-                <version>2.0.0-SNAPSHOT</version>
+                <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Minecraft</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!--
             <dependency>
                 <groupId>ml.karmaconfigs</groupId>
                 <artifactId>KarmaAPI-Common</artifactId>
@@ -329,6 +328,7 @@
                 <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
+            -->
 
             <!-- !SELF! -->
             <dependency>
@@ -479,6 +479,13 @@
                 <artifactId>angus-mail</artifactId>
                 <version>2.0.1</version>
                 <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
+                <version>4.1.93.Final</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

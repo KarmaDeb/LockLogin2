@@ -26,6 +26,10 @@ package es.karmadev.locklogin.spigot.protocol.protocol.premium.handler;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketEvent;
+import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.web.minecraft.MineAPI;
+import es.karmadev.api.web.minecraft.UUIDType;
+import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -35,10 +39,6 @@ import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.ProtocolListener;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.StartClient;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.client.ClientKey;
-import ml.karmaconfigs.api.common.minecraft.api.MineAPI;
-import ml.karmaconfigs.api.common.minecraft.api.response.OKARequest;
-import ml.karmaconfigs.api.common.string.StringUtils;
-import ml.karmaconfigs.api.common.utils.uuid.UUIDType;
 import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
@@ -129,7 +129,7 @@ public final class LoginHandler implements Runnable {
                     }
                 }
             } else {
-                player.kickPlayer(StringUtils.toColor(messages.premiumFailSession()));
+                player.kickPlayer(ConsoleColor.parse(messages.premiumFailSession()));
             }
         } finally {
             ProtocolLibrary.getProtocolManager().getAsynchronousManager().signalPacketTransmission(packet);

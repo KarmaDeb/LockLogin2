@@ -30,7 +30,6 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.FuzzyReflection;
-import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.*;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.model.skin.Textures;
@@ -94,7 +93,7 @@ public class ProtocolListener extends PacketAdapter {
     public void onPacketReceiving(final PacketEvent event) {
         Configuration config = plugin.configuration();
 
-        if (event.isCancelled() || plugin.runtime().booting() || keyPair == null || !config.premium().enable() || plugin.bungeeMode()) {
+        if (event.isCancelled() || plugin.getRuntime().booting() || keyPair == null || !config.premium().enable() || plugin.bungeeMode()) {
             /*
             We will ignore if the plugin is not fully started or the
             packet got cancelled in order to avoid errors

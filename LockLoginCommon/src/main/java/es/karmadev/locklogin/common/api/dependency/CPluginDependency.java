@@ -1,14 +1,12 @@
 package es.karmadev.locklogin.common.api.dependency;
 
-import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.shaded.google.gson.*;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -35,7 +33,7 @@ public class CPluginDependency {
         try (InputStream locklogin = plugin.load("internal/locklogin.json")) {
             if (locklogin != null) {
                 Path dataFile = plugin.workingDirectory().resolve("cache").resolve("tables.kf");
-                KarmaMain checksum = null;
+                JsonObject object = null;
 
                 try (InputStreamReader isr = new InputStreamReader(locklogin)) {
                     Gson gson = new GsonBuilder().create();
@@ -77,14 +75,13 @@ public class CPluginDependency {
                             reader.close();
                             bf.close();
 
-                            checksum = new KarmaMain(dataFile);
-                            checksum.create();
+                            object = gson.fromJson(PathUtilities.read(dataFile), JsonObject.class);
                         }
                     }
 
-                    if (Files.exists(dataFile) && checksum == null) {
+                    /*if (Files.exists(dataFile) && checksum == null) {
                         checksum = new KarmaMain(dataFile);
-                    }
+                    }*/
 
                     List<JsonDependency> ignore = new ArrayList<>();
                     List<JsonDependency> install = new ArrayList<>();
@@ -92,12 +89,21 @@ public class CPluginDependency {
                         JsonObject dependencyJson = element.getAsJsonObject();
                         JsonDependency dependency = new JsonDependency(dependencyJson);
 
+                        if (dependency.isPlugin()) continue; //Ignore plugin dependencies
+
                         String id = dependencyJson.get("id").getAsString();
                         long adler = 0;
                         long crc = 0;
-                        if (checksum != null) {
-                            adler = checksum.get("adler." + id, new KarmaPrimitive(0L)).getAsLong();
-                            crc = checksum.get("crc." + id, new KarmaPrimitive(0L)).getAsLong();
+                        String hash = "";
+                        if (object != null) {
+                            JsonObject dependencyTable = object.get("dependency").getAsJsonObject();
+                            if (!dependencyTable.has(dependency.id())) continue; //Ignore unknown dependencies
+
+                            JsonObject dependencyData = dependencyTable.get(dependency.id()).getAsJsonObject();
+
+                            adler = dependencyData.get("adler").getAsLong();
+                            crc = dependencyData.get("crc").getAsLong();
+                            hash = dependencyData.get("hash").getAsString();
                         }
 
                         String testClass = dependency.testClass();
@@ -128,7 +134,8 @@ public class CPluginDependency {
                         dependency.checksum().define("adler", adler);
                         dependency.checksum().define("crc", crc);
 
-                        if (dependency.checksum().matches(dependency.generateChecksum())) {
+                        Checksum checksum = dependency.checksum();
+                        if (checksum.matches(dependency.generateChecksum()) && !checksum.verify(hash)) {
                             if (!ignore.contains(dependency))
                                 ignore.add(dependency);
 

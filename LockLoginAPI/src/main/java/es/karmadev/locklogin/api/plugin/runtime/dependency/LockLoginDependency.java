@@ -9,6 +9,13 @@ import java.nio.file.Path;
 public interface LockLoginDependency {
 
     /**
+     * Get the dependency id
+     *
+     * @return the dependency id
+     */
+    String id();
+
+    /**
      * Get the dependency name
      *
      * @return the dependency name

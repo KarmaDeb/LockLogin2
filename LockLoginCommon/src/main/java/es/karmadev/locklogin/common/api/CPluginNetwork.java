@@ -19,9 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CPluginNetwork implements PluginNetwork {
 
     private final DataDriver driver;
-    private final Set<NetworkClient> clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Set<NetworkServer> servers = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Set<LocalNetworkClient> offline_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<NetworkClient> clients = ConcurrentHashMap.newKeySet();
+    private final Set<NetworkServer> servers = ConcurrentHashMap.newKeySet();
+    private final Set<LocalNetworkClient> offline_cache = ConcurrentHashMap.newKeySet();
 
     public CPluginNetwork(final DataDriver driver) {
         this.driver = driver;
@@ -48,6 +48,15 @@ public class CPluginNetwork implements PluginNetwork {
      */
     public void appendServer(final NetworkServer server) {
         servers.add(server);
+    }
+
+    /**
+     * Disconnect a client
+     *
+     * @param client the client to disconnect
+     */
+    public void disconnectClient(final NetworkClient client) {
+        clients.remove(client);
     }
 
     /**
@@ -127,7 +136,7 @@ public class CPluginNetwork implements PluginNetwork {
     @Override
     public LocalNetworkClient getOfflinePlayer(final UUID uniqueId) {
         if (offline_cache.stream().anyMatch((offline) -> offline.uniqueId().equals(uniqueId))) {
-            return offline_cache.stream().filter((offline) -> offline.uniqueId().equals(uniqueId)).findFirst().orElse(null);
+            return offline_cache.stream().filter((offline) -> offline != null && offline.uniqueId().equals(uniqueId)).findAny().orElse(null);
         }
 
         Connection connection = null;

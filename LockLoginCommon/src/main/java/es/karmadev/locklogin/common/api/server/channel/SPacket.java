@@ -25,9 +25,9 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final byte[] message) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
-        Path caller = plugin.runtime().caller();
+        Path caller = plugin.getRuntime().caller();
 
         sender = plugin.moduleManager().loader().findByFile(caller);
         raw_data = Base64.getEncoder().encode(message);
@@ -35,9 +35,9 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final String raw) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
-        Path caller = plugin.runtime().caller();
+        Path caller = plugin.getRuntime().caller();
 
         sender = plugin.moduleManager().loader().findByFile(caller);
         raw_data = Base64.getEncoder().encode(raw.getBytes(StandardCharsets.UTF_8));
@@ -45,9 +45,9 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final JsonElement element) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.runtime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
 
-        Path caller = plugin.runtime().caller();
+        Path caller = plugin.getRuntime().caller();
 
         sender = plugin.moduleManager().loader().findByFile(caller);
         Gson gson = new GsonBuilder().create();

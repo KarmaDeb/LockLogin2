@@ -4,6 +4,7 @@ import es.karmadev.api.file.FileEncryptor;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
@@ -19,6 +20,7 @@ import es.karmadev.locklogin.common.api.plugin.file.section.*;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -37,10 +39,13 @@ public class CPluginConfiguration implements Configuration {
      */
     public CPluginConfiguration() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
+        if (!Files.exists(file)) {
+            PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
+        }
 
         try {
-            yaml = YamlHandler.load(file);
+            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/config.yml"));
+            yaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -60,6 +65,7 @@ public class CPluginConfiguration implements Configuration {
                 break;
         }
 
+        yaml.validate();
         database_config = new CDatabaseConfiguration(driver);
     }
 
@@ -243,7 +249,7 @@ public class CPluginConfiguration implements Configuration {
     public RegisterConfiguration register() {
         boolean boss = yaml.getBoolean("Register.Boss", true);
         boolean blind = yaml.getBoolean("Register.Blind", false);
-        int timeout = yaml.getInteger("Register.Timeout", 60);
+        int timeout = yaml.getInteger("Register.TimeOut", 60);
         int max = yaml.getInteger("Register.Max", 2);
 
         return CRegisterSection.of(boss, blind, timeout, max);
@@ -258,7 +264,7 @@ public class CPluginConfiguration implements Configuration {
     public LoginConfiguration login() {
         boolean boss = yaml.getBoolean("Login.Boss", true);
         boolean blind = yaml.getBoolean("Login.Blind", false);
-        int timeout = yaml.getInteger("Login.Timeout", 60);
+        int timeout = yaml.getInteger("Login.TimeOut", 60);
 
         return CLoginSection.of(boss, blind, timeout);
     }

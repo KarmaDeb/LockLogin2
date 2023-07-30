@@ -3,6 +3,7 @@ package es.karmadev.locklogin.common.api.plugin.file;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.Driver;
@@ -29,10 +30,13 @@ public class CDatabaseConfiguration implements Database {
         PathUtilities.copy(plugin, "plugin/yaml/database.yml", file);
 
         try {
-            yaml = YamlHandler.load(file);
+            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
+            yaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+
+        yaml.validate();
     }
 
     /**

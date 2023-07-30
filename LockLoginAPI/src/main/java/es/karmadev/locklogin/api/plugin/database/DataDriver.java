@@ -77,7 +77,7 @@ public interface DataDriver {
      */
     default void testDriver(final Driver driver) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
 
         plugin.info("Validating the existence of a suitable driver for {0}", driver.name());
 

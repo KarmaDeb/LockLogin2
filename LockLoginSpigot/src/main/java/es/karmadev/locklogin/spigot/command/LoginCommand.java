@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -8,12 +9,15 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 public class LoginCommand implements CommandExecutor {
 
@@ -32,7 +36,18 @@ public class LoginCommand implements CommandExecutor {
      * @return true if a valid command, otherwise false
      */
     @Override
-    public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, final @NotNull String[] args) {
+    public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, @NotNull String[] args) {
+        if (args.length > 0) {
+            String last_argument = args[args.length - 1];
+            try {
+                UUID commandId = UUID.fromString(last_argument);
+                args = CommandMask.getArguments(commandId);
+                CommandMask.consume(commandId);
+            } catch (IllegalArgumentException ex) {
+                return false;
+            }
+        }
+
         if (sender instanceof Player) {
             Player player = (Player) sender;
             Messages messages = plugin.messages();
@@ -44,17 +59,24 @@ public class LoginCommand implements CommandExecutor {
                 UserSession session = client.session();
 
                 if (account.isRegistered()) {
-                    String captcha = ConsoleColor.strip(session.captcha());
+                    String captcha = session.captcha();
+                    if (captcha == null) captcha = "";
+                    captcha = ConsoleColor.strip(captcha);
 
                     switch (args.length) {
-                        case 1: validate(client, account, args[0]);
+                        case 1:
+                            if (captcha.isEmpty()) {
+                                validate(client, account, session, args[0]);
+                            } else {
+                                client.sendMessage(messages.prefix() + messages.login(captcha));
+                            }
                             break;
                         case 2:
                             String inputPassword = args[0];
                             String inputCaptcha = args[1];
 
-                            if (captcha.equals(inputCaptcha)) {
-                                validate(client, account, inputPassword);
+                            if (captcha.isEmpty() || captcha.equals(inputCaptcha)) {
+                                validate(client, account, session, inputPassword);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.invalidCaptcha());
                             }
@@ -67,7 +89,7 @@ public class LoginCommand implements CommandExecutor {
                     client.sendMessage(messages.prefix() + messages.register(session.captcha()));
                 }
             } else {
-                player.sendMessage(ConsoleColor.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
             plugin.info("This command is for players only!");
@@ -76,11 +98,14 @@ public class LoginCommand implements CommandExecutor {
         return false;
     }
 
-    private void validate(final NetworkClient client, final UserAccount account, final String inputPassword) {
+    private void validate(final NetworkClient client, final UserAccount account, UserSession session, final String inputPassword) {
         HashResult hash = account.password();
         Messages messages = plugin.messages();
 
         if (hash.verify(inputPassword)) {
+            session.login(true);
+            session._2faLogin(true);
+            session.pinLogin(true);
             client.sendMessage(messages.prefix() + messages.logged());
         } else {
             client.sendMessage(messages.prefix() + messages.incorrectPassword());
