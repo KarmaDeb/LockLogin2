@@ -2,6 +2,7 @@ package es.karmadev.locklogin.common.api.sql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -41,6 +42,7 @@ public class CSQLDriver implements DataDriver {
             Driver driver = database.driver();
 
             Path sql_file = plugin.workingDirectory().resolve("data").resolve("accounts.db");
+            PathUtilities.createPath(sql_file);
 
             HikariConfig config = new HikariConfig();
             config.setPoolName("locklogin-" + driver.name());

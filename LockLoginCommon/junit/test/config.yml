@@ -11,7 +11,7 @@
 
 #This is used by 2fa
 #and some plugin messages
-ServerName: ""
+ServerName: ''
 
 #Manage the web services communication
 #server.
@@ -19,7 +19,7 @@ ServerName: ""
 # DO NOT CHANGE THIS UNLESS YOU KNOW WHAT
 # YOU ARE DOING
 Communications:
-  Server: "karmadev.es"
+  Server: 'karmadev.es'
   Port: 2053
   SSL: true
 
@@ -30,7 +30,7 @@ BedrockLogin: false
 #The plugin secret key, used for internal encryption
 #
 #PLEASE NOTE: TOUCHING THIS COULD RESULT IN PLUGIN MALFUNCTION
-SecretKey: ""
+SecretKey: 'cV1m6NRinaJPt3N2LWz+370NS4pK+HiSwqZzw3Ee9Z0=$E+2fHr0pxojmBW8IEDZZU+2c6sEql9FkOZlh/WhDFtd41uSu0bDat79ExtaDfIv+khJn+DeOcVKEXjRoYbqrFsTSRJPENwCukR0tPqMVhfkIiUflfMicTRSuqh4/yOaMCnnRa1GKwBHIprfts1JBGjwwRVjIIge5ED9MA6vjSsJEdcbuCDWuI5eOuH1GJ6bD06QrHKvaGpr/Q27xsjPbYwT/W9gjNjktWwyvrO48jeq0tQAfS1s+qPiH2OsCUDFgE8aGoAjYBLR5t/LIQh2k4K4p6kCNAOv1nvURd4xfndhI5Gjno1aOvql6aLPBBWkCfOYnQhtIuXx14X7pBSzhRg=='
 
 #This will share statistics with LockLogin web services, the statistics we
 #recopilate are:
@@ -220,7 +220,7 @@ Captcha:
 # Iterations: The minimum amount of iterations when hashing. This only
 #             applies to argon2 methods
 Encryption:
-  Algorithm: "argon2id"
+  Algorithm: 'argon2id'
   Encrypt: true
   VirtualID: false
   HashCost:
@@ -252,13 +252,12 @@ Permissions:
   BlockOperator: true
   RemoveEverything: true
   AllowWildcard: false
-  PreLogin:
-    - "my.permission.for.unlogged"
-    - "group.unlogged"
+  PreLogin: 
+   - 'my.permission.for.unlogged'
+   - 'group.unlogged'
   PostLogin:
-    - "my.permission.for.logged"
-    - "group.default"
-
+   - 'my.permission.for.logged'
+   - 'group.default'
 #Password configuration
 #
 # PrintSuccess: When warn unsafe is enabled, print success checks in green to the player
@@ -352,7 +351,7 @@ Pin: true
 #              update check, the minimum is 5 and
 #              the maximum is 86400 (1 day)
 Updater:
-  Channel: "${locklogin.version.type}"
+  Channel: 'snapshot'
   Check: true
   CheckTime: 10
 
@@ -406,7 +405,7 @@ NameCheckProtocol: 2
 # Simplified Chinese ( zh_CN | Chinese simplified | Simplified chinese )
 # being english by default
 Language:
-  Name: en_EN
+  Name: 'en_EN'
 
 #Plugin database configuration
 #For advanced database configuration, please refer
@@ -417,4 +416,4 @@ Language:
 #  MySQL
 #  MariaDB
 #  MongoDB
-DataDriver: SQLITE
+DataDriver: 'SQLITE'

@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+
+  "dependency": {
+    "apache_commons": {
+      "adler": 3916456401,
+      "crc": 2418094782,
+      "hash": ""
+    },
+    "google_authenticator": {
+      "adler": 293225421,
+      "crc": 868364232,
+      "hash": ""
+    },
+    "google_guava": {
+      "adler": 4241935111,
+      "crc": 4146188870,
+      "hash": ""
+    },
+    "log4j_core": {
+      "adler": 217741531,
+      "crc": 556285814,
+      "hash": ""
+    },
+    "log4j_web": {
+      "adler": 993548242,
+      "crc": 308611953,
+      "hash": ""
+    },
+    "socket_io": {
+      "adler": 134414007,
+      "crc": 2726544904,
+      "hash": ""
+    },
+    "hikari_cp": {
+      "adler": 3610116550,
+      "crc": 3814866849,
+      "hash": ""
+    },
+    "java_native_access": {
+      "adler": 1401302140,
+      "crc": 4264884457,
+      "hash": ""
+    }
+  }
+}

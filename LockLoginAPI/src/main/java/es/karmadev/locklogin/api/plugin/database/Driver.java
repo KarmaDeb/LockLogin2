@@ -1,13 +1,14 @@
 package es.karmadev.locklogin.api.plugin.database;
 
+import es.karmadev.api.strings.StringUtils;
 import lombok.Getter;
-import ml.karmaconfigs.api.common.string.StringUtils;
 
 import java.util.Arrays;
 
 /**
  * LockLogin known drivers
  */
+@Getter
 public enum Driver {
     /**
      * SQLite driver (default)
@@ -84,7 +85,7 @@ public enum Driver {
      * @return the connection URL
      */
     public String getConnection(final Object... arguments) {
-        return StringUtils.formatString(connection, arguments);
+        return StringUtils.format(connection, arguments);
     }
 
     /**

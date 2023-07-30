@@ -39,7 +39,7 @@ public class CModCommand extends ModuleCommand {
      */
     public ModuleCommand setExecutor(final CommandExecutor executor) throws SecurityException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
 
         Path caller = runtime.caller();
         Module callerModule = plugin.moduleManager().loader().findByFile(caller);
@@ -61,7 +61,7 @@ public class CModCommand extends ModuleCommand {
      */
     public ModuleCommand setTabCompletor(final CommandCompletor completor) throws SecurityException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.runtime();
+        LockLoginRuntime runtime = plugin.getRuntime();
 
         Path caller = runtime.caller();
         Module callerModule = plugin.moduleManager().loader().findByFile(caller);
