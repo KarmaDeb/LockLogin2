@@ -4,7 +4,7 @@ import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.section.CommunicationSection;
+import es.karmadev.locklogin.api.plugin.file.section.CommunicationConfiguration;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.engineio.client.transports.Polling;
@@ -37,7 +37,7 @@ public class SocketService {
         if (service == null) service = this;
         LockLogin plugin = CurrentPlugin.getPlugin();
         Configuration configuration = plugin.configuration();
-        CommunicationSection section = configuration.communications();
+        CommunicationConfiguration section = configuration.communications();
 
         String protocol = "wss"; //Default protocol
         String host = section.host();

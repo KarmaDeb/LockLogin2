@@ -168,6 +168,13 @@ public interface LockLogin extends ResourceLoader {
     <T> ModuleConverter<T> getConverter();
 
     /**
+     * Get the plugin auth process factory
+     *
+     * @return the process factory
+     */
+    ProcessFactory getAuthProcessFactory();
+
+    /**
      * Get the plugin account factory
      *
      * @param original retrieve the plugin default
