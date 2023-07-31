@@ -1,8 +1,8 @@
-package es.karmadev.locklogin.common.api.plugin.service.name;
+package es.karmadev.locklogin.common.api.plugin.service.password;
 
 import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 
-public class CNameProvider implements ServiceProvider<CNameValidator> {
+public class CPasswordProvider implements ServiceProvider<CPasswordValidator> {
 
     /**
      * Get the service name
@@ -11,7 +11,7 @@ public class CNameProvider implements ServiceProvider<CNameValidator> {
      */
     @Override
     public String name() {
-        return "Name Validator Provider";
+        return "Password Validator Service";
     }
 
     /**
@@ -33,10 +33,10 @@ public class CNameProvider implements ServiceProvider<CNameValidator> {
      * @return the plugin service
      */
     @Override
-    public CNameValidator serve(final Object... arguments) {
+    public CPasswordValidator serve(final Object... arguments) {
         if (arguments.length == 0 || arguments[0] == null) return null;
-        CNameValidator validator = new CNameValidator(arguments[0].toString());
-        validator.grantedThroughService = true;
+        CPasswordValidator validator = new CPasswordValidator(arguments[0].toString());
+        validator.grantedThroughServiceProvider = true;
 
         return validator;
     }
@@ -47,7 +47,7 @@ public class CNameProvider implements ServiceProvider<CNameValidator> {
      * @return the service class
      */
     @Override
-    public Class<CNameValidator> getService() {
-        return CNameValidator.class;
+    public Class<CPasswordValidator> getService() {
+        return CPasswordValidator.class;
     }
 }

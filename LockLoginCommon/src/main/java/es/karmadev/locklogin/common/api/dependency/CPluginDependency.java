@@ -32,7 +32,7 @@ public class CPluginDependency {
 
         try (InputStream locklogin = plugin.load("internal/locklogin.json")) {
             if (locklogin != null) {
-                Path dataFile = plugin.workingDirectory().resolve("cache").resolve("tables.kf");
+                Path dataFile = plugin.workingDirectory().resolve("cache").resolve("tables.json");
                 JsonObject object = null;
 
                 try (InputStreamReader isr = new InputStreamReader(locklogin)) {
@@ -78,10 +78,6 @@ public class CPluginDependency {
                             object = gson.fromJson(PathUtilities.read(dataFile), JsonObject.class);
                         }
                     }
-
-                    /*if (Files.exists(dataFile) && checksum == null) {
-                        checksum = new KarmaMain(dataFile);
-                    }*/
 
                     List<JsonDependency> ignore = new ArrayList<>();
                     List<JsonDependency> install = new ArrayList<>();

@@ -5,16 +5,21 @@ import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -66,7 +71,7 @@ public class LoginCommand implements CommandExecutor {
                     switch (args.length) {
                         case 1:
                             if (captcha.isEmpty()) {
-                                validate(client, account, session, args[0]);
+                                validate(player, client, account, session, args[0]);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.login(captcha));
                             }
@@ -76,7 +81,7 @@ public class LoginCommand implements CommandExecutor {
                             String inputCaptcha = args[1];
 
                             if (captcha.isEmpty() || captcha.equals(inputCaptcha)) {
-                                validate(client, account, session, inputPassword);
+                                validate(player, client, account, session, inputPassword);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.invalidCaptcha());
                             }
@@ -98,15 +103,39 @@ public class LoginCommand implements CommandExecutor {
         return false;
     }
 
-    private void validate(final NetworkClient client, final UserAccount account, UserSession session, final String inputPassword) {
+    private void validate(final Player player, final NetworkClient client, final UserAccount account, UserSession session, final String inputPassword) {
         HashResult hash = account.password();
         Messages messages = plugin.messages();
+        Configuration configuration = plugin.configuration();
 
         if (hash.verify(inputPassword)) {
             session.login(true);
             session._2faLogin(true);
             session.pinLogin(true);
             client.sendMessage(messages.prefix() + messages.logged());
+
+            if (player.hasMetadata("walkSpeed")) {
+                float walkSpeed = player.getMetadata("walkSpeed").get(0).asFloat();
+                player.setWalkSpeed(walkSpeed);
+
+                player.removeMetadata("walkSpeed", (Plugin) plugin.plugin());
+            }
+            if (player.hasMetadata("flySpeed")) {
+                float flySpeed = player.getMetadata("flySpeed").get(0).asFloat();
+                player.setFlySpeed(flySpeed);
+
+                player.removeMetadata("flySpeed", (Plugin) plugin.plugin());
+            }
+
+            SpawnSection spawn = configuration.spawn();
+            if (spawn.takeBack()) {
+                PlayerLocationStorage storage = new PlayerLocationStorage(client);
+                Location location = storage.load();
+
+                if (location != null) {
+                    player.teleport(location);
+                }
+            }
         } else {
             client.sendMessage(messages.prefix() + messages.incorrectPassword());
         }

@@ -3,6 +3,7 @@ package es.karmadev.locklogin.common.api.plugin.service.name;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
 
 import java.util.ArrayList;
@@ -12,9 +13,13 @@ public class CNameValidator implements NameValidator {
 
     boolean grantedThroughService = false;
 
-    private String name = "";
+    private final String name;
     private boolean valid = true;
     private char[] invalid;
+
+    CNameValidator(final String name) {
+        this.name = name;
+    }
 
     /**
      * Get the service name
@@ -40,20 +45,17 @@ public class CNameValidator implements NameValidator {
 
     /**
      * Validate the name
-     *
-     * @param name the name to validate
      */
     @Override
-    public void validate(final String name) {
+    public void validate() {
         if (!grantedThroughService) return;
 
-        this.name = name;
         LockLogin plugin = CurrentPlugin.getPlugin();
-        //Configuration configuration = plugin.configuration();
+        Configuration configuration = plugin.configuration();
 
         if (name.length() > 16 || name.length() < 3) valid = false;
 
-        int protocol = /*configuration.checkProtocol();*/ 2;
+        int protocol = configuration.checkProtocol();
         List<Character> invalid = new ArrayList<>();
         if (protocol == 2) {
             for (char character : name.toCharArray()) {

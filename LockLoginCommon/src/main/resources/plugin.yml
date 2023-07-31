@@ -20,3 +20,5 @@ commands:
     description: The principal command to create an account
   login:
     description: The principal command to authenticate an user
+  setloginspawn:
+    description: The principal command to set the spawn location

@@ -5,17 +5,27 @@ import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
+import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
+import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
+import es.karmadev.locklogin.api.security.check.CheckResult;
+import es.karmadev.locklogin.api.security.check.PasswordValidator;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -85,7 +95,7 @@ public class RegisterCommand implements CommandExecutor {
                                 String passwordInput = args[0];
                                 String passwordConfirmation = args[1];
 
-                                register(client, account, session, passwordInput, passwordConfirmation);
+                                register(player, client, account, session, passwordInput, passwordConfirmation);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.invalidCaptcha());
                             }
@@ -97,7 +107,7 @@ public class RegisterCommand implements CommandExecutor {
 
                             if (captcha.isEmpty() || captchaCode.equals(captcha)) {
                                 session.setCaptcha(null);
-                                register(client, account, session, passwordInput, passwordConfirmation);
+                                register(player, client, account, session, passwordInput, passwordConfirmation);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.invalidCaptcha());
                             }
@@ -119,16 +129,78 @@ public class RegisterCommand implements CommandExecutor {
         return false;
     }
 
-    private void register(final NetworkClient client, final UserAccount account, final UserSession session, final String passwordInput, final String passwordConfirmation) {
+    @SuppressWarnings("unchecked")
+    private void register(final Player player, final NetworkClient client, final UserAccount account, final UserSession session, final String passwordInput, final String passwordConfirmation) {
         Messages messages = plugin.messages();
+        Configuration configuration = plugin.configuration();
+        PasswordConfiguration passwordConfiguration = configuration.password();
+
+        PluginService service = plugin.getService("password");
+        ServiceProvider<PasswordValidator> provider = null;
+        if (service instanceof ServiceProvider) {
+            ServiceProvider<?> unknownProvider = (ServiceProvider<?>) service;
+            if (unknownProvider.getService().isAssignableFrom(PasswordValidator.class)) {
+                provider = (ServiceProvider<PasswordValidator>) unknownProvider;
+            }
+        }
 
         if (passwordInput.equals(passwordConfirmation)) {
+            if (provider != null) {
+                PasswordValidator validator = provider.serve(passwordInput);
+                CheckResult result = validator.validate();
+
+                String message = messages.checkResult(result);
+                if (!result.valid()) {
+                    if (passwordConfiguration.blockUnsafe()) {
+                        client.sendMessage(message);
+                        return;
+                    }
+
+                    if (passwordConfiguration.warningUnsafe()) {
+                        for (NetworkClient online : plugin.network().getOnlinePlayers()) {
+                            if (online.id() != client.id() && online.hasPermission(LockLoginPermission.PERMISSION_UNSAFE_WARNING)) {
+                                online.sendMessage(messages.prefix() + messages.passwordWarning(client));
+                            }
+                        }
+
+                        client.sendMessage(messages.prefix() + messages.passwordInsecure());
+                    }
+                } else {
+                    if (passwordConfiguration.printSuccess()) {
+                        client.sendMessage(message);
+                    }
+                }
+            }
+
             account.setPassword(passwordInput);
             client.sendMessage(messages.prefix() + messages.registered());
 
             session.login(true);
             session._2faLogin(true);
             session.pinLogin(true);
+
+            if (player.hasMetadata("walkSpeed")) {
+                float walkSpeed = player.getMetadata("walkSpeed").get(0).asFloat();
+                player.setWalkSpeed(walkSpeed);
+
+                player.removeMetadata("walkSpeed", (Plugin) plugin.plugin());
+            }
+            if (player.hasMetadata("flySpeed")) {
+                float flySpeed = player.getMetadata("flySpeed").get(0).asFloat();
+                player.setFlySpeed(flySpeed);
+
+                player.removeMetadata("flySpeed", (Plugin) plugin.plugin());
+            }
+
+            SpawnSection spawn = configuration.spawn();
+            if (spawn.takeBack()) {
+                PlayerLocationStorage storage = new PlayerLocationStorage(client);
+                Location location = storage.load();
+
+                if (location != null) {
+                    player.teleport(location);
+                }
+            }
         } else {
             client.sendMessage(messages.prefix() + messages.registerError());
         }

@@ -37,7 +37,7 @@ public interface Configuration {
      * @return the server communication
      * configuration
      */
-    CommunicationSection communications();
+    CommunicationConfiguration communications();
 
     /**
      * Get if the bedrock players should be
@@ -154,6 +154,13 @@ public interface Configuration {
     EncryptionConfiguration encryption();
 
     /**
+     * Get the plugin movement configuration
+     *
+     * @return the plugin movement configuration
+     */
+    MovementConfiguration movement();
+
+    /**
      * Get the plugin permission configuration
      *
      * @return the plugin permission configuration
@@ -173,7 +180,7 @@ public interface Configuration {
      * @return the plugin bruteforce
      * settings
      */
-    BruteForceSection bruteForce();
+    BruteForceConfiguration bruteForce();
 
     /**
      * Get if the plugin allows a client to

@@ -3,7 +3,7 @@ package es.karmadev.locklogin.api.plugin.file.section;
 /**
  * LockLogin communications section
  */
-public interface CommunicationSection {
+public interface CommunicationConfiguration {
 
     /**
      * Get the communication server host

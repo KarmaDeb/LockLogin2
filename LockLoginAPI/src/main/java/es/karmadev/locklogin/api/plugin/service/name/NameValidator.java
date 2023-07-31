@@ -9,10 +9,8 @@ public interface NameValidator extends PluginService {
 
     /**
      * Validate the name
-     *
-     * @param name the name to validate
      */
-    void validate(final String name);
+    void validate();
 
     /**
      * Get if the name is valid

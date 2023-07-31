@@ -17,6 +17,7 @@ import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.auth.ProcessFactory;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -120,6 +121,13 @@ public interface LockLogin extends ResourceLoader {
      * @return the plugin messages
      */
     Messages messages();
+
+    /**
+     * Get the plugin auth process factory
+     *
+     * @return the process factory
+     */
+    ProcessFactory getAuthProcessFactory();
 
     /**
      * Get the plugin account factory

@@ -14,6 +14,7 @@ import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
 import es.karmadev.locklogin.api.extension.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -35,6 +36,7 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.auth.ProcessFactory;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -48,14 +50,19 @@ import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.plugin.service.brute.CBruteForce;
 import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
 import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
+import es.karmadev.locklogin.common.api.plugin.service.password.CPasswordProvider;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
 import es.karmadev.locklogin.common.api.runtime.CRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
 import es.karmadev.locklogin.common.api.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
+import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.spigot.command.module.CommandHandler;
+import es.karmadev.locklogin.spigot.command.module.ExecutorHelper;
+import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
@@ -88,6 +95,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     private final CPluginHasher hasher;
     private final CPluginConfiguration configuration;
     private final InternalPack messages;
+    private final CProcessFactory process_factory;
 
     private CAccountFactory default_account_factory;
     private CSessionFactory default_session_factory;
@@ -99,7 +107,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     private UserFactory<? extends LocalNetworkClient> provider_user_factory = null;
     private ServerFactory<? extends NetworkServer> provider_server_factory = null;
 
-    private final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
+    final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
 
     private final Instant startup = Instant.now();
 
@@ -123,9 +131,11 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
         CLocalBackup backup_service = new CLocalBackup();
         CNameProvider name_service = new CNameProvider();
+        CPasswordProvider password_service = new CPasswordProvider();
 
         registerService("name", name_service);
         registerService("backup", backup_service);
+        registerService("password", password_service);
         try {
             Class.forName("org.geysermc.floodgate.api.FloodgateApi");
 
@@ -142,6 +152,9 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         SpigotCommandManager manager = new SpigotCommandManager(this, map);
         moduleManager.onCommandRegistered = manager;
         moduleManager.onCommandUnregistered = manager;
+
+        process_factory = new CProcessFactory();
+        process_factory.registerAuthProcess(SpigotAccountProcess.class);
     }
 
     void installDriver() {
@@ -316,6 +329,16 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public Messages messages() {
         return messages.getMessenger();
+    }
+
+    /**
+     * Get the plugin auth process factory
+     *
+     * @return the process factory
+     */
+    @Override
+    public ProcessFactory getAuthProcessFactory() {
+        return process_factory;
     }
 
     /**
@@ -505,6 +528,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             plugin.logger().log(LogLevel.WARNING, "Tried to register duplicated service name {0}", name);
             throw new UnsupportedOperationException("Cannot register service " + name + " because it's already defined by another service");
         }
+
         Stream<PluginService> filtered_services = service_provider.values().stream().filter((registered) -> service.getClass().equals(registered.getClass()));
         if (filtered_services.findAny().isPresent()) {
             plugin.logger().log(LogLevel.WARNING, "Tried to registered duplicated service provider {0} under name {1}", service.getClass().getName(), name);

@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.common.api.protection.virtual;
 
 import es.karmadev.api.file.FileEncryptor;
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -11,15 +12,14 @@ import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
-import ml.karmaconfigs.api.common.karma.file.element.types.ElementPrimitive;
 
 import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -31,6 +31,7 @@ public class CVirtualId implements VirtualID {
         plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
     }
 
+    @SuppressWarnings("deprecation")
     public CVirtualId() {
         LockLogin plugin = CurrentPlugin.getPlugin();
         plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
@@ -38,7 +39,20 @@ public class CVirtualId implements VirtualID {
         Configuration configuration = plugin.configuration();
         SecretStore store = configuration.secretKey();
 
-        Path virtual_id = plugin.workingDirectory().resolve("data").resolve("virtual.kf");
+        Path legacy_id = plugin.workingDirectory().resolve("cache").resolve("virtual_id.kf");
+        Path virtual_id = plugin.workingDirectory().resolve("data").resolve("virtual.id");
+
+        if (Files.exists(legacy_id)) {
+            KarmaMain legacy = new KarmaMain(legacy_id);
+            if (legacy.isSet("virtual_key")) {
+                Element<?> virtualKey = legacy.get("virtual_key");
+                if (virtualKey.isPrimitive() && virtualKey.getAsPrimitive().isString()) {
+                    PathUtilities.write(virtual_id, Base64.getDecoder().decode(virtualKey.getAsString()));
+                    PathUtilities.destroy(legacy_id);
+                }
+            }
+        }
+
         FileEncryptor encryptor = new FileEncryptor(virtual_id, store.token());
         if (Files.exists(virtual_id)) {
             try {
@@ -48,23 +62,11 @@ public class CVirtualId implements VirtualID {
             }
         }
 
-        KarmaMain main = new KarmaMain(virtual_id);
-
-        main.create();
-
-        Element<?> element = main.get("id");
-        String tmpId = null;
-        if (element.isPrimitive()) {
-            ElementPrimitive primitive = element.getAsPrimitive();
-            tmpId = primitive.asString();
-        }
-
+        String tmpId = PathUtilities.read(virtual_id);
         if (ObjectUtils.isNullOrEmpty(tmpId) || tmpId.equalsIgnoreCase("null")) {
             tmpId = StringUtils.generateString();
-            main.set("id", new KarmaPrimitive(tmpId));
-            main.save();
+            PathUtilities.write(virtual_id, tmpId);
         }
-
         virtualID = tmpId;
 
         if (Files.exists(virtual_id)) {

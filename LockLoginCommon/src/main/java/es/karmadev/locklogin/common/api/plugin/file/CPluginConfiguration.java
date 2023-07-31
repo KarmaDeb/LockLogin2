@@ -120,7 +120,7 @@ public class CPluginConfiguration implements Configuration {
      * configuration
      */
     @Override
-    public CommunicationSection communications() {
+    public CommunicationConfiguration communications() {
         String host = yaml.getString("Communications.Server", "karmadev.es");
         int port = yaml.getInteger("Communications.Port", 2053);
         boolean ssl = yaml.getBoolean("Communications.SSL", true);
@@ -368,6 +368,24 @@ public class CPluginConfiguration implements Configuration {
     }
 
     /**
+     * Get the plugin movement configuration
+     *
+     * @return the plugin movement configuration
+     */
+    @Override
+    public MovementConfiguration movement() {
+        boolean allow = yaml.getBoolean("Movement.Allow", false);
+        MovementConfiguration.MovementMethod method = MovementConfiguration.MovementMethod.TELEPORT;
+        String rawMethod = yaml.getString("Movement.Method", "teleport").toLowerCase();
+        if (rawMethod.equalsIgnoreCase("speed")) {
+            method = MovementConfiguration.MovementMethod.SPEED;
+        }
+        int distance = yaml.getInteger("Movement.Distance", 10);
+
+        return CMovementSection.of(allow, method, distance);
+    }
+
+    /**
      * Get the plugin permission configuration
      *
      * @return the plugin permission configuration
@@ -415,7 +433,7 @@ public class CPluginConfiguration implements Configuration {
      * settings
      */
     @Override
-    public BruteForceSection bruteForce() {
+    public BruteForceConfiguration bruteForce() {
         return null;
     }
 

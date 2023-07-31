@@ -1,6 +1,5 @@
 package es.karmadev.locklogin.common.api.user.session;
 
-import es.karmadev.api.core.source.APISource;
 import es.karmadev.api.schedule.runner.TaskRunner;
 import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.api.schedule.runner.event.TaskEvent;
@@ -12,18 +11,24 @@ import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
-import es.karmadev.locklogin.common.api.user.storage.session.CSession;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class CSessionChecker implements SessionChecker {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
+    private final List<Consumer<Boolean>> endListeners = new ArrayList<>();
     private final NetworkClient client;
 
     private TaskRunner runner;
     private boolean running = false;
     private boolean cancelled = false;
+
+    private boolean resultSet = false;
+    private boolean result = false;
 
     /**
      * Initialize the session checker
@@ -76,6 +81,21 @@ public class CSessionChecker implements SessionChecker {
     }
 
     /**
+     * Add an end listener
+     *
+     * @param status the session end listener
+     */
+    @Override
+    public void onEnd(final Consumer<Boolean> status) {
+        if (resultSet) {
+            status.accept(result);
+            return;
+        }
+
+        endListeners.add(status);
+    }
+
+    /**
      * When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
      * <code>run</code> method to be called in that separately executing
@@ -89,6 +109,7 @@ public class CSessionChecker implements SessionChecker {
     @Override
     public void run() {
         if (!running) {
+            resultSet = false;
             running = true;
             Configuration configuration = plugin.configuration();
             Messages messages = plugin.messages();
@@ -128,7 +149,17 @@ public class CSessionChecker implements SessionChecker {
                     } else {
                         client.kick(messages.registerTimeOut());
                     }
+
+                    result = false;
+                } else {
+                    result = true;
                 }
+
+                resultSet = true;
+                for (Consumer<Boolean> endListener : endListeners) {
+                    endListener.accept(result);
+                }
+                endListeners.clear();
             };
 
             runner.on(TaskEvent.END, endTask);

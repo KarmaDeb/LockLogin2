@@ -18,8 +18,11 @@ import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.spigot.command.LoginCommand;
 import es.karmadev.locklogin.spigot.command.RegisterCommand;
+import es.karmadev.locklogin.spigot.command.SpawnCommand;
+import es.karmadev.locklogin.spigot.command.module.CommandHandler;
 import es.karmadev.locklogin.spigot.event.ChatHandler;
 import es.karmadev.locklogin.spigot.event.JoinHandler;
+import es.karmadev.locklogin.spigot.event.MovementHandler;
 import es.karmadev.locklogin.spigot.event.QuitHandler;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
@@ -201,17 +204,30 @@ public class SpigotPlugin extends KarmaPlugin {
 
             PluginCommand login = getCommand("login");
             PluginCommand register = getCommand("register");
+            PluginCommand setSpawn = getCommand("setloginspawn");
             if (login != null) {
                 login.setExecutor(new LoginCommand());
             }
             if (register != null) {
                 register.setExecutor(new RegisterCommand());
             }
+            if (setSpawn != null) {
+                setSpawn.setExecutor(new SpawnCommand());
+            }
+
+            /*CommandHandler loginCommand = CommandHandler.builder()
+                    .description("The default login command")
+                    .aliases(new String[]{"log"})
+                    .name("login")
+                    .executor(new LoginCommand()).build();*/
 
             PluginManager manager = getServer().getPluginManager();
             manager.registerEvents(new JoinHandler(), this);
             manager.registerEvents(new ChatHandler(), this);
             manager.registerEvents(new QuitHandler(), this);
+            manager.registerEvents(new MovementHandler(), this);
+
+            logger().log(LogLevel.DEBUG, "LockLogin initialized with {0} services", spigot.service_provider.size());
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
         }

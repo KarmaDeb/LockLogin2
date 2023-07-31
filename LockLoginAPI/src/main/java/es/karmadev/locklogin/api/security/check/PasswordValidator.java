@@ -1,15 +1,16 @@
 package es.karmadev.locklogin.api.security.check;
 
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+
 /**
  * LockLogin password validator
  */
-public interface PasswordValidator {
+public interface PasswordValidator extends PluginService {
 
     /**
      * Get if the password is safe
      *
-     * @param input the password
      * @return the password check result
      */
-    CheckResult isSafe(final String input);
+    CheckResult validate();
 }

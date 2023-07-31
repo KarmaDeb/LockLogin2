@@ -2,7 +2,9 @@ package es.karmadev.locklogin.spigot.util;
 
 import es.karmadev.api.core.KarmaPlugin;
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
@@ -54,5 +56,15 @@ public class UserDataHandler {
         }
         
         return -1;
+    }
+
+    public static Player getPlayer(final NetworkClient client) {
+        int id = client.id();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            int networkId = getNetworkId(online);
+            if (networkId == id) return online;
+        }
+
+        return null;
     }
 }

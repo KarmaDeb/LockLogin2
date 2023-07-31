@@ -3,8 +3,10 @@ package es.karmadev.locklogin.spigot.event;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,6 +28,11 @@ public class QuitHandler implements Listener {
 
             client.getSessionChecker().cancel();
             network.disconnectClient(client);
+
+            PlayerLocationStorage storage = new PlayerLocationStorage(client);
+            storage.assign(player.getLocation());
+
+            ((CProcessFactory) CurrentPlugin.getPlugin().getAuthProcessFactory()).removeProgress(client);
         }
     }
 }

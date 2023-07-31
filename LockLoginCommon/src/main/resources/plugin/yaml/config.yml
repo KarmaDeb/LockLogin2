@@ -228,6 +228,22 @@ Encryption:
     Parallelism: 22
     Iterations: 2
 
+#Movement configuration
+#
+# Allow: allow movement
+#
+# Method: The method to deny movement if allow is set to false.
+#         Valid methods are: 'speed' and 'teleport'. Speed works
+#         by setting the client walk and fly speed to 0, meanwhile
+#         teleport will just teleport the client back
+#
+# Distance: The maximum distance to allow the client to move if
+#           movement is allowed. Please note, leaving this value to zero
+#           will allow the player to move freely, which is not recommended
+Movement:
+  Allow: false
+  Method: 'teleport'
+  Distance: 10
 
 #Permissions configuration
 #

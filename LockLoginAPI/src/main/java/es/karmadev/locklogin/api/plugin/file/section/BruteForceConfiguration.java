@@ -3,7 +3,7 @@ package es.karmadev.locklogin.api.plugin.file.section;
 /**
  * Brute force plugin configuration
  */
-public interface BruteForceSection {
+public interface BruteForceConfiguration {
 
     /**
      * Get the maximum amount of login

@@ -28,10 +28,12 @@ import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.plugin.service.floodgate.FloodGateService;
 import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
 import es.karmadev.locklogin.api.security.brute.BruteForceService;
+import es.karmadev.locklogin.api.user.auth.ProcessFactory;
+import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
+import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
@@ -46,6 +48,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import java.net.InetAddress;
@@ -116,6 +119,10 @@ public class JoinHandler implements Listener {
                 EntitySessionCreatedEvent event = new EntitySessionCreatedEvent(offline, session);
                 plugin.moduleManager().fireEvent(event);
             }
+
+            session.login(false);
+            session._2faLogin(false);
+            session.pinLogin(false);
 
             if (!session.isCaptchaLogged()) {
                 CaptchaConfiguration settings = configuration.captcha();
@@ -245,11 +252,11 @@ public class JoinHandler implements Listener {
                 PluginService name_service = plugin.getService("name");
                 if (name_service instanceof ServiceProvider) {
                     ServiceProvider<? extends PluginService> provider = (ServiceProvider<?>) name_service;
-                    PluginService service = provider.serve();
+                    PluginService service = provider.serve(name);
 
                     if (service instanceof NameValidator) {
                         NameValidator validator = (NameValidator) service;
-                        validator.validate(name);
+                        validator.validate();
 
                         if (validator.isValid()) {
                             plugin.logInfo("Successfully validated username of {0}", name);
@@ -292,6 +299,12 @@ public class JoinHandler implements Listener {
             }
         });
         e.allow();
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onLogin(final PlayerLoginEvent e) {
+        Player player = e.getPlayer();
+
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -366,15 +379,34 @@ public class JoinHandler implements Listener {
             CPluginNetwork network = (CPluginNetwork) plugin.network();
             network.appendClient(online);
 
-            player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
-            SessionChecker checker = online.getSessionChecker();
-            plugin.plugin().scheduler("async").schedule(checker);
+            //MovementConfiguration movement = configuration.movement();
 
-            if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
+            SpigotTask task = plugin.plugin().scheduler("async").schedule(() -> {
+                player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
+                /*if (!movement.allow() && movement.method().equals(MovementConfiguration.MovementMethod.SPEED)) {
+                    float walkSpeed = player.getWalkSpeed();
+                    float flySpeed = player.getFlySpeed();
+                    if (walkSpeed <= 0) walkSpeed = 0.2f;
+                    if (flySpeed <= 0) flySpeed = 0.2f;
+
+                    player.setMetadata("walkSpeed", new FixedMetadataValue(plugin.plugin(), walkSpeed));
+                    player.setMetadata("flySpeed", new FixedMetadataValue(plugin.plugin(), flySpeed));
+
+                    player.setWalkSpeed(0f);
+                    player.setFlySpeed(0f);
+                }
+
+                SessionChecker checker = online.getSessionChecker();
+                plugin.plugin().scheduler("async").schedule(checker);*/
+            });
+            task.markSynchronous();
+            task.onEnd(() -> startAuthProcess(online, null));
+
             if (configuration.clearChat()) {
                 ProtocolAssistant.clearChat(player);
             }
 
+            if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
             String customMessage = messages.join(online);
             if (!ObjectUtils.isNullOrEmpty(customMessage)) {
                 Bukkit.broadcastMessage(ColorComponent.parse(message));
@@ -393,5 +425,28 @@ public class JoinHandler implements Listener {
         }
 
         return false;
+    }
+
+    private void startAuthProcess(final NetworkClient client, final AuthProcess previous) {
+        ProcessFactory factory = plugin.getAuthProcessFactory();
+        UserAuthProcess process = factory.getNextProcess(client).orElse(null);
+        if (process == null && previous == null) {
+            plugin.err("Your LockLogin instance is not using any auth process. This is a security risk!");
+            return;
+        }
+
+        if (process == null) return;
+        if (previous != null && !previous.wasSuccess()) {
+            return;
+        }
+
+        process.process(null).whenComplete((authProcess, error) -> {
+            if (error != null) {
+                client.kick("&cAn error occurred while processing your session");
+                return;
+            }
+
+            startAuthProcess(client, authProcess); //Go to the next auth process
+        });
     }
 }
