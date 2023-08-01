@@ -1,6 +1,6 @@
-package es.karmadev.locklogin.api.extension.manager;
+package es.karmadev.locklogin.api.extension.module.manager;
 
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 
 import java.nio.file.Path;
 

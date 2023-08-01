@@ -24,6 +24,8 @@ import java.util.concurrent.CompletableFuture;
 public class SpigotAccountProcess implements UserAuthProcess {
 
     private final NetworkClient client;
+    private static boolean enabled = true;
+
 
     public SpigotAccountProcess(final NetworkClient client) {
         this.client = client;
@@ -35,6 +37,10 @@ public class SpigotAccountProcess implements UserAuthProcess {
 
     public static int getPriority() {
         return ProcessPriority.RUN_FIRST;
+    }
+
+    public static void setStatus(final boolean status) {
+        SpigotAccountProcess.enabled = status;
     }
 
     public static SpigotAccountProcess createFor(final NetworkClient client) {
@@ -72,6 +78,26 @@ public class SpigotAccountProcess implements UserAuthProcess {
     }
 
     /**
+     * Get if the process is enabled
+     *
+     * @return the process status
+     */
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Set the process status
+     *
+     * @param status the process status
+     */
+    @Override
+    public void setEnabled(final boolean status) {
+        SpigotAccountProcess.enabled = status;
+    }
+
+    /**
      * Process the auth process
      *
      * @param previous the previous auth process
@@ -95,7 +121,7 @@ public class SpigotAccountProcess implements UserAuthProcess {
             float walkSpeed = player.getWalkSpeed();
             float flySpeed = player.getFlySpeed();
             if (walkSpeed <= 0) walkSpeed = 0.2f;
-            if (flySpeed <= 0) flySpeed = 0.2f;
+            if (flySpeed <= 0) flySpeed = 0.1f;
 
             player.setMetadata("walkSpeed", new FixedMetadataValue(plugin.plugin(), walkSpeed));
             player.setMetadata("flySpeed", new FixedMetadataValue(plugin.plugin(), flySpeed));

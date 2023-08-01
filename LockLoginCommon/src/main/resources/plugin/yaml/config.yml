@@ -333,6 +333,9 @@ BruteForce:
 #to log in
 AllowSameIp: true
 
+#Enable authentication feature (register/login)
+Authentication: true
+
 #Enable pin feature (This is not 2FA)
 #LockLogin pin or LockLogin Pinner is
 #an extra pin feature that adds an extra
