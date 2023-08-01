@@ -6,6 +6,9 @@ import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.version.Version;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
@@ -14,6 +17,7 @@ import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
+import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
 import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.spigot.command.LoginCommand;
@@ -226,6 +230,24 @@ public class SpigotPlugin extends KarmaPlugin {
             manager.registerEvents(new ChatHandler(), this);
             manager.registerEvents(new QuitHandler(), this);
             manager.registerEvents(new MovementHandler(), this);
+
+            Path modsFolder = workingDirectory().resolve("mods");
+            if (!Files.isDirectory(modsFolder)) PathUtilities.destroy(modsFolder);
+
+            PathUtilities.createDirectory(modsFolder);
+            try(Stream<Path> mods = Files.list(modsFolder).filter((path) -> !Files.isDirectory(path))) {
+                ModuleLoader loader = spigot.moduleManager().loader();
+                mods.forEach((modFile) -> {
+                    Module module = loader.load(modFile);
+                    if (module != null) {
+                        spigot.info("Loaded module {0}", module.sourceName());
+                    } else {
+                        spigot.err("Failed to load file {0} as a module file. Does it contains a module.yml?", PathUtilities.pathString(modFile));
+                    }
+                });
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
 
             logger().log(LogLevel.DEBUG, "LockLogin initialized with {0} services", spigot.service_provider.size());
         } else {

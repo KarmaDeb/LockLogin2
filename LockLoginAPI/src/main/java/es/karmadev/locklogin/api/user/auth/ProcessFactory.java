@@ -16,7 +16,15 @@ public interface ProcessFactory {
      * @param client the client
      * @return the client next process
      */
-    Optional<? extends UserAuthProcess> getNextProcess(final NetworkClient client);
+    Optional<UserAuthProcess> nextProcess(final NetworkClient client);
+
+    /**
+     * Get the previous process for the client
+     *
+     * @param client the client
+     * @return the previous process
+     */
+    Optional<UserAuthProcess> previousProcess(final NetworkClient client);
 
     /**
      * Register an auth process
@@ -25,5 +33,5 @@ public interface ProcessFactory {
      * @throws IllegalStateException if the {@link UserAuthProcess instance} doesn't have a
      * static createFor({@link NetworkClient}) method
      */
-    void registerAuthProcess(final Class<? extends UserAuthProcess> process) throws IllegalStateException;
+    void register(final Class<? extends UserAuthProcess> process) throws IllegalStateException;
 }

@@ -1,9 +1,9 @@
-package es.karmadev.locklogin.api.extension.manager;
+package es.karmadev.locklogin.api.extension.module.manager;
 
 import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
-import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
-import es.karmadev.locklogin.api.extension.command.error.CommandRuntimeException;
+import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
+import es.karmadev.locklogin.api.extension.module.command.error.CommandRuntimeException;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
 import java.util.function.Consumer;

@@ -28,13 +28,13 @@ public class CVirtualId implements VirtualID {
     private final String virtualID;
     static {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "static {}");
     }
 
     @SuppressWarnings("deprecation")
     public CVirtualId() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "CVirtualId()");
 
         Configuration configuration = plugin.configuration();
         SecretStore store = configuration.secretKey();

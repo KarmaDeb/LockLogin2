@@ -187,7 +187,7 @@ public class CAccount implements UserAccount {
      */
     @Override
     public boolean destroy(final NetworkEntity issuer) throws SecurityException {
-        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CAccount.class, "destroy(NetworkEntity)");
 
         return true;
     }

@@ -16,7 +16,7 @@ import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;

@@ -14,8 +14,8 @@ import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.ModuleConverter;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
@@ -43,6 +43,7 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
+import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
@@ -60,9 +61,9 @@ import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
-import es.karmadev.locklogin.spigot.command.module.CommandHandler;
-import es.karmadev.locklogin.spigot.command.module.ExecutorHelper;
 import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
+import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
@@ -96,6 +97,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     private final CPluginConfiguration configuration;
     private final InternalPack messages;
     private final CProcessFactory process_factory;
+    private final SpigotModuleMaker moduleMaker;
 
     private CAccountFactory default_account_factory;
     private CSessionFactory default_session_factory;
@@ -154,10 +156,18 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         moduleManager.onCommandUnregistered = manager;
 
         process_factory = new CProcessFactory();
-        process_factory.registerAuthProcess(SpigotAccountProcess.class);
+        process_factory.register(SpigotAccountProcess.class);
+        process_factory.register(SpigotPinProcess.class);
+
+        SpigotAccountProcess.setStatus(configuration.enableAuthentication());
+        SpigotPinProcess.setStatus(configuration.enablePin());
+
+        moduleMaker = new SpigotModuleMaker();
     }
 
     void installDriver() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "installDriver()");
+
         driver.testDriver(Driver.SQLite);
         driver.connect();
 
@@ -180,6 +190,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @return the plugin data driver
      */
     public CSQLDriver driver() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "driver()");
         return driver;
     }
 
@@ -191,7 +202,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public KarmaPlugin plugin() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "plugin()");
         return plugin;
     }
 
@@ -203,6 +214,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public boolean bungeeMode() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "bungeeMode()");
+
         File server_folder = plugin.getServer().getWorldContainer();
         File spigot_yml = new File(server_folder, "spigot.yml");
         try {
@@ -224,6 +237,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public boolean onlineMode() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "onlineMode()");
         return plugin.getServer().getOnlineMode();
     }
 
@@ -247,7 +261,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public InputStream load(final String name) throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "load(String)");
 
         File pluginFile = plugin.runtime().getFile().toFile();
         try(JarFile jarFile = new JarFile(pluginFile)) {
@@ -276,6 +290,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Path workingDirectory() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "workingDirectory()");
         return plugin.workingDirectory();
     }
 
@@ -287,7 +302,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public CRuntime getRuntime() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getRuntime()");
         return runtime;
     }
 
@@ -298,6 +313,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public PluginNetwork network() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "network()");
         return network;
     }
 
@@ -308,6 +324,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public LockLoginHasher hasher() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "hasher()");
         return hasher;
     }
 
@@ -318,6 +335,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Configuration configuration() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "configuration()");
         return configuration;
     }
 
@@ -328,6 +346,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Messages messages() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "messages()");
         return messages.getMessenger();
     }
 
@@ -337,8 +356,19 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @return the process factory
      */
     @Override
-    public ProcessFactory getAuthProcessFactory() {
+    public ProcessFactory getProcessFactory() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getProcessFactory()");
         return process_factory;
+    }
+
+    /**
+     * Get the module converter
+     *
+     * @return the module converter
+     */
+    @Override @SuppressWarnings("unchecked")
+    public <T> ModuleConverter<T> getConverter() {
+        return (ModuleConverter<T>) moduleMaker;
     }
 
     /**
@@ -350,6 +380,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public AccountFactory<? extends UserAccount> getAccountFactory(final boolean original) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getAccountFactory(boolean)");
         if (original || provider_account_factory == null) {
             return default_account_factory;
         }
@@ -366,6 +397,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public SessionFactory<? extends UserSession> getSessionFactory(final boolean original) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getSessionFactory(boolean)");
         if (original || provider_session_factory == null) {
             return default_session_factory;
         }
@@ -382,6 +414,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public UserFactory<? extends LocalNetworkClient> getUserFactory(final boolean original) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getUserFactory(boolean)");
         if (original || provider_user_factory == null) {
             return default_user_factory;
         }
@@ -398,6 +431,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public ServerFactory<? extends NetworkServer> getServerFactory(final boolean original) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getServerFactory(boolean)");
         if (original || provider_server_factory == null) {
             return default_server_factory;
         }
@@ -412,6 +446,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public MultiAccountManager accountManager() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "accountManager()");
         return null;
     }
 
@@ -423,6 +458,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public PluginService getService(final String name) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getService(String)");
         return service_provider.getOrDefault(name, null);
     }
 
@@ -433,6 +469,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public ModuleManager moduleManager() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "moduleManager()");
         return moduleManager;
     }
 
@@ -443,6 +480,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public PremiumDataStore premiumStore() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "premiumStore()");
         return premiumDataStore;
     }
 
@@ -455,7 +493,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("deprecation")
     public ServerHash server() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "server()");
+
         Path data = plugin.workingDirectory().resolve("cache").resolve("server.kf");
         if (Files.exists(data)) {
             KarmaMain persistent_hash = new KarmaMain(data);
@@ -524,6 +563,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void registerService(final String name, final PluginService service) throws UnsupportedOperationException {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "registerService(String, PluginService)");
+
         if (service_provider.containsKey(name)) {
             plugin.logger().log(LogLevel.WARNING, "Tried to register duplicated service name {0}", name);
             throw new UnsupportedOperationException("Cannot register service " + name + " because it's already defined by another service");
@@ -554,6 +595,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void unregisterService(final String name) throws UnsupportedOperationException, NullPointerException {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "unregisterService(String)");
+
         PluginService service = service_provider.getOrDefault(name, null);
         if (service == null) throw new NullPointerException("Cannot unregister service " + name + " because it does not exist");
         //if (service instanceof CLocalBackup) throw new UnsupportedOperationException("Cannot unregister plugin internal service: " + name);
@@ -569,7 +612,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void setAccountFactory(final AccountFactory<UserAccount> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "setAccountFactory(AccountFactory)");
         provider_account_factory = factory;
     }
 
@@ -580,7 +623,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void setSessionFactory(final SessionFactory<UserSession> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "setSessionFactory(SessionFactory)");
         provider_session_factory = factory;
     }
 
@@ -591,7 +634,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void setUserFactory(final UserFactory<LocalNetworkClient> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "setUserFactory(UserFactory)");
         provider_user_factory = factory;
     }
 
@@ -602,7 +645,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void setServerFactory(final ServerFactory<NetworkServer> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "setServerFactory(ServerFactory)");
         provider_server_factory = factory;
     }
 
@@ -614,6 +657,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void info(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "info(String, Object[])");
         plugin.logger().send(LogLevel.INFO, message, replaces);
     }
 
@@ -625,6 +669,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void warn(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "warn(String, Object[])");
         plugin.logger().send(LogLevel.WARNING, message, replaces);
     }
 
@@ -636,6 +681,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void err(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "err(String, Object[])");
         plugin.logger().send(LogLevel.ERROR, message, replaces);
     }
 
@@ -647,6 +693,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void logInfo(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logInfo(String, Object[])");
         plugin.logger().log(LogLevel.INFO, message, replaces);
     }
 
@@ -658,6 +705,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void logWarn(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logWarn(String, Object[])");
         plugin.logger().log(LogLevel.WARNING, message, replaces);
     }
 
@@ -669,6 +717,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void logErr(final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logErr(String, Object[])");
         plugin.logger().log(LogLevel.ERROR, message, replaces);
     }
 
@@ -681,6 +730,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "log(Throwable, String, Object[])");
         plugin.logger().log(error, message, replaces);
     }
 
@@ -701,6 +751,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public InetSocketAddress address() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "address()");
         return InetSocketAddress.createUnresolved("127.0.0.1", plugin.getServer().getPort());
     }
 
@@ -711,6 +762,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Instant creation() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "creation()");
         return startup;
     }
 
@@ -763,6 +815,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Collection<NetworkClient> connected() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "connected()");
         return network.getOnlinePlayers();
     }
 
@@ -774,12 +827,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public Collection<LocalNetworkClient> offlineClients() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "offlineClients()");
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
     @Override
     public Collection<NetworkClient> onlineClients() {
-        return null;
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "onlineClients()");
+        return connected();
     }
 
     /**
@@ -789,6 +844,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public NetworkChannel channel() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "channel()");
         return null;
     }
 
@@ -799,6 +855,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void sendMessage(final String message) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "sendMessage(String)");
         plugin.logger().send(message);
     }
 
@@ -809,6 +866,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void sendActionBar(final String actionbar) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "sendActionBar(String)");
+
         for (Player online : Bukkit.getOnlinePlayers()) {
             SpigotActionbar sBar = new SpigotActionbar(actionbar);
             sBar.send(online);
@@ -826,6 +885,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      */
     @Override
     public void sendTitle(final String title, final String subtitle, final int fadeIn, final int showTime, final int fadeOut) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "sendTitle(String, String, int, int, int)");
+
         for (Player online : Bukkit.getOnlinePlayers()) {
             SpigotTitle sTitle = new SpigotTitle(title, subtitle);
             sTitle.send(online, fadeIn, showTime, fadeOut);
@@ -834,6 +895,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
     @Override
     public InputStream loadResource(final String s) {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "loadResource(String)");
         return LockLoginSpigot.class.getResourceAsStream("/" + s);
     }
 }

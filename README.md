@@ -27,6 +27,8 @@ it will be easier to determine which module (if any) caused that breach.
 You can learn on how to create a module for LockLogin in the [LockLogin wiki](https://reddo.es/karmadev/wiki) or<br>
 If you need more help when developing the module, you can have a look at the [LockLogin docs](https://reddo.es/karmadev/locklogin/docs/)
 
+You can also have a look on the [module examples](https://github.com/KarmaDeb/LockLogin2Examples/blob/master/PluginModule/src/main/java/es/karmadev/examples/pluginmodule/Main.java). (Spoiler) A plugin can extend to a module
+
 # Migrating from LockLoginReborn (Legacy v2) (>1.1.0.9)
 [LockLoginReborn](https://github.com/KarmaDeb/LockLoginReborn) is the previous version to this version of LockLogin. Any version under LockLogin v2.0.0 will be<br>
 marked as legacy since this version releases officially. Which means that no more support will be provided for those<br>

@@ -8,12 +8,11 @@ import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CProcessFactory implements ProcessFactory {
 
     private final UserAuthProcessContainer container = new UserAuthProcessContainer();
-    private final Map<UUID, UserAuthProcess> userProcess  = new ConcurrentHashMap<>();
+    private final Map<UUID, UserAuthProcess> userProcess  = new HashMap<>();
 
     /**
      * Get the next process for the client
@@ -22,7 +21,7 @@ public class CProcessFactory implements ProcessFactory {
      * @return the client next process
      */
     @Override
-    public Optional<? extends UserAuthProcess> getNextProcess(final NetworkClient client) {
+    public Optional<UserAuthProcess> nextProcess(final NetworkClient client) {
         UserAuthProcess current = userProcess.get(client.uniqueId());
         Class<? extends UserAuthProcess> processClass = container.getNext(current);
 
@@ -37,6 +36,33 @@ public class CProcessFactory implements ProcessFactory {
 
             return Optional.ofNullable(process);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {}
+
+        return Optional.empty();
+    }
+
+    /**
+     * Get the previous process for the client
+     *
+     * @param client the client
+     * @return the previous process
+     */
+    @Override
+    public Optional<UserAuthProcess> previousProcess(final NetworkClient client) {
+        UserAuthProcess current = userProcess.get(client.uniqueId());
+        Class<? extends UserAuthProcess> processClass = container.getPrevious(current);
+
+        if (processClass == null) return Optional.empty();
+        try {
+            Method createFor = processClass.getDeclaredMethod("createFor", NetworkClient.class);
+            UserAuthProcess process = (UserAuthProcess) createFor.invoke(processClass, client);
+
+            if (process != null) {
+                userProcess.put(client.uniqueId(), process);
+            }
+
+            return Optional.ofNullable(process);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {}
+
         return Optional.empty();
     }
 
@@ -48,7 +74,7 @@ public class CProcessFactory implements ProcessFactory {
      *                               static createFor({@link NetworkClient}) method
      */
     @Override
-    public void registerAuthProcess(final Class<? extends UserAuthProcess> process) throws IllegalStateException {
+    public void register(final Class<? extends UserAuthProcess> process) throws IllegalStateException {
         if (container.insert(process)) {
             CurrentPlugin.getPlugin().info("Successfully registered user auth process: {0}", container.getNameFor(process));
         } else {

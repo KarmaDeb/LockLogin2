@@ -2,7 +2,7 @@ package es.karmadev.locklogin.api.plugin.permission;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.AllArgsConstructor;
@@ -327,7 +327,7 @@ public final class LockLoginPermission {
         if (!module_node_map.containsKey(permission.node()) &&
                 module_node_map.values().stream().noneMatch((np) -> np.getPermission().node().equals(permission.node()))) {
             LockLogin plugin = CurrentPlugin.getPlugin();
-            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginPermission.class, "register(PermissionObject)");
 
             Path caller = plugin.getRuntime().caller();
             if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
@@ -352,7 +352,7 @@ public final class LockLoginPermission {
      */
     public static boolean unregister(final PermissionObject permission) throws SecurityException {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginPermission.class, "unregister(PermissionObject)");
 
         Path caller = plugin.getRuntime().caller();
         if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");

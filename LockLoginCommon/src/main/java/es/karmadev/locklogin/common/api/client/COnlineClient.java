@@ -174,7 +174,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void performCommand(final String cmd) {
-        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, COnlineClient.class, "performCommand(String)");
         if (performCommand != null) performCommand.accept(cmd);
     }
 

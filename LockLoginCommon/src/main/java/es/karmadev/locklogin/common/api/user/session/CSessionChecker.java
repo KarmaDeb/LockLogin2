@@ -9,8 +9,11 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
+import es.karmadev.locklogin.common.api.user.storage.session.CSession;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,7 +130,8 @@ public class CSessionChecker implements SessionChecker {
                     return;
                 }
 
-                if (session.isLogged()) {
+                SessionField<Boolean> field = session.fetch("logged");
+                if (field.get()) {
                     //client.sendMessage(messages.prefix() + messages.logged());
                     runner.stop();
                     return;
@@ -143,7 +147,7 @@ public class CSessionChecker implements SessionChecker {
             Runnable endTask = () -> {
                 if (cancelled) return; //Do nothing
 
-                if (!session.isLogged()) {
+                if (!(boolean) session.fetch("logged").get()) {
                     if (account.isRegistered()) {
                         client.kick(messages.loginTimeOut());
                     } else {

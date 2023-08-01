@@ -194,6 +194,13 @@ public interface Configuration {
     boolean allowSameIp();
 
     /**
+     * Get if the plugin enables base authentication
+     *
+     * @return if the plugin uses login and register
+     */
+    boolean enableAuthentication();
+
+    /**
      * Get if the plugin enables the pin
      * login. Globally
      *

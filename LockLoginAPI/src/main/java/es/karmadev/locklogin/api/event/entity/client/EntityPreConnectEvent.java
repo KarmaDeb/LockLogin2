@@ -1,31 +1,30 @@
 package es.karmadev.locklogin.api.event.entity.client;
 
 import es.karmadev.locklogin.api.event.Cancellable;
+import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.module.Module;
-import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.NetworkEntity;
 
 /**
- * This event is fired when an entity receives a validation
- * of any type
+ * When an entity pre connects the server
  */
-@SuppressWarnings("unused")
-public class EntityValidationEvent extends EntityEvent implements Cancellable {
+public class EntityPreConnectEvent extends EntityEvent implements Cancellable {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
 
     private boolean cancelled = false;
-    private String reason;
+    private String reason = "";
 
     /**
      * Initialize the entity event
      *
      * @param entity the entity
-     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
+     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent()}
      */
-    public EntityValidationEvent(final LocalNetworkClient entity) throws SecurityException, IllegalArgumentException {
-        this(null, entity);
+    public EntityPreConnectEvent(NetworkEntity entity) throws SecurityException {
+        super(entity);
     }
 
     /**
@@ -33,9 +32,9 @@ public class EntityValidationEvent extends EntityEvent implements Cancellable {
      *
      * @param caller the event caller
      * @param entity the entity
-     * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
+     * @throws SecurityException as part of {@link LockLoginEvent#LockLoginEvent(Module)}
      */
-    public EntityValidationEvent(final Module caller, final LocalNetworkClient entity) throws SecurityException {
+    public EntityPreConnectEvent(Module caller, NetworkEntity entity) throws SecurityException {
         super(caller, entity);
     }
 
@@ -47,7 +46,7 @@ public class EntityValidationEvent extends EntityEvent implements Cancellable {
      */
     @Override
     public void setCancelled(final boolean cancel, final String reason) {
-        cancelled = cancel;
+        this.cancelled = cancel;
         this.reason = reason;
     }
 

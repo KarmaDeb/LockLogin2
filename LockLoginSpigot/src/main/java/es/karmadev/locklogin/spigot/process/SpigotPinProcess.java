@@ -2,49 +2,50 @@ package es.karmadev.locklogin.spigot.process;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.section.MovementConfiguration;
 import es.karmadev.locklogin.api.user.auth.process.AuthType;
 import es.karmadev.locklogin.api.user.auth.process.ProcessPriority;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
-import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.user.auth.CAuthProcess;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Spigot login process
  */
-public class SpigotAccountProcess implements UserAuthProcess {
+public class SpigotPinProcess implements UserAuthProcess {
 
     private final NetworkClient client;
-    private static boolean enabled = true;
+    private static boolean enabled;
 
-
-    public SpigotAccountProcess(final NetworkClient client) {
+    public SpigotPinProcess(final NetworkClient client) {
         this.client = client;
     }
 
     public static String getName() {
-        return "account";
+        return "pin";
     }
 
     public static int getPriority() {
-        return ProcessPriority.RUN_FIRST;
+        return ProcessPriority.RUN_FIRST + 1; //Run the second
     }
 
     public static void setStatus(final boolean status) {
-        SpigotAccountProcess.enabled = status;
+        SpigotPinProcess.enabled = status;
     }
 
-    public static SpigotAccountProcess createFor(final NetworkClient client) {
-        return new SpigotAccountProcess(client);
+    public static SpigotPinProcess createFor(final NetworkClient client) {
+        return new SpigotPinProcess(client);
     }
 
     /**
@@ -74,7 +75,7 @@ public class SpigotAccountProcess implements UserAuthProcess {
      */
     @Override
     public AuthType getAuthType() {
-        return AuthType.ANY;
+        return AuthType.LOGIN;
     }
 
     /**
@@ -93,8 +94,8 @@ public class SpigotAccountProcess implements UserAuthProcess {
      * @param status the process status
      */
     @Override
-    public void setEnabled(final boolean status) {
-        SpigotAccountProcess.enabled = status;
+    public void setEnabled(boolean status) {
+        SpigotPinProcess.enabled = status;
     }
 
     /**
@@ -113,27 +114,28 @@ public class SpigotAccountProcess implements UserAuthProcess {
             return task;
         }
 
+        InventoryHolder holder = new InventoryHolder() {
+            @NotNull
+            @Override
+            public Inventory getInventory() {
+                return null;
+            }
+        };
+
+        Inventory inventory = Bukkit.createInventory(holder, 9);
+        player.openInventory(inventory);
+
         LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
-        Configuration configuration = plugin.configuration();
-        MovementConfiguration movement = configuration.movement();
+        Bukkit.getServer().getPluginManager().registerEvent(InventoryCloseEvent.class, new Listener() {}, EventPriority.HIGHEST, ((listener, event) -> {
+            assert event instanceof InventoryCloseEvent;
+            InventoryCloseEvent e = (InventoryCloseEvent) event;
+            if (e.getInventory().getHolder().equals(holder)) {
+                task.complete(CAuthProcess.forResult(true, this));
+            } else {
+                task.complete(CAuthProcess.forResult(false, this));
+            }
+        }), plugin.plugin());
 
-        if (!movement.allow() && movement.method().equals(MovementConfiguration.MovementMethod.SPEED)) {
-            float walkSpeed = player.getWalkSpeed();
-            float flySpeed = player.getFlySpeed();
-            if (walkSpeed <= 0) walkSpeed = 0.2f;
-            if (flySpeed <= 0) flySpeed = 0.1f;
-
-            player.setMetadata("walkSpeed", new FixedMetadataValue(plugin.plugin(), walkSpeed));
-            player.setMetadata("flySpeed", new FixedMetadataValue(plugin.plugin(), flySpeed));
-
-            player.setWalkSpeed(0f);
-            player.setFlySpeed(0f);
-        }
-
-        SessionChecker checker = client.getSessionChecker();
-        checker.onEnd((status) -> task.complete(CAuthProcess.forResult(status, this)));
-
-        Bukkit.getServer().getScheduler().runTaskAsynchronously(plugin.plugin(), checker);
         return task;
     }
 }

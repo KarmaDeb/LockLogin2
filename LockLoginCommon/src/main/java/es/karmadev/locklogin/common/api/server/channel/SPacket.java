@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.server.packet.NetworkPacket;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
@@ -25,7 +25,7 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final byte[] message) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(byte[])");
 
         Path caller = plugin.getRuntime().caller();
 
@@ -35,7 +35,7 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final String raw) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(String)");
 
         Path caller = plugin.getRuntime().caller();
 
@@ -45,7 +45,7 @@ public class SPacket implements NetworkPacket {
 
     public SPacket(final JsonElement element) {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES);
+        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(JsonElement)");
 
         Path caller = plugin.getRuntime().caller();
 

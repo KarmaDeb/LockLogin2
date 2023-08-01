@@ -2,7 +2,7 @@ package es.karmadev.locklogin.api.event;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
 /**
@@ -34,7 +34,7 @@ public abstract class LockLoginEvent {
         this.caller = caller;
         if (caller == null) {
             LockLogin plugin = CurrentPlugin.getPlugin();
-            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginEvent.class, "LockLoginEvent(Module)");
         }
     }
 

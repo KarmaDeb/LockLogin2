@@ -17,6 +17,7 @@ import es.karmadev.locklogin.api.security.check.PasswordValidator;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
@@ -175,9 +176,10 @@ public class RegisterCommand implements CommandExecutor {
             account.setPassword(passwordInput);
             client.sendMessage(messages.prefix() + messages.registered());
 
-            session.login(true);
+            /*session.login(true);
             session._2faLogin(true);
-            session.pinLogin(true);
+            session.pinLogin(true);*/
+            session.append(CSessionField.newField(Boolean.class, "logged", true));
 
             if (player.hasMetadata("walkSpeed")) {
                 float walkSpeed = player.getMetadata("walkSpeed").get(0).asFloat();

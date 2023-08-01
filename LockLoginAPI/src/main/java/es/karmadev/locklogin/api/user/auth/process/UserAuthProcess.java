@@ -32,6 +32,20 @@ public interface UserAuthProcess {
     AuthType getAuthType();
 
     /**
+     * Get if the process is enabled
+     *
+     * @return the process status
+     */
+    boolean isEnabled();
+
+    /**
+     * Set the process status
+     *
+     * @param status the process status
+     */
+    void setEnabled(final boolean status);
+
+    /**
      * Process the auth process
      *
      * @param previous the previous auth process

@@ -61,9 +61,11 @@ public abstract class LockLoginRuntime {
      * Verify the runtime integrity
      *
      * @param permission the minimum permission authorization level
+     * @param clazz the clazz that is verifying integrity
+     * @param method the method that is verifying integrity
      * @throws SecurityException if the integrity fails to check
      */
-    public abstract void verifyIntegrity(final int permission) throws SecurityException;
+    public abstract void verifyIntegrity(final int permission, final Class<?> clazz, final String method) throws SecurityException;
 
     /**
      * Get if the runtime is completely booted. Meaning

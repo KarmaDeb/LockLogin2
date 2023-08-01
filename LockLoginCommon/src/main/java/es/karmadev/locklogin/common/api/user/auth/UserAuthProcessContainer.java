@@ -2,13 +2,13 @@ package es.karmadev.locklogin.common.api.user.auth;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
+import es.karmadev.locklogin.api.user.auth.process.ProcessPriority;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * User auth process container
@@ -16,8 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UserAuthProcessContainer implements Iterable<Class<? extends UserAuthProcess>> {
 
     private Class<?>[] que = new Class<?>[0];
-    private final Map<Class<?>, String> names = new ConcurrentHashMap<>();
-    private final Map<Class<?>, Integer> priorities = new ConcurrentHashMap<>();
+    private final Map<Class<?>, String> names = new HashMap<>();
+    private final Map<Class<?>, Integer> priorities = new HashMap<>();
 
     public String getNameFor(final Class<?> process) {
         return names.get(process);

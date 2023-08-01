@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.event.handler;
 
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 
 import java.util.ArrayList;
 import java.util.List;

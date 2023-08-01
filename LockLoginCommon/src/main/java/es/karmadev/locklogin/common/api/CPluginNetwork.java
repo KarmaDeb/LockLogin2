@@ -7,6 +7,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
@@ -145,7 +146,7 @@ public class CPluginNetwork implements PluginNetwork {
             connection = driver.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `uuid` = '" + uniqueId + "'")) {
+            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `uuid` = '" + uniqueId + "' OR `premium_uuid` = '" + uniqueId + "'")) {
                 if (result.next()) {
                     int id = result.getInt("id");
 

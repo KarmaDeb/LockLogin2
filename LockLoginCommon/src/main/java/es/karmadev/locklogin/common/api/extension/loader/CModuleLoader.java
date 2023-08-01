@@ -7,19 +7,23 @@ import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.command.ModuleCommand;
-import es.karmadev.locklogin.api.extension.manager.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleLoader;
+import es.karmadev.locklogin.api.extension.plugin.PluginModule;
+import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 import es.karmadev.locklogin.common.api.extension.command.CModCommand;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
@@ -30,6 +34,7 @@ import java.util.jar.JarFile;
 
 public class CModuleLoader implements ModuleLoader {
 
+    private final Module dummyModule = new DummyModule();
     private final Set<CModData> loadedModules = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Map<Module, CModData> unloadedModulesData = new ConcurrentHashMap<>();
 
@@ -37,6 +42,19 @@ public class CModuleLoader implements ModuleLoader {
 
     public CModuleLoader(final CModuleManager manager) {
         this.manager = manager;
+    }
+
+    /**
+     * Load a plugin module
+     *
+     * @param module the module to load
+     */
+    public void load(final PluginModule<?> module) {
+        for (CModData data : loadedModules) {
+            if (data.getFile().equals(module.getFile())) {
+                data.setModule(module);
+            }
+        }
     }
 
     /**
@@ -73,6 +91,16 @@ public class CModuleLoader implements ModuleLoader {
         LockLoginRuntime runtime = plugin.getRuntime();
 
         File modFile = file.toFile();
+        for (CModData data : loadedModules) {
+            if (data.getFile().equals(file)) {
+                return data.getModule();
+            }
+        }
+        for (CModData data : unloadedModulesData.values()) {
+            if (data.getFile().equals(file)) {
+                return data.getModule();
+            }
+        }
 
         try (JarFile jar = new JarFile(modFile)) {
             JarEntry entry = jar.getJarEntry("module.yml");
@@ -91,14 +119,18 @@ public class CModuleLoader implements ModuleLoader {
                         Constructor<? extends Module> constructor = main.getDeclaredConstructor();
                         constructor.setAccessible(true);
 
-                        Module module = constructor.newInstance();
-                        mapCommands(module_yaml, module);
-
-                        CModData data = new CModData(file, module, module_yaml);
+                        CModData data = new CModData(file, dummyModule, module_yaml);
                         loadedModules.add(data);
 
+                        Module module = constructor.newInstance();
+                        data.setModule(module);
+
+                        mapCommands(module_yaml, module);
+
                         module.onLoad();
+                        return module;
                     } catch (Exception ex) {
+                        //ex.printStackTrace();
                         plugin.log(ex, "An unexpected error occurred while fetching a module from {0}", PathUtilities.pathString(file));
                     }
                 }
@@ -126,6 +158,7 @@ public class CModuleLoader implements ModuleLoader {
         try (JarFile jar = new JarFile(modFile)) {
             JarEntry entry = jar.getJarEntry("module.yml");
             if (entry == null) plugin.logErr("Cannot load module from file {0} (nonexistent module.yml)", PathUtilities.pathString(file));
+            entry = jar.getJarEntry("plugin.yml");
 
             try (InputStream stream = jar.getInputStream(entry)) {
                 YamlFileHandler module_yaml = YamlHandler.load(stream);
@@ -219,7 +252,7 @@ public class CModuleLoader implements ModuleLoader {
         Module match = null;
 
         for (CModData data : loadedModules) {
-            if (data.getFile().equals(file)) {
+            if (data.getFile().toAbsolutePath().equals(file)) {
                 match = data.getModule();
                 break;
             }
@@ -344,5 +377,46 @@ public class CModuleLoader implements ModuleLoader {
                 manager.commands().register(module, command);
             }
         }
+    }
+
+    /**
+     * Pre-load a plugin
+     *
+     * @param caller the plugin caller
+     */
+    public void loadPlugin(final Path caller) {
+        YamlFileHandler virtualYaml = YamlHandler.create(null);
+        virtualYaml.set("main", dummyModule.getClass().toString());
+
+        CModData data = new CModData(caller, dummyModule, virtualYaml);
+        loadedModules.add(data);
+    }
+}
+
+class DummyModule extends Module {
+
+    public DummyModule() {
+        super("DummyModule", "0.0.0", "Dummy module", new String[]{"KarmaDev"}, new PermissionObject[0]);
+    }
+
+    /**
+     * When the module gets loaded
+     */
+    @Override
+    public void onLoad() {
+
+    }
+
+    /**
+     * When the module gets disabled
+     */
+    @Override
+    public void onUnload() {
+
+    }
+
+    @Override
+    public @Nullable URI sourceUpdateURI() {
+        return null;
     }
 }

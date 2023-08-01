@@ -1,17 +1,16 @@
 package es.karmadev.locklogin.api.event.entity;
 
 import es.karmadev.locklogin.api.event.LockLoginEvent;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.NetworkEntity;
+import lombok.Getter;
 
 /**
  * An event that involves an entity
  */
+@Getter
 public abstract class EntityEvent extends LockLoginEvent {
 
-    /**
-     * The event entity
-     */
     protected final NetworkEntity entity;
 
     /**
@@ -36,12 +35,4 @@ public abstract class EntityEvent extends LockLoginEvent {
         this.entity = entity;
     }
 
-    /**
-     * Get the entity involved in this event
-     *
-     * @return the entity event
-     */
-    public NetworkEntity getEntity() {
-        return entity;
-    }
 }

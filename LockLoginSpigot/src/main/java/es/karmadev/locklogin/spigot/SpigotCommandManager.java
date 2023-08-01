@@ -2,10 +2,10 @@ package es.karmadev.locklogin.spigot;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.command.ModuleCommand;
-import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.plugin.file.Messages;

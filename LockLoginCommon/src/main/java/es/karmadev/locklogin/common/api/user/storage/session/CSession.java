@@ -1,6 +1,5 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
-import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.DataDriver;
@@ -23,7 +22,7 @@ public class CSession implements UserSession {
 
     private boolean valid = false;
 
-    private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
+    private final static Map<Integer, Map<String, SessionField<?>>> fields = new ConcurrentHashMap<>();
 
     /**
      * Initialize the session
@@ -370,7 +369,10 @@ public class CSession implements UserSession {
      */
     @Override
     public void append(final SessionField<?> value) {
-        fields.put(value.key(), value);
+        Map<String, SessionField<?>> fieldMap = fields.computeIfAbsent(id, (map) -> new ConcurrentHashMap<>());
+        fieldMap.put(value.key(), value);
+
+        fields.put(id, fieldMap);
     }
 
     /**
@@ -379,9 +381,10 @@ public class CSession implements UserSession {
      * @param key the field key
      * @return the field or null if none
      */
-    @Override
+    @Override @SuppressWarnings("unchecked")
     public <T> SessionField<T> fetch(final String key) {
-        return (SessionField<T>) fields.getOrDefault(key, null);
+        Map<String, SessionField<?>> fieldMap = fields.computeIfAbsent(id, (map) -> new ConcurrentHashMap<>());
+        return (SessionField<T>) fieldMap.get(key);
     }
 
     /**

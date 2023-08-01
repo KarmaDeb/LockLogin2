@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.api.extension.command.worker;
+package es.karmadev.locklogin.api.extension.module.command.worker;
 
 import es.karmadev.locklogin.api.network.NetworkEntity;
 

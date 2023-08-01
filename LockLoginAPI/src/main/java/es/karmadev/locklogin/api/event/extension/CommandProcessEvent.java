@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.api.event.extension;
 
 import es.karmadev.locklogin.api.event.LockLoginEvent;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
 import java.util.ArrayList;

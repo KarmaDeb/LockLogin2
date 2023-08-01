@@ -452,6 +452,16 @@ public class CPluginConfiguration implements Configuration {
     }
 
     /**
+     * Get if the plugin enables base authentication
+     *
+     * @return if the plugin uses login and register
+     */
+    @Override
+    public boolean enableAuthentication() {
+        return yaml.getBoolean("Authentication", true);
+    }
+
+    /**
      * Get if the plugin enables the pin
      * login. Globally
      *

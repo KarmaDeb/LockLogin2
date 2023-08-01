@@ -1,8 +1,8 @@
-package es.karmadev.locklogin.api.extension.command;
+package es.karmadev.locklogin.api.extension.module.command;
 
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.command.worker.CommandCompletor;
-import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandCompletor;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
 import lombok.Getter;
 
 /**

@@ -1,7 +1,8 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.api.file.yaml.handler.ResourceLoader;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.ModuleConverter;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -127,7 +128,15 @@ public interface LockLogin extends ResourceLoader {
      *
      * @return the process factory
      */
-    ProcessFactory getAuthProcessFactory();
+    ProcessFactory getProcessFactory();
+
+    /**
+     * Get the module converter
+     *
+     * @return the module converter
+     * @param <T> the converter type
+     */
+    <T> ModuleConverter<T> getConverter();
 
     /**
      * Get the plugin account factory

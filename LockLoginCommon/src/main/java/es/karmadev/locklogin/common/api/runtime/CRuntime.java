@@ -4,9 +4,8 @@ import es.karmadev.api.core.source.APISource;
 import es.karmadev.api.core.source.SourceManager;
 import es.karmadev.api.core.source.exception.UnknownProviderException;
 import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.plugin.runtime.DependencyManager;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
@@ -14,6 +13,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CRuntime extends LockLoginRuntime {
 
@@ -59,26 +60,27 @@ public class CRuntime extends LockLoginRuntime {
      */
     @Override
     public Path caller() {
-        String path = LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
+        Path plugin = file();
 
         try {
-            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().getParent();
-            String loader = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-            if (loader.startsWith("/")) {
-                loader = loader.substring(1);
+            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().toAbsolutePath().getParent();
+            String loaderPath = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
+            if (loaderPath.startsWith("/")) {
+                loaderPath = loaderPath.substring(1);
             }
 
+            Path loader = Paths.get(loaderPath);
             CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
-            if (source == null) return Paths.get(path);
+            if (source == null) return plugin;
 
-            String server = source.getLocation().getFile();
-            if (server.startsWith("/")) {
-                server = server.substring(1);
+            String serverPath = source.getLocation().getFile();
+            if (serverPath.startsWith("/")) {
+                serverPath = serverPath.substring(1);
             }
 
+            String pluginsPath = PathUtilities.pathString(pluginsFolder, '/');
+
+            Path server = Paths.get(serverPath);
             StackTraceElement[] elements = Thread.currentThread().getStackTrace();
             for (StackTraceElement element : elements) {
                 String name = element.getClassName();
@@ -89,10 +91,12 @@ public class CRuntime extends LockLoginRuntime {
                         String urlPath = url.getPath();
                         if (urlPath.startsWith("file:") && urlPath.contains("!")) {
                             String jarPath = urlPath.substring((urlPath.startsWith("file:/") ? 6 : 5), urlPath.indexOf('!')).replaceAll("%20", " ");
+                            Path path = Paths.get(jarPath);
+                            jarPath = PathUtilities.pathString(path, '/');
 
-                            if (!jarPath.equals(path) && !loader.equals(jarPath) && !jarPath.equals(server)) {
-                                if (jarPath.startsWith(pluginsFolder.toString())) {
-                                    return Paths.get(jarPath);
+                            if (!plugin.equals(path) && !loader.equals(path) && !path.equals(server)) {
+                                if (jarPath.startsWith(pluginsPath)) {
+                                    return path;
                                 }
                             }
                         }
@@ -102,41 +106,43 @@ public class CRuntime extends LockLoginRuntime {
             }
         } catch (UnknownProviderException ignored) {}
 
-        return Paths.get(path);
+        return plugin;
     }
 
     /**
      * Verify the runtime integrity
      *
      * @param permission the minimum permission authorization level
+     * @param targetClazz      the clazz that is verifying integrity
+     * @param targetMethod     the method that is verifying integrity
      * @throws SecurityException if the integrity fails to check
      */
     @Override
-    public void verifyIntegrity(final int permission) throws SecurityException {
+    public void verifyIntegrity(final int permission, final Class<?> targetClazz, String targetMethod) throws SecurityException {
         if (permission < 0) return;
 
-        String path = LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-
+        Path plugin = file();
         try {
-            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().getParent();
-            String loader = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-            if (loader.startsWith("/")) {
-                loader = loader.substring(1);
+            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().toAbsolutePath().getParent();
+            String loaderPath = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
+            if (loaderPath.startsWith("/")) {
+                loaderPath = loaderPath.substring(1);
             }
 
+            Path loader = Paths.get(loaderPath);
             CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
             if (source == null) throw new SecurityException("Cannot validate runtime integrity. Are we running in a test environment?");
 
-            String server = source.getLocation().getFile();
-            if (server.startsWith("/")) {
-                server = server.substring(1);
+            String serverPath = source.getLocation().getFile();
+            if (serverPath.startsWith("/")) {
+                serverPath = serverPath.substring(1);
             }
 
+            String pluginsPath = PathUtilities.pathString(pluginsFolder, '/');
+
+            Path server = Paths.get(serverPath);
             StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-            String method = "";
+            String method = targetClazz.getSimpleName() + "#" + targetMethod;
             Class<?> sourceClass = null;
             for (StackTraceElement element : elements) {
                 String name = element.getClassName();
@@ -149,22 +155,26 @@ public class CRuntime extends LockLoginRuntime {
                         String urlPath = url.getPath();
                         if (urlPath.startsWith("file:") && urlPath.contains("!")) {
                             String jarPath = urlPath.substring((urlPath.startsWith("file:/") ? 6 : 5), urlPath.indexOf('!')).replaceAll("%20", " ");
-                            if (jarPath.equals(path) && ObjectUtils.isNullOrEmpty(method)) {
-                                method = element.getClassName() + "#" + element.getMethodName();
-                            }
+                            Path jar = Paths.get(jarPath);
+                            jarPath = PathUtilities.pathString(jar, '/');
 
-                            if (!jarPath.equals(path) && !jarPath.equals(loader) && !jarPath.equals(server)) {
-                                if (jarPath.startsWith(pluginsFolder.toString())) {
+                            if (!jarPath.equals(PathUtilities.pathString(plugin, '/')) && !jar.equals(loader) && !jar.equals(server)) {
+                                if (jarPath.startsWith(pluginsPath)) {
                                     Path caller = Paths.get(jarPath);
 
                                     Module mod = modManager.loader().findByFile(caller);
                                     String pathName = PathUtilities.pathString(caller);
+
                                     if (mod != null) {
                                         pathName = "(Module) " + mod.sourceName();
                                         if (permission == PLUGIN_AND_MODULES) break;
                                         if (permission == MODULE_ONLY) {
+                                            Module src = modManager.loader().findByClass(targetClazz);
+                                            if (!src.equals(mod)) {
+                                                throw new SecurityException("Cannot access module method " + method + " from an unsafe source. " + pathName);
+                                            }
 
-                                            //TODO: Check if the module owns the class
+                                            break;
                                         }
                                     }
 
@@ -173,7 +183,7 @@ public class CRuntime extends LockLoginRuntime {
                             }
                         }
                     }
-                } catch (Throwable ignored) {
+                } catch (ClassNotFoundException ignored) {
                 }
             }
         } catch (UnknownProviderException ignored) {}

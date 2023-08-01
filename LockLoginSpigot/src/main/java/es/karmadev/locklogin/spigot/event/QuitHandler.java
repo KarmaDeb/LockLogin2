@@ -32,7 +32,7 @@ public class QuitHandler implements Listener {
             PlayerLocationStorage storage = new PlayerLocationStorage(client);
             storage.assign(player.getLocation());
 
-            ((CProcessFactory) CurrentPlugin.getPlugin().getAuthProcessFactory()).removeProgress(client);
+            ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
         }
     }
 }

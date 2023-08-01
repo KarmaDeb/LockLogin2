@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.api.extension.command.error;
+package es.karmadev.locklogin.api.extension.module.command.error;
 
 /**
  * This exception is thrown when a command fails to execute

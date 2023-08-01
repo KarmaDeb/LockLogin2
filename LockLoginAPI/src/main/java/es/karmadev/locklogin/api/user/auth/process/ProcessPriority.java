@@ -8,9 +8,9 @@ public final class ProcessPriority {
     /**
      * Be the first to run
      */
-    public static int RUN_FIRST = Integer.MAX_VALUE;
+    public static int RUN_FIRST = Integer.MIN_VALUE;
     /**
      * Be the last to run
      */
-    public static int RUN_LAST = Integer.MIN_VALUE;
+    public static int RUN_LAST = Integer.MAX_VALUE;
 }

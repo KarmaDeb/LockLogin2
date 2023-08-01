@@ -31,7 +31,7 @@ public final class CurrentPlugin {
         if (plugin != null) throw new SecurityException("Cannot redefine plugin instance!");
         if (instance.getRuntime() == null) throw new SecurityException();
 
-        instance.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY);
+        instance.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, CurrentPlugin.class, "initialize(LockLogin)");
         plugin = instance;
     }
 

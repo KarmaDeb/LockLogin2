@@ -9,17 +9,18 @@ import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.command.ModuleCommand;
-import es.karmadev.locklogin.api.extension.command.error.CommandRuntimeException;
-import es.karmadev.locklogin.api.extension.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.manager.ModuleLoader;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.command.error.CommandRuntimeException;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
+import es.karmadev.locklogin.common.api.runtime.CRuntime;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,7 +62,6 @@ public class CModuleManager implements ModuleManager {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         for (Module module : loader.getModules()) {
-            plugin.info(module.toString());
             EventHandler[] handlers = list.getHandlers(module);
 
             for (EventHandler handler : handlers) {
@@ -72,7 +72,7 @@ public class CModuleManager implements ModuleManager {
                         Parameter parameter = parameters[0];
                         Class<?> paramType = parameter.getType();
 
-                        if (paramType.equals(event.getClass())) {
+                        if (event.getClass().isAssignableFrom(paramType)) {
                             method.setAccessible(true);
                             try {
                                 method.invoke(handler, event);
@@ -136,6 +136,7 @@ public class CModuleManager implements ModuleManager {
         Path caller = runtime.caller();
 
         Module module = loader.findByFile(caller);
+        System.out.println(module);
         if (module != null) {
             EventHandler handler = new EventHandler() {
 

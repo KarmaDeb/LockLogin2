@@ -1,26 +1,44 @@
-package es.karmadev.locklogin.api.extension;
+package es.karmadev.locklogin.api.extension.module;
 
+import es.karmadev.api.core.CoreModule;
+import es.karmadev.api.core.DefaultRuntime;
+import es.karmadev.api.core.ExceptionCollector;
 import es.karmadev.api.core.source.APISource;
+import es.karmadev.api.core.source.KarmaSource;
+import es.karmadev.api.core.source.runtime.SourceRuntime;
+import es.karmadev.api.file.util.NamedStream;
 import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.file.util.StreamUtils;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.logger.LogManager;
+import es.karmadev.api.logger.SourceLogger;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.schedule.task.TaskScheduler;
+import es.karmadev.api.strings.StringFilter;
+import es.karmadev.api.strings.placeholder.PlaceholderEngine;
 import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.command.ModuleCommand;
-import es.karmadev.locklogin.api.extension.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.permission.DummyPermission;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
+import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.net.URL;
 import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
@@ -45,7 +63,7 @@ public abstract class Module implements APISource {
     /**
      * Default module manager
      */
-    protected final ModuleManager manager = plugin.moduleManager();
+    protected ModuleManager manager = (CurrentPlugin.getPlugin() != null ? plugin.moduleManager() : null);
 
     /**
      * Module id
@@ -53,6 +71,8 @@ public abstract class Module implements APISource {
     @Getter
     @Accessors(fluent = true)
     private UUID id;
+
+    private final SourceRuntime runtime = new DefaultRuntime(this);
 
     /**
      * Module name
@@ -86,7 +106,7 @@ public abstract class Module implements APISource {
      * @throws ExceptionInInitializerError if the module is already loaded
      */
     public Module() throws IllegalStateException, ExceptionInInitializerError {
-        Path modFile = runtime().getFile();
+        Path modFile = runtime.getFile();
 
         try (JarFile jar = new JarFile(modFile.toFile())) {
             JarEntry entry = jar.getJarEntry("module.yml");
@@ -191,6 +211,8 @@ public abstract class Module implements APISource {
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
+
+        id = UUID.nameUUIDFromBytes(("LockLoginMod:" + this.getClass().getName()).getBytes());
     }
 
     /**
@@ -203,7 +225,8 @@ public abstract class Module implements APISource {
      * @param permissions the module permissions
      * @throws ExceptionInInitializerError if the module is already loaded
      */
-    Module(final String name, final String version, final String description, final String[] authors, final PermissionObject[] permissions) throws ExceptionInInitializerError {
+    protected Module(final String name, final String version, final String description, final String[] authors, final PermissionObject[] permissions) throws ExceptionInInitializerError {
+        //if (CurrentPlugin.getPlugin() != null) CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, Module.class, "Module(String, String, String, String[], PermissionObject[])");
         if (loaded.contains(name)) throw new ExceptionInInitializerError("Module " + name + " already initialized!");
 
         this.name = name;
@@ -292,6 +315,210 @@ public abstract class Module implements APISource {
     @Override
     public final String[] sourceAuthors() {
         return authors;
+    }
+
+    @Override
+    public NamedStream[] findResources() {
+        return APISource.super.findResources();
+    }
+
+    @Override
+    public void loadIdentifier() {
+        APISource.super.loadIdentifier();
+    }
+
+    @Override
+    public void saveIdentifier() {
+        APISource.super.saveIdentifier();
+    }
+
+    @Override
+    public @NotNull String identifier() {
+        return name;
+    }
+
+    @Override
+    public @NotNull SourceRuntime runtime() {
+        return runtime;
+    }
+
+    @Override
+    public @NotNull PlaceholderEngine placeholderEngine(final String s) {
+        return ((APISource) CurrentPlugin.getPlugin().plugin()).placeholderEngine(s);
+    }
+
+    @Override
+    public @NotNull TaskScheduler scheduler(final String s) {
+        return ((APISource) CurrentPlugin.getPlugin().plugin()).scheduler(s);
+    }
+
+    @Override
+    public @NotNull Path workingDirectory() {
+        return ((APISource) CurrentPlugin.getPlugin().plugin()).workingDirectory().resolve("mods").resolve(name);
+    }
+
+    @Override
+    public @NotNull Path navigate(String s, String... strings) {
+        Path initial = workingDirectory();
+        for (String str : strings) initial = initial.resolve(str);
+
+        return initial.resolve(s);
+    }
+
+    @Override
+    public @Nullable NamedStream findResource(final String s) {
+        JarFile jarHandle = null;
+        NamedStream stream = null;
+        try {
+            Class<? extends Module> clazz = getClass();
+            ProtectionDomain domain = clazz.getProtectionDomain();
+            if (domain == null) return null;
+
+            CodeSource source = domain.getCodeSource();
+            if (source == null) return null;
+
+            URL location = source.getLocation();
+            if (location == null) return null;
+
+            String filePath = location.getFile().replaceAll("%20", " ");
+            File file = new File(filePath);
+
+            jarHandle = new JarFile(file);
+
+            JarEntry entry = jarHandle.getJarEntry(s);
+            if (entry == null || entry.isDirectory()) return null;
+
+            InputStream streamHandle = jarHandle.getInputStream(entry);
+            stream = NamedStream.newStream(entry.getName(), StreamUtils.clone(streamHandle, true));
+        } catch (IOException ex) {
+            ExceptionCollector.catchException(KarmaSource.class, ex);
+        } finally {
+            if (jarHandle != null) {
+                try {
+                    jarHandle.close();
+                } catch (IOException ignored) {}
+            }
+        }
+
+        return stream;
+    }
+
+    @Override
+    public @NotNull NamedStream[] findResources(final String s, @Nullable StringFilter stringFilter) {
+        JarFile jarHandle = null;
+        List<NamedStream> handles = new ArrayList<>();
+        try {
+            Class<? extends Module> clazz = getClass();
+            ProtectionDomain domain = clazz.getProtectionDomain();
+            if (domain == null) return null;
+
+            CodeSource source = domain.getCodeSource();
+            if (source == null) return null;
+
+            URL location = source.getLocation();
+            if (location == null) return null;
+
+            String filePath = location.getFile().replaceAll("%20", " ");
+            File file = new File(filePath);
+
+            jarHandle = new JarFile(file);
+            Enumeration<JarEntry> entries = jarHandle.entries();
+
+            do {
+                JarEntry entry = entries.nextElement();
+                if (entry.isDirectory()) continue;
+
+                String name = entry.getName();
+                if (stringFilter == null || stringFilter.accept(name)) {
+                    try (InputStream stream = jarHandle.getInputStream(entry)) {
+                        handles.add(NamedStream.newStream(name, stream));
+                    }
+                }
+            } while (entries.hasMoreElements());
+        } catch (IOException ex) {
+            ExceptionCollector.catchException(KarmaSource.class, ex);
+        } finally {
+            if (jarHandle != null) {
+                try {
+                    jarHandle.close();
+                } catch (IOException ignored) {}
+            }
+        }
+
+        return handles.toArray(new NamedStream[0]);
+    }
+
+    @Override
+    public boolean export(final String s, final Path path) {
+        try (NamedStream single = findResource(s)) {
+            if (single != null) {
+                return tryExport(single, path);
+            }
+        } catch (IOException ex) {
+            ExceptionCollector.catchException(KarmaSource.class, ex);
+        }
+
+        NamedStream[] streams = findResources(s, null);
+        if (streams.length == 0) return false; //We export nothing
+
+        int success = 0;
+        for (NamedStream stream : streams) {
+            try {
+                if (tryExport(stream, path)) {
+                    success++;
+                }
+            } finally {
+                try {
+                    stream.close();
+                } catch (IOException ignored) {}
+            }
+        }
+
+        return success == streams.length;
+    }
+
+    @Override
+    public SourceLogger logger() {
+        return LogManager.getLogger(this);
+    }
+
+    @Override
+    public @Nullable CoreModule getModule(String s) {
+        return null;
+    }
+
+    @Override
+    public boolean registerModule(CoreModule coreModule) {
+        return false;
+    }
+
+    @Override
+    public void loadIdentifier(String s) {
+
+    }
+
+    @Override
+    public void saveIdentifier(String s) {
+
+    }
+
+    private boolean tryExport(final NamedStream stream, final Path directory) {
+        String name = stream.getName();
+        Path targetFile = directory;
+        if (name.contains("/")) {
+            String[] data = name.split("/");
+            for (String dir : data) {
+                //Are we the start route?
+                if (!ObjectUtils.isNullOrEmpty(dir)) {
+                    targetFile = targetFile.resolve(dir);
+                }
+            }
+        } else {
+            targetFile = targetFile.resolve(name);
+        }
+
+        String raw = StreamUtils.streamToString(stream);
+        return PathUtilities.write(targetFile, raw);
     }
 
     /**

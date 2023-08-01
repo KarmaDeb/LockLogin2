@@ -13,6 +13,7 @@ import es.karmadev.api.web.minecraft.UUIDType;
 import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
+import es.karmadev.locklogin.api.event.entity.client.EntityPreConnectEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntitySessionCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
@@ -37,6 +38,7 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.util.PlayerPool;
@@ -55,6 +57,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,7 +69,9 @@ public class JoinHandler implements Listener {
     private final Configuration configuration = plugin.configuration();
     private final Messages messages = plugin.messages();
 
-    private final Map<UUID, UUID> uuid_translator = new ConcurrentHashMap<>();
+    private final Set<UUID> passedProcess = ConcurrentHashMap.newKeySet();
+    private final ConcurrentMap<UUID, UUID> uuidTranslator = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, CLocalClient> networkClients = new ConcurrentHashMap<>();
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -110,6 +115,8 @@ public class JoinHandler implements Listener {
                 EntityCreatedEvent event = new EntityCreatedEvent(offline);
                 plugin.moduleManager().fireEvent(event);
             }
+
+            networkClients.put(offline_uid, offline);
 
             UserSession session = offline.session();
             if (session == null) {
@@ -295,7 +302,14 @@ public class JoinHandler implements Listener {
                     }
                 }
 
-                if (online_uid != null && !online_uid.equals(offline_uid)) uuid_translator.put(online_uid, offline_uid);
+                if (online_uid != null && !online_uid.equals(offline_uid)) uuidTranslator.put(online_uid, offline_uid);
+
+                EntityPreConnectEvent event = new EntityPreConnectEvent(offline);
+                plugin.moduleManager().fireEvent(event);
+
+                if (event.isCancelled()) {
+                    playerKickPool.add(use_uid, event.cancelReason());
+                }
             }
         });
         e.allow();
@@ -316,12 +330,24 @@ public class JoinHandler implements Listener {
 
         plugin.plugin().scheduler("async").schedule(() -> {
             UUID id = player.getUniqueId();
-            if (uuid_translator.containsKey(id)) {
-                id = uuid_translator.getOrDefault(id, null);
+            if (uuidTranslator.containsKey(id)) {
+                id = uuidTranslator.getOrDefault(id, null);
                 if (id == null) id = player.getUniqueId();
             }
 
             CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
+            if (offline == null) {
+                offline = networkClients.remove(id);
+            }
+
+            if (offline == null) {
+                UUID offline_uid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + player.getName()).getBytes());
+
+                offline = (CLocalClient) plugin.getUserFactory(false).create(player.getName(), offline_uid);
+                EntityCreatedEvent event = new EntityCreatedEvent(offline);
+                plugin.moduleManager().fireEvent(event);
+            }
+
             COnlineClient online = new COnlineClient(offline.id(), plugin.driver(), null)
                     .onMessageRequest((msg) -> {
                         if (!player.isOnline()) return;
@@ -376,11 +402,15 @@ public class JoinHandler implements Listener {
                         return player.hasPermission(permission);
                     });
 
+            online.session().append(CSessionField.newField(boolean.class, "logged", false));
+
             CPluginNetwork network = (CPluginNetwork) plugin.network();
             network.appendClient(online);
 
+            networkClients.remove(id);
             //MovementConfiguration movement = configuration.movement();
 
+            passedProcess.remove(online.uniqueId());
             SpigotTask task = plugin.plugin().scheduler("async").schedule(() -> {
                 player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
                 /*if (!movement.allow() && movement.method().equals(MovementConfiguration.MovementMethod.SPEED)) {
@@ -428,25 +458,63 @@ public class JoinHandler implements Listener {
     }
 
     private void startAuthProcess(final NetworkClient client, final AuthProcess previous) {
-        ProcessFactory factory = plugin.getAuthProcessFactory();
-        UserAuthProcess process = factory.getNextProcess(client).orElse(null);
-        if (process == null && previous == null) {
+        ProcessFactory factory = plugin.getProcessFactory();
+        UserAuthProcess process = factory.nextProcess(client).orElse(null);
+        if (process == null && !passedProcess.contains(client.uniqueId())) {
             plugin.err("Your LockLogin instance is not using any auth process. This is a security risk!");
             return;
         }
+        if (process == null) {
+            boolean log = true;
+            if (previous != null) log = previous.wasSuccess();
 
-        if (process == null) return;
+            //Final auth step
+            if (log) {
+                client.session().login(true);
+                client.session()._2faLogin(true);
+                client.session().pinLogin(true);
+            } else {
+                client.kick("&cInvalid session status");
+            }
+
+            return;
+        }
+
         if (previous != null && !previous.wasSuccess()) {
             return;
         }
 
-        process.process(null).whenComplete((authProcess, error) -> {
-            if (error != null) {
-                client.kick("&cAn error occurred while processing your session");
-                return;
-            }
+        boolean allow = false;
+        switch (process.getAuthType()) {
+            case ANY:
+                allow = true;
+                break;
+            case LOGIN:
+                allow = client.account().isRegistered();
+                break;
+            case REGISTER:
+                allow = !client.account().isRegistered();
+                break;
+        }
 
-            startAuthProcess(client, authProcess); //Go to the next auth process
-        });
+        if (allow) {
+            Bukkit.getServer().getScheduler().runTask(plugin.plugin(), () -> {
+                if (process.isEnabled()) {
+                    passedProcess.add(client.uniqueId());
+                    process.process(previous).whenComplete((authProcess, error) -> {
+                        if (error != null) {
+                            client.kick("&cAn error occurred while processing your session");
+                            return;
+                        }
+
+                        startAuthProcess(client, authProcess); //Go to the next auth process
+                    });
+                } else {
+                    startAuthProcess(client, previous);
+                }
+            });
+        } else {
+            startAuthProcess(client, previous); //Go directly to the next process
+        }
     }
 }

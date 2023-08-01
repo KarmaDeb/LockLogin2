@@ -3,7 +3,7 @@ package es.karmadev.locklogin.api.event.entity.client;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.entity.EntityEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
-import es.karmadev.locklogin.api.extension.Module;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import lombok.Getter;

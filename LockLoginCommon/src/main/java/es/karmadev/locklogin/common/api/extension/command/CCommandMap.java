@@ -2,9 +2,9 @@ package es.karmadev.locklogin.common.api.extension.command;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.extension.Module;
-import es.karmadev.locklogin.api.extension.command.CommandRegistrar;
-import es.karmadev.locklogin.api.extension.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 

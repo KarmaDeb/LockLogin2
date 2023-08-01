@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.api.extension.command;
+package es.karmadev.locklogin.api.extension.module.command;
 
 /**
  * Command registrar
