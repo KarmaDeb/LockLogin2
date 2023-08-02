@@ -33,6 +33,8 @@ public class QuitHandler implements Listener {
             storage.assign(player.getLocation());
 
             ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
+
+            plugin.getInjector().release(client);
         }
     }
 }

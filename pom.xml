@@ -12,6 +12,7 @@
         <module>LockLoginAPI</module>
         <module>LockLoginCommon</module>
         <module>LockLoginSpigot</module>
+        <module>LockLoginBungee</module>
     </modules>
 
     <name>LockLogin</name>
@@ -255,6 +256,11 @@
             <id>Sparky</id>
             <url>https://nexus.sparky.ac/repository/Sparky/</url>
         </repository>
+
+        <repository>
+            <id>exceptionflug</id>
+            <url>https://mvn.exceptionflug.de/repository/exceptionflug-public/</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
@@ -263,20 +269,20 @@
             <dependency>
                 <groupId>org.spigotmc</groupId>
                 <artifactId>spigot-api</artifactId>
-                <version>1.19.3-R0.1-SNAPSHOT</version>
+                <version>1.20.1-R0.1-SNAPSHOT</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>net.md-5</groupId>
                 <artifactId>bungeecord-api</artifactId>
-                <version>1.19-R0.1-SNAPSHOT</version>
+                <version>1.20-R0.1-SNAPSHOT</version>
                 <type>jar</type>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>net.md-5</groupId>
                 <artifactId>bungeecord-api</artifactId>
-                <version>1.19-R0.1-SNAPSHOT</version>
+                <version>1.20-R0.1-SNAPSHOT</version>
                 <type>javadoc</type>
                 <scope>provided</scope>
             </dependency>
@@ -485,6 +491,13 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport</artifactId>
                 <version>4.1.93.Final</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.simplix</groupId>
+                <artifactId>protocolize-api</artifactId>
+                <version>2.3.0</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

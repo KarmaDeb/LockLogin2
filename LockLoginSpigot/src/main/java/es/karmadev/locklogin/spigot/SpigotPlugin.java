@@ -37,6 +37,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -250,6 +252,12 @@ public class SpigotPlugin extends KarmaPlugin {
             }
 
             logger().log(LogLevel.DEBUG, "LockLogin initialized with {0} services", spigot.service_provider.size());
+            /*spigot.plugin().getServer().getMessenger().registerIncomingPluginChannel(spigot.plugin(), "test:test", new PluginMessageListener() {
+                @Override
+                public void onPluginMessageReceived(@NotNull String s, @NotNull Player player, @NotNull byte[] bytes) {
+
+                }
+            });*/
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
         }

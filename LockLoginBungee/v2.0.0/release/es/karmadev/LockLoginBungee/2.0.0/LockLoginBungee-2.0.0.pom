@@ -9,7 +9,7 @@
         <version>2.0.0</version>
     </parent>
 
-    <artifactId>LockLoginSpigot</artifactId>
+    <artifactId>LockLoginBungee</artifactId>
 
     <properties>
         <jar.name>LockLogin</jar.name>
@@ -30,9 +30,16 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-proxy</artifactId>
+            <version>1.20-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Spigot</artifactId>
@@ -55,39 +62,6 @@
             <groupId>es.karmadev</groupId>
             <artifactId>LockLoginCommon</artifactId>
             <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.comphenix.protocol</groupId>
-            <artifactId>ProtocolLib</artifactId>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>org.inventivetalent.packetlistenerapi</groupId>
-            <artifactId>api</artifactId>
-        </dependency>
-        -->
-        <dependency>
-            <groupId>com.github.games647</groupId>
-            <artifactId>craftapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.MilkBowl</groupId>
-            <artifactId>VaultAPI</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport</artifactId>
         </dependency>
     </dependencies>
 </project>

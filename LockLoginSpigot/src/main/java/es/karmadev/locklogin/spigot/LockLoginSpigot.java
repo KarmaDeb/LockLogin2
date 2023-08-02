@@ -43,7 +43,6 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
-import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
@@ -63,7 +62,9 @@ import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
 import es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker;
+import lombok.Getter;
 import ml.karmaconfigs.api.common.karma.file.KarmaMain;
 import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
 import ml.karmaconfigs.api.common.karma.file.element.types.Element;
@@ -112,6 +113,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
 
     private final Instant startup = Instant.now();
+    @Getter
+    private final ClientInjector injector;
 
     public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) throws RuntimeException {
         this.plugin = plugin;
@@ -163,6 +166,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         SpigotPinProcess.setStatus(configuration.enablePin());
 
         moduleMaker = new SpigotModuleMaker();
+        injector = new ClientInjector();
     }
 
     void installDriver() {
