@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>es.karmadev</groupId>
+        <artifactId>LockLogin</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>LockLoginBungee</artifactId>
+
+    <properties>
+        <jar.name>LockLogin</jar.name>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.md-5</groupId>
+            <artifactId>bungeecord-proxy</artifactId>
+            <version>1.20-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Spigot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Minecraft</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>LockLoginAPI</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>LockLoginCommon</artifactId>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>
