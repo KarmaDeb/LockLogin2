@@ -5,6 +5,7 @@ import es.karmadev.api.shaded.google.gson.JsonElement;
 import es.karmadev.api.shaded.google.gson.JsonObject;
 import es.karmadev.api.shaded.google.gson.JsonPrimitive;
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,16 @@ public class JsonDependency implements LockLoginDependency {
     private final Checksum generated_checksum = new Checksum(this);
 
     private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    /**
+     * Get the dependency type
+     *
+     * @return the type
+     */
+    @Override
+    public DependencyType type() {
+        return DependencyType.valueOf(object.get("type").getAsString().toUpperCase());
+    }
 
     /**
      * Get the dependency id
@@ -76,9 +87,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public Path file() {
-        boolean plugin = object.get("plugin").getAsBoolean();
-        if (plugin) return null; //A plugin file name is not always the same
-
+        if (!type().equals(DependencyType.SINGLE)) return null;
         return CurrentPlugin.getPlugin().workingDirectory().resolve("dependencies").resolve(object.get("file").getAsString());
     }
 
@@ -109,8 +118,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public URL downloadURL() {
-        boolean plugin = object.get("plugin").getAsBoolean();
-        if (plugin) return null; //A plugin cannot be downloaded and injected, it must be loaded by the server itself
+        if (type().equals(DependencyType.PLUGIN)) return null;
 
         JsonArray urls = object.get("download").getAsJsonArray();
         if (urls.isEmpty()) return null; //No need to iterate over nothing
@@ -134,9 +142,11 @@ public class JsonDependency implements LockLoginDependency {
      * Get if the dependency is a plugin
      *
      * @return if the dependency is a plugin
+     * @deprecated See {@link LockLoginDependency#type()}
      */
     @Override
+    @Deprecated
     public boolean isPlugin() {
-        return object.get("plugin").getAsBoolean();
+        return type().equals(DependencyType.PLUGIN);
     }
 }

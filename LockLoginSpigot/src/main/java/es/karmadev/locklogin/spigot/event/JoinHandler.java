@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.event;
 
-import es.karmadev.api.core.scheduler.SpigotTask;
+import es.karmadev.api.spigot.core.scheduler.SpigotTask;
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.object.ObjectUtils;
@@ -14,7 +14,6 @@ import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityPreConnectEvent;
-import es.karmadev.locklogin.api.event.entity.client.EntitySessionCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -33,16 +32,15 @@ import es.karmadev.locklogin.api.user.auth.ProcessFactory;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
-import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
+import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
-import es.karmadev.locklogin.spigot.protocol.injector.Injection;
 import es.karmadev.locklogin.spigot.util.PlayerPool;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.Bukkit;
@@ -122,17 +120,19 @@ public class JoinHandler implements Listener {
             networkClients.put(offline_uid, offline);
 
             UserSession session = offline.session();
-            if (session == null) {
-                SessionFactory<? extends UserSession> factory = plugin.getSessionFactory(false);
-                session = factory.create(offline);
-
+            /*if (session == null) {
                 EntitySessionCreatedEvent event = new EntitySessionCreatedEvent(offline, session);
                 plugin.moduleManager().fireEvent(event);
-            }
+            }*/
 
             session.login(false);
             session._2faLogin(false);
             session.pinLogin(false);
+
+            /*Path legacyAccountFile = plugin.workingDirectory().resolve("data").resolve("accounts").resolve(offline_uid.toString().replace("-", "") + ".lldb");
+            if (!Files.exists(legacyAccountFile)) {
+                legacyAccountFile = plugin.workingDirectory().resolve("data").resolve("accounts").resolve(online_uid.toString().replace("-", "") + ".lldb");
+            }*/
 
             if (!session.isCaptchaLogged()) {
                 CaptchaConfiguration settings = configuration.captcha();
@@ -340,7 +340,7 @@ public class JoinHandler implements Listener {
             plugin.moduleManager().fireEvent(event);
         }
 
-        COnlineClient online = new COnlineClient(offline.id(), plugin.driver(), null)
+        COnlineClient online = ((COnlineClient) offline.client())
                 .onMessageRequest((msg) -> {
                     if (!player.isOnline()) return;
                     player.sendMessage(ColorComponent.parse(msg)
@@ -395,10 +395,6 @@ public class JoinHandler implements Listener {
                 });
 
         online.session().append(CSessionField.newField(boolean.class, "logged", false));
-
-        CPluginNetwork network = (CPluginNetwork) plugin.network();
-        network.appendClient(online);
-
         player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
 
         ClientInjector injector = plugin.getInjector();
@@ -455,8 +451,10 @@ public class JoinHandler implements Listener {
             client.session()._2faLogin(true);
             client.session().pinLogin(true);
 
+            System.out.println("Finishing login");
             return;
         }
+
         if (process == null) {
             boolean log = true;
             if (previous != null) log = previous.wasSuccess();
@@ -492,7 +490,13 @@ public class JoinHandler implements Listener {
 
         if (allow) {
             Bukkit.getServer().getScheduler().runTask(plugin.plugin(), () -> {
-                if (process.isEnabled()) {
+                boolean work = true;
+                if (process.name().equals(SpigotAccountProcess.getName()) ||
+                        process.name().equals(SpigotPinProcess.getName())) {
+                    work = process.isEnabled();
+                }
+
+                if (work) {
                     passedProcess.add(client.uniqueId());
                     process.process(previous).whenComplete((authProcess, error) -> {
                         if (error != null) {

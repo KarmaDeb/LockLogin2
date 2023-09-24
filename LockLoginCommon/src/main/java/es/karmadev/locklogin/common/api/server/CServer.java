@@ -3,9 +3,14 @@ package es.karmadev.locklogin.common.api.server;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.common.api.server.channel.SChannel;
 import es.karmadev.locklogin.common.util.ActionListener;
 import es.karmadev.locklogin.common.util.action.ServerEntityAction;
@@ -17,10 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +31,7 @@ import java.util.stream.Stream;
 public class CServer implements NetworkServer {
 
     private final int id;
-    private final DataDriver pool;
+    private final SQLDriver engine;
     private final SChannel channel = new SChannel();
 
     private final Set<LocalNetworkClient> offline_clients = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -75,17 +77,21 @@ public class CServer implements NetworkServer {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `name` FROM `server` WHERE `id` = " + id)) {
+            try (ResultSet result = statement.executeQuery(
+                    QueryBuilder.createQuery()
+                            .select(Table.SERVER, Row.NAME)
+                            .where(Row.ID, QueryBuilder.EQUALS, id).build()
+            )) {
                 if (result.next()) {
-                    return result.getString("name");
+                    return result.getString(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -101,12 +107,14 @@ public class CServer implements NetworkServer {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `address`,`port` FROM `server` WHERE `id` = " + id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SERVER, Row.ADDRESS, Row.PORT)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
                 if (result.next()) {
-                    String address = result.getString("address");
-                    int port = result.getInt("port");
+                    String address = result.getString(1);
+                    int port = result.getInt(2);
                     if (!result.wasNull()) {
                         if (address == null) address = "127.0.0.1";
                         return InetSocketAddress.createUnresolved(address, port);
@@ -116,7 +124,7 @@ public class CServer implements NetworkServer {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
@@ -132,18 +140,20 @@ public class CServer implements NetworkServer {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `created_at` FROM `server` WHERE `id` = " + id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SERVER, Row.CREATED_AT)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
                 if (result.next()) {
-                    long millis = result.getLong("created_at");
+                    long millis = result.getLong(1);
                     return Instant.ofEpochMilli(millis);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return Instant.now();
@@ -180,14 +190,16 @@ public class CServer implements NetworkServer {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            statement.executeUpdate("UPDATE `server` SET `name` = '" + name + "' WHERE `id` = " + id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SERVER).set(Row.NAME, name)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -201,15 +213,18 @@ public class CServer implements NetworkServer {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            statement.executeUpdate("UPDATE `server` SET `address` = '" + address.getHostString() + "' WHERE `id` = " + id);
-            statement.executeUpdate("UPDATE `server` SET `port` = " + address.getPort() + " WHERE `id` = " + id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SERVER)
+                    .set(Row.ADDRESS, address.getHostString())
+                    .set(Row.PORT, address.getPort())
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection ,statement);
+            engine.close(connection ,statement);
         }
     }
 
@@ -236,17 +251,6 @@ public class CServer implements NetworkServer {
     }
 
     /**
-     * Get all the online clients that
-     * are connected in this server
-     *
-     * @return all the connected clients
-     */
-    @Override
-    public Collection<NetworkClient> onlineClients() {
-        return null;
-    }
-
-    /**
      * Get the server packet queue
      *
      * @return the server packet queue
@@ -254,6 +258,26 @@ public class CServer implements NetworkServer {
     @Override
     public NetworkChannel channel() {
         return channel;
+    }
+
+    /**
+     * When a packet is received
+     *
+     * @param packet the packet
+     */
+    @Override
+    public void onReceive(IncomingPacket packet) {
+
+    }
+
+    /**
+     * When a packet is sent
+     *
+     * @param packet the packet to send
+     */
+    @Override
+    public void onSend(OutgoingPacket packet) {
+
     }
 
     /**

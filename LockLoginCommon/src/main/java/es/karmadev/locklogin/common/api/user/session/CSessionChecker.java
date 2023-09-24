@@ -12,8 +12,6 @@ import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
-import es.karmadev.locklogin.common.api.user.storage.session.CSession;
-import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +24,7 @@ public class CSessionChecker implements SessionChecker {
     private final List<Consumer<Boolean>> endListeners = new ArrayList<>();
     private final NetworkClient client;
 
-    private TaskRunner runner;
+    private TaskRunner<Long> runner;
     private boolean running = false;
     private boolean cancelled = false;
 
@@ -119,16 +117,15 @@ public class CSessionChecker implements SessionChecker {
             UserAccount account = client.account();
             UserSession session = client.session();
             boolean registered = account.isRegistered();
+            SessionField<?> legacyUser = session.fetch("legacy");
+            if (legacyUser != null) registered = true;
 
             int authTime = (registered ? configuration.login().timeout() : configuration.register().timeout());
+
+            boolean isRegistered = registered;
             runner = new AsyncTaskExecutor(authTime, TimeUnit.SECONDS);
             runner.on(TaskEvent.TICK, (time) -> {
                 long timeLeft = runner.timeLeft(TimeUnit.SECONDS);
-
-                if (session == null) {
-                    runner.stop();
-                    return;
-                }
 
                 SessionField<Boolean> field = session.fetch("logged");
                 if (field.get()) {
@@ -137,8 +134,22 @@ public class CSessionChecker implements SessionChecker {
                     return;
                 }
 
+                boolean updatedRegistered = account.isRegistered();
+                SessionField<?> updatedLegacy = session.fetch("legacy");
+                if (updatedLegacy != null) updatedRegistered = true;
+
+                if (updatedRegistered != isRegistered) {
+                    int updatedAuthTime = (updatedRegistered ? configuration.login().timeout() : configuration.register().timeout());
+
+                    runner.forceMaxTime((long) updatedAuthTime);
+                    if (updatedAuthTime > authTime) {
+                        runner.forceTimeLeft((long) updatedAuthTime);
+                    }
+                    //timeLeft = newTimeLeft;
+                }
+
                 String captcha = session.captcha();
-                if (account.isRegistered()) {
+                if (updatedRegistered) {
                     client.sendTitle(messages.loginTitle(captcha, timeLeft), messages.loginSubtitle(captcha, timeLeft), 0, 3, 0);
                 } else {
                     client.sendTitle(messages.registerTitle(captcha, timeLeft), messages.registerSubtitle(captcha, timeLeft), 0, 3, 0);

@@ -1,12 +1,12 @@
 package es.karmadev.locklogin.common.api.user.storage.account;
 
-import es.karmadev.api.core.ExceptionCollector;
-import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -14,146 +14,98 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.common.api.protection.CHash;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 public class CAccount implements UserAccount {
 
     private final int id;
     private final int account_id;
-    private final DataDriver pool;
+    private final SQLDriver engine;
 
     /**
      * Initialize the account
      *
      * @param user_id the client id
      * @param account_id the account id
-     * @param pool the account pool
+     * @param engine the account pool
      */
-    public CAccount(final int user_id, final int account_id, final DataDriver pool) {
+    public CAccount(final int user_id, final int account_id, final SQLDriver engine) {
         this.id = user_id;
         this.account_id = account_id;
-        this.pool = pool;
+        this.engine = engine;
     }
 
     public void writeHashField(final AccountField field, final HashResult result) {
-        String target = null;
-        String table = null;
-        int use_id = -1;
-        if (field.equals(AccountField.PASSWORD) || field.equals(AccountField.PIN) || field.equals(AccountField.PANIC)) {
-            table = "user";
-            use_id = account_id;
+        if (!field.isType(HashResult.class)) return;
 
-            switch (field) {
-                case PASSWORD:
-                    target = "password";
-                    break;
-                case PIN:
-                    target = "pin";
-                    break;
-                case PANIC:
-                    target = "panic";
-                    break;
-            }
-        }
+        String hash_value = result.serialize();
+        QueryBuilder builder = QueryBuilder.createQuery()
+                .update(field.getTable())
+                .set(field.getRow(), hash_value)
+                .where(Row.ID, QueryBuilder.EQUALS, id);
+        
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
 
-        String hash_value = StringUtils.serialize(result);
-
-        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
-            Connection connection = null;
-            Statement statement = null;
-            try {
-                connection = pool.retrieve();
-                statement = connection.createStatement();
-
-                statement.executeUpdate("UPDATE `" + table + "` SET `" + target + "` = '" + hash_value + "' WHERE `id` = " + use_id);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            } finally {
-                pool.close(connection, statement);
-            }
+            statement.executeUpdate(builder.build());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
         }
     }
 
     public void writeBooleanValue(final AccountField field, final boolean value) {
-        String target = null;
-        String table = null;
-        int use_id = -1;
-        if (field.equals(AccountField.USERNAME) || field.equals(AccountField.UNIQUEID)) {
-            table = "user";
-            use_id = account_id;
+        if (!field.isType(Boolean.class)) return;
 
-            switch (field) {
-                case USERNAME:
-                    target = "name";
-                    break;
-                case UNIQUEID:
-                    target = "uuid";
-                    break;
-            }
-        }
-        if (field.equals(AccountField.TOKEN_2FA)) {
-            table = "account";
-            target = "2fa_token";
-        }
+        QueryBuilder builder = QueryBuilder.createQuery()
+                .update(field.getTable())
+                .set(field.getRow(), value)
+                .where(Row.ID, QueryBuilder.EQUALS, id);
 
-        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
-            Connection connection = null;
-            Statement statement = null;
-            try {
-                connection = pool.retrieve();
-                statement = connection.createStatement();
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
 
-                statement.executeUpdate("UPDATE `" + table + "` SET `" + target + "` = " + value + " WHERE `id` = " + use_id);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            } finally {
-                pool.close(connection, statement);
-            }
+            statement.executeUpdate(builder.build());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
         }
     }
 
     public void writeStringValue(final AccountField field, final String value) {
-        String target = null;
-        String table = null;
-        int use_id = -1;
-        if (field.equals(AccountField.USERNAME) || field.equals(AccountField.UNIQUEID)) {
-            table = "user";
-            use_id = account_id;
+        if (!field.isType(String.class)) return;
 
-            switch (field) {
-                case USERNAME:
-                    target = "name";
-                    break;
-                case UNIQUEID:
-                    target = "uuid";
-                    break;
-            }
-        }
-        if (field.equals(AccountField.TOKEN_2FA)) {
-            table = "account";
-            target = "2fa_token";
-        }
+        QueryBuilder builder = QueryBuilder.createQuery()
+                .update(field.getTable())
+                .set(field.getRow(), value)
+                .where(Row.ID, QueryBuilder.EQUALS, id);
 
-        if (!ObjectUtils.areNullOrEmpty(false, field, table) && use_id > -1) {
-            Connection connection = null;
-            Statement statement = null;
-            try {
-                connection = pool.retrieve();
-                statement = connection.createStatement();
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
 
-                statement.executeUpdate("UPDATE `" + table + "` SET `" + target + "` = '" + value + "' WHERE `id` = " + use_id);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            } finally {
-                pool.close(connection, statement);
-            }
+            statement.executeUpdate(builder.build());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
         }
     }
 
@@ -202,17 +154,19 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `name` FROM `user` WHERE `id` = " + id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.NAME)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
                 if (result.next()) {
-                    return result.getString("name");
+                    return result.getString(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -228,13 +182,16 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `user` SET `name` = '" + name + "' WHERE `id` = " + id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.USER)
+                    .set(Row.NAME, name)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -245,6 +202,24 @@ public class CAccount implements UserAccount {
      */
     @Override
     public String email() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.EMAIL)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                if (result.next()) {
+                    return result.getString(1);
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
+        }
+
         return null;
     }
 
@@ -255,7 +230,20 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void updateEmail(final String email) {
-
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.USER)
+                    .set(Row.EMAIL, email)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
+        }
     }
 
     /**
@@ -268,17 +256,19 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `uuid` FROM `user` WHERE `id` = " + id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.UUID)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
                 if (result.next()) {
-                    return UUID.fromString(result.getString("uuid"));
+                    return UUID.fromString(result.getString(1));
                 }
             }
         } catch (SQLException | IllegalArgumentException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -294,13 +284,16 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `user` SET `uuid` = '" + uuid.toString() + "' WHERE `id` = " + id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.USER)
+                    .set(Row.UUID, uuid)
+                    .where(Row.ID, QueryBuilder.EQUALS, id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -314,18 +307,20 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `password` FROM `account` WHERE `id` = " + account_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.PASSWORD)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
-                    String password = result.getString("password");
-                    return StringUtils.loadAndCast(password);
+                    String password = result.getString(1);
+                    return CHash.fromString(password, id);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -344,18 +339,21 @@ public class CAccount implements UserAccount {
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(password);
-        String result = StringUtils.serialize(rs);
+        String result = rs.serialize();
 
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `account` SET `password` = '" + result + "' WHERE `id` = " + account_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.ACCOUNT)
+                    .set(Row.PASSWORD, result)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -369,18 +367,20 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `pin` FROM `account` WHERE `id` = " + account_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.PIN)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
-                    String pin = result.getString("pin");
-                    return StringUtils.loadAndCast(pin);
+                    String pin = result.getString(1);
+                    return CHash.fromString(pin, id);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -399,18 +399,21 @@ public class CAccount implements UserAccount {
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(pin);
-        String result = StringUtils.serialize(rs);
+        String result = rs.serialize();
 
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `account` SET `pin` = '" + result + "' WHERE `id` = " + account_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.ACCOUNT)
+                    .set(Row.PIN, result)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -424,17 +427,19 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `2fa_token` FROM `account` WHERE `id` = " + account_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.TOKEN_2FA)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
-                    return result.getString("2fa_token");
+                    return result.getString(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -450,13 +455,16 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `account` SET `2fa_token` = '" + token + "' WHERE `id` = " + account_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.ACCOUNT)
+                    .set(Row.TOKEN_2FA, token)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -470,18 +478,21 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `panic` FROM `account` WHERE `id` = " + account_id)) {
-                if (result.next()) {
-                    String panic = result.getString("panic");
-                    return StringUtils.loadAndCast(panic);
+            try (ResultSet rs = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.PANIC)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+
+                if (rs.next()) {
+                    String panic = rs.getString(1);
+                    return CHash.fromString(panic, id);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -500,18 +511,21 @@ public class CAccount implements UserAccount {
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(token);
-        String result = StringUtils.serialize(rs);
+        String result = rs.serialize();
 
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `account` SET `panic` = '" + result + "' WHERE `id` = " + account_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.ACCOUNT)
+                    .set(Row.PANIC, result)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -525,13 +539,16 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `account` SET `2fa` = " + status + " WHERE `id` = " + account_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.ACCOUNT)
+                    .set(Row.STATUS_2FA, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -545,17 +562,19 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `2fa` FROM `account` WHERE `id` = " + account_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.STATUS_2FA)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("2fa");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -571,18 +590,20 @@ public class CAccount implements UserAccount {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `created_at` FROM `account` WHERE `id` = " + account_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.ACCOUNT, Row.CREATED_AT)
+                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
-                    long millis = result.getLong("created_at");
+                    long millis = result.getLong(1);
                     return Instant.ofEpochMilli(millis);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return Instant.now();

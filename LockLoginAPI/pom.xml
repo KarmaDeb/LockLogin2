@@ -12,6 +12,9 @@
     <artifactId>LockLoginAPI</artifactId>
 
     <dependencies>
+        <!--
+        API interfaces shouldn't need to use those
+
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
@@ -23,12 +26,9 @@
 
         <dependency>
             <groupId>es.karmadev</groupId>
-            <artifactId>KarmaAPI-Core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Spigot</artifactId>
         </dependency>
+        -->
 
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -37,6 +37,25 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>me.lucko</groupId>
+            <artifactId>jar-relocator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
     </dependencies>
 </project>

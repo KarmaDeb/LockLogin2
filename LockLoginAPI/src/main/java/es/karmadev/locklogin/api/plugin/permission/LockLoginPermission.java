@@ -2,6 +2,7 @@ package es.karmadev.locklogin.api.plugin.permission;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
@@ -306,7 +307,7 @@ public final class LockLoginPermission {
         PermissionObject permission = official_node_map.getOrDefault(node, null);
         if (permission == null) {
             ModulePermission modPermission = module_node_map.getOrDefault(node, null);
-            if (modPermission != null && modPermission.getModule().isLoaded()) {
+            if (modPermission != null && modPermission.getModule().isEnabled()) {
                 return modPermission.getPermission();
             }
         }
@@ -332,8 +333,8 @@ public final class LockLoginPermission {
             Path caller = plugin.getRuntime().caller();
             if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
 
-            Module module = plugin.moduleManager().loader().load(caller);
-            if (module == null || !module.isLoaded()) throw new SecurityException("Cannot maintain a secure permission policy with an invalid API iterator");
+            Module module = plugin.moduleManager().loader().getModule(caller);
+            if (module == null || !module.isEnabled()) throw new SecurityException("Cannot maintain a secure permission policy with an invalid API iterator");
 
             module_node_map.put(permission.node(), new ModulePermission(module, permission.addParent(LOCKLOGIN.addChildren(permission))));
             return true;
@@ -357,8 +358,8 @@ public final class LockLoginPermission {
         Path caller = plugin.getRuntime().caller();
         if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
 
-        Module module = plugin.moduleManager().loader().load(caller);
-        if (module == null || !module.isLoaded()) throw new SecurityException("Cannot maintain a secure permission policty with an invalid API iterator");
+        Module module = plugin.moduleManager().loader().getModule(caller);
+        if (module == null || !module.isEnabled()) throw new SecurityException("Cannot maintain a secure permission policty with an invalid API iterator");
 
         ModulePermission modPermission = module_node_map.getOrDefault(permission.node(), null);
         if (modPermission != null) {
@@ -372,11 +373,10 @@ public final class LockLoginPermission {
     }
 }
 
+@Getter
 @AllArgsConstructor
 class ModulePermission {
 
-    @Getter
     private final Module module;
-    @Getter
     private final PermissionObject permission;
 }

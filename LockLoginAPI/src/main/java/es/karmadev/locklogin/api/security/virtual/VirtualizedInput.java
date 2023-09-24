@@ -1,11 +1,9 @@
 package es.karmadev.locklogin.api.security.virtual;
 
-import java.io.Serializable;
-
 /**
  * Virtualized input
  */
-public interface VirtualizedInput extends Serializable {
+public interface VirtualizedInput {
 
     /**
      * Get the virtualization references

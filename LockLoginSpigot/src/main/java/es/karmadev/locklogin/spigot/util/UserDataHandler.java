@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.util;
 
-import es.karmadev.api.core.KarmaPlugin;
+import es.karmadev.api.spigot.core.KarmaPlugin;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;

@@ -17,13 +17,15 @@ import es.karmadev.locklogin.api.security.check.PasswordValidator;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
+import es.karmadev.locklogin.common.api.user.storage.session.CSession;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
+import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -31,24 +33,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class RegisterCommand implements CommandExecutor {
+@PluginCommand(command = "register")
+public class RegisterCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
 
+    public RegisterCommand(final String cmd) {
+        super(cmd);
+    }
+
     /**
-     * Executes the given command, returning its success.
-     * <br>
-     * If false is returned, then the "usage" plugin.yml entry for this command
-     * (if defined) will be sent to the player.
+     * Executes the command, returning its success
      *
-     * @param sender  Source of the command
-     * @param command Command which was executed
-     * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
-     * @return true if a valid command, otherwise false
+     * @param sender       Source object which is executing this command
+     * @param label        The alias of the command used
+     * @param args         All arguments passed to the command, split via ' '
+     * @return true if the command was successful, otherwise false
      */
     @Override
-    public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, @NotNull String[] args) {
+    public boolean execute(final @NotNull CommandSender sender, final @NotNull String label, @NotNull String[] args) {
         if (args.length > 0) {
             String last_argument = args[args.length - 1];
             try {
@@ -78,10 +81,13 @@ public class RegisterCommand implements CommandExecutor {
                 UserSession session = client.session();
 
                 if (account.isRegistered()) {
-                    if (session.isLogged()) {
+                    if (session.fetch("logged", false)) {
                         client.sendMessage(messages.prefix() + messages.alreadyRegistered());
-                        return false;
+                    } else {
+                        client.sendMessage(messages.prefix() + messages.login(session.captcha()));
                     }
+
+                    return false;
                 } else {
                     String captcha = session.captcha();
                     if (captcha == null) captcha = "";

@@ -9,6 +9,7 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.EncryptionConfiguration;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
+import es.karmadev.locklogin.api.security.hash.LegacyPluginHash;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
@@ -17,7 +18,7 @@ import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
 
 import java.nio.charset.StandardCharsets;
 
-public class SHA256Hash extends PluginHash {
+public class SHA256Hash extends PluginHash implements LegacyPluginHash {
 
     /**
      * Get the hashing name
@@ -34,7 +35,7 @@ public class SHA256Hash extends PluginHash {
         return "$SHA256$" + randomSalt + "$" + Hashing.sha256().hashString(password, StandardCharsets.UTF_8);
     }
 
-    private boolean auth(final String password, final String token) {
+    public boolean auth(final String password, final String token) {
         try {
             String[] data = token.split("\\$");
             String salt = data[2];
@@ -88,7 +89,7 @@ public class SHA256Hash extends PluginHash {
             VirtualID id = hasher.virtualID();
             virtualized = id.virtualize(input);
         } else {
-            virtualized = CVirtualInput.of(new int[0], false, input.getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.raw(input.getBytes(StandardCharsets.UTF_8));
         }
 
         String pwd = new String(virtualized.product(), StandardCharsets.UTF_8);

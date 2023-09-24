@@ -7,21 +7,20 @@ import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import lombok.Getter;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This event is fired when an entity session is created.
  * This doesn't mean the client has been logged in any method,
  * but his session is ready to handle it.
  */
+@Getter
 @SuppressWarnings("unused")
 public class EntitySessionCreatedEvent extends EntityEvent {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
 
     @Nullable
-    @Getter
     private final UserSession session;
 
     /**
@@ -43,7 +42,7 @@ public class EntitySessionCreatedEvent extends EntityEvent {
      * @param session the entity session
      * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
      */
-    public EntitySessionCreatedEvent(final Module caller, final LocalNetworkClient entity, UserSession session) throws SecurityException {
+    public EntitySessionCreatedEvent(final Module caller, final LocalNetworkClient entity, @Nullable UserSession session) throws SecurityException {
         super(caller, entity);
         this.session = session;
     }

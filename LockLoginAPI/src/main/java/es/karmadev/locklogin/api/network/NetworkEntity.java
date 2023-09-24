@@ -35,7 +35,7 @@ public interface NetworkEntity {
      * Get if this entity has the specified permission
      *
      * @param permission the permission
-     * @return if the entity has the perimssion
+     * @return if the entity has the permission
      */
     boolean hasPermission(final PermissionObject permission);
 }

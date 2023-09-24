@@ -7,6 +7,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.spigot.legacy.spawn.LegacySpawn;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,6 +23,16 @@ public final class SpawnLocationStorage {
 
     private final static LockLogin plugin = CurrentPlugin.getPlugin();
     private final static JsonConnection connection = ((JsonDatabase) DatabaseManager.getEngine("json").orElse(new JsonDatabase())).grabConnection("data/locations/spawn.json");
+
+    /**
+     * Migrate from a legacy spawn
+     * location
+     *
+     * @param legacy the legacy spawn location
+     */
+    public static void migrateFrom(final LegacySpawn legacy) {
+
+    }
 
     public static void assign(final Location location) {
         World world = location.getWorld();

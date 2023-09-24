@@ -11,6 +11,13 @@ import org.jetbrains.annotations.Nullable;
 public interface IncomingPacket extends ComPacket {
 
     /**
+     * Get the packet data
+     *
+     * @return the packet data
+     */
+    byte[] getData();
+
+    /**
      * Get the message data type
      *
      * @return the message type

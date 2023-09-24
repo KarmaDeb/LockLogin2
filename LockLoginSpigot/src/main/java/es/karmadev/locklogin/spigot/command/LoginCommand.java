@@ -13,11 +13,11 @@ import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
+import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -25,24 +25,25 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public class LoginCommand implements CommandExecutor {
+@PluginCommand(command = "login")
+public class LoginCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
 
+    public LoginCommand(final String cmd) {
+        super(cmd);
+    }
+
     /**
-     * Executes the given command, returning its success.
-     * <br>
-     * If false is returned, then the "usage" plugin.yml entry for this command
-     * (if defined) will be sent to the player.
+     * Executes the command, returning its success
      *
-     * @param sender  Source of the command
-     * @param command Command which was executed
-     * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
-     * @return true if a valid command, otherwise false
+     * @param sender       Source object which is executing this command
+     * @param label        The alias of the command used
+     * @param args         All arguments passed to the command, split via ' '
+     * @return true if the command was successful, otherwise false
      */
     @Override
-    public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, @NotNull String[] args) {
+    public boolean execute(final @NotNull CommandSender sender, final @NotNull String label, @NotNull String[] args) {
         if (args.length > 0) {
             String last_argument = args[args.length - 1];
             try {
@@ -63,6 +64,11 @@ public class LoginCommand implements CommandExecutor {
                 NetworkClient client = plugin.network().getPlayer(id);
                 UserAccount account = client.account();
                 UserSession session = client.session();
+
+                if (session.fetch("logged", false)) {
+                    client.sendMessage(messages.prefix() + messages.alreadyLogged());
+                    return false;
+                }
 
                 if (account.isRegistered()) {
                     String captcha = session.captcha();
@@ -95,6 +101,7 @@ public class LoginCommand implements CommandExecutor {
                     client.sendMessage(messages.prefix() + messages.register(session.captcha()));
                 }
             } else {
+                //Unlike in LockLogin legacy v2, this invalid-session message is real, and LockLogin cannot proceed without a valid session
                 player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
@@ -110,6 +117,11 @@ public class LoginCommand implements CommandExecutor {
         Configuration configuration = plugin.configuration();
 
         if (hash.verify(inputPassword)) {
+            if (hash.hasher().isLegacy()) {
+                plugin.info("Migrated password from legacy client {0}", client.name());
+                account.setPassword(inputPassword); //Update the client password
+            }
+
             session.append(CSessionField.newField(Boolean.class, "logged", true));
 
             /*session.login(true);

@@ -5,26 +5,23 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
-import es.karmadev.locklogin.api.user.account.migration.Transictionable;
+import es.karmadev.locklogin.api.user.account.migration.Transitional;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CMigrator implements AccountMigrator<CAccount> {
 
     private final CAccountFactory factory;
-    private final DataDriver driver;
 
-    public CMigrator(final CAccountFactory factory, final DataDriver driver) {
+    public CMigrator(final CAccountFactory factory) {
         this.factory = factory;
-        this.driver = driver;
     }
 
     /**
@@ -36,14 +33,14 @@ public class CMigrator implements AccountMigrator<CAccount> {
      * @return the migrated account
      */
     @Override
-    public CAccount migrate(final LocalNetworkClient owner, final Transictionable transictionable, final AccountField... ignore) {
+    public CAccount migrate(final LocalNetworkClient owner, final Transitional transictionable, final AccountField... ignore) {
         CAccount account = (CAccount) owner.account();
         UserSession session = owner.session();
 
-        List<AccountField> fields = new ArrayList<>(Arrays.asList(AccountField.values()));
-        fields.removeAll(Arrays.asList(ignore));
+        List<AccountField> fields = Arrays.stream(AccountField.values()).filter((field) ->
+                !Arrays.asList(ignore).contains(field)).collect(Collectors.toList());
 
-        if (account == null) {
+        if (account == null || account.id() <= 0) {
             account = factory.create(owner);
         }
 
@@ -89,14 +86,14 @@ public class CMigrator implements AccountMigrator<CAccount> {
      * @return the transictionable account
      */
     @Override
-    public Transictionable export(final CAccount account) {
+    public Transitional export(final CAccount account) {
         int owner_id = account.ownerId();
         LockLogin plugin = CurrentPlugin.getPlugin();
         PluginNetwork network = plugin.network();
 
         LocalNetworkClient client = network.getEntity(owner_id);
         if (client != null) {
-            return CTransictionable.from(client);
+            return CTransitional.from(client);
         }
 
         return null;

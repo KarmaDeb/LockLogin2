@@ -5,7 +5,10 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.permission.DummyPermission;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
@@ -31,7 +34,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     private NetworkServer server;
     private NetworkServer previous = null;
 
-    public COnlineClient(final int id, final DataDriver pool, final NetworkServer current) {
+    public COnlineClient(final int id, final SQLDriver pool, final NetworkServer current) {
         super(id, pool);
         server = current;
         checker = new CSessionChecker(this);
@@ -219,18 +222,24 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     @Override
     public void setServer(final NetworkServer server) {
         previous = this.server;
+
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            statement.executeUpdate("UPDATE `user` SET `previous_server` = " + previous.id() + " WHERE `id` = " + id);
-            statement.executeUpdate("UPDATE `user` SET `last_server` = " + server.id() + " WHERE `id` = " + id);
+            statement.executeUpdate(
+                    QueryBuilder.createQuery()
+                            .update(Table.USER)
+                            .set(Row.PREV_SERVER, previous.id())
+                            .set(Row.LAST_SERVER, server.id())
+                            .where(Row.ID, QueryBuilder.EQUALS, id).build()
+            );
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection ,statement);
+            engine.close(connection ,statement);
         }
 
         this.server = server;
@@ -244,17 +253,24 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     @Override
     public void forcePreviousServer(final NetworkServer server) {
         previous = server;
+
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            statement.executeUpdate("UPDATE `user` SET `previous_server` = " + server.id() + " WHERE `id` = " + id);
+            statement.executeUpdate(
+                    QueryBuilder.createQuery()
+                            .update(Table.USER)
+                            .set(Row.PREV_SERVER, server.id())
+                            .where(Row.ID, QueryBuilder.EQUALS, id)
+                            .build()
+            );
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection ,statement);
+            engine.close(connection ,statement);
         }
     }
 

@@ -5,20 +5,20 @@ import es.karmadev.api.core.source.SourceManager;
 import es.karmadev.api.core.source.exception.UnknownProviderException;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.extension.module.Module;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.plugin.runtime.DependencyManager;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CRuntime extends LockLoginRuntime {
 
-    private final DependencyManager manager = new CDependencyManager();
+    DependencyManager manager;
     private final ModuleManager modManager;
 
     public boolean booted = false;
@@ -119,74 +119,82 @@ public class CRuntime extends LockLoginRuntime {
      */
     @Override
     public void verifyIntegrity(final int permission, final Class<?> targetClazz, String targetMethod) throws SecurityException {
-        if (permission < 0) return;
-
-        Path plugin = file();
         try {
-            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().toAbsolutePath().getParent();
-            String loaderPath = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-            if (loaderPath.startsWith("/")) {
-                loaderPath = loaderPath.substring(1);
+            Path filePath = Paths.get(LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            String path = PathUtilities.pathString(filePath, '/');
+
+            APISource source;
+            try {
+                source = SourceManager.getProvider("LockLogin");
+            } catch (UnknownProviderException ex) {
+                throw new SecurityException(ex);
             }
 
-            Path loader = Paths.get(loaderPath);
-            CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
-            if (source == null) throw new SecurityException("Cannot validate runtime integrity. Are we running in a test environment?");
+            String pluginsFolder = PathUtilities.pathString(source.workingDirectory().getParent().toAbsolutePath(), '/');
 
-            String serverPath = source.getLocation().getFile();
-            if (serverPath.startsWith("/")) {
-                serverPath = serverPath.substring(1);
-            }
+            Path loaderJar = Paths.get(APISource.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            String loader = PathUtilities.pathString(loaderJar, '/');
 
-            String pluginsPath = PathUtilities.pathString(pluginsFolder, '/');
+            Path serverJar = Paths.get(LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+            String server = PathUtilities.pathString(serverJar, '/');
 
-            Path server = Paths.get(serverPath);
             StackTraceElement[] elements = Thread.currentThread().getStackTrace();
             String method = targetClazz.getSimpleName() + "#" + targetMethod;
-            Class<?> sourceClass = null;
-            for (StackTraceElement element : elements) {
-                String name = element.getClassName();
+
+            if (elements.length >= 5) {
+                boolean bypass = false;
+                for (int i = 0; i < 4; i++) {
+                    StackTraceElement caller = elements[i];
+                    String name = caller.getClassName();
+
+                    if (name.equalsIgnoreCase("es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker")) {
+                        bypass = true;
+                        break;
+                    }
+                }
+
+                if (bypass) return;
+                /*
+                Allow internal classes to bypass this restriction in order to allow its normal function,
+                for instance, SpigotModuleMaker, to allow plugins to be implemented into a module, the plugin
+                must somehow access (inheritable) to the module manager, which is "protected"
+                 */
+
+                StackTraceElement caller = elements[4]; //CRuntime and SubmissiveRuntime call counts!
+                String name = caller.getClassName();
                 try {
                     Class<?> clazz = Class.forName(name);
-                    if (sourceClass == null) sourceClass = clazz;
-
                     URL url = clazz.getResource('/' + name.replace('.', '/') + ".class");
                     if (url != null) {
                         String urlPath = url.getPath();
+
                         if (urlPath.startsWith("file:") && urlPath.contains("!")) {
                             String jarPath = urlPath.substring((urlPath.startsWith("file:/") ? 6 : 5), urlPath.indexOf('!')).replaceAll("%20", " ");
-                            Path jar = Paths.get(jarPath);
-                            jarPath = PathUtilities.pathString(jar, '/');
+                            Path currentPath = Paths.get(jarPath);
+                            jarPath = PathUtilities.pathString(currentPath, '/');
 
-                            if (!jarPath.equals(PathUtilities.pathString(plugin, '/')) && !jar.equals(loader) && !jar.equals(server)) {
-                                if (jarPath.startsWith(pluginsPath)) {
-                                    Path caller = Paths.get(jarPath);
-
-                                    Module mod = modManager.loader().findByFile(caller);
-                                    String pathName = PathUtilities.pathString(caller);
-
+                            if (!path.equals(jarPath) && !loader.equals(jarPath) && !server.equals(jarPath)) {
+                                if (jarPath.startsWith(pluginsFolder)) {
+                                    Module mod = modManager.loader().getModule(currentPath);
+                                    String pathName = PathUtilities.pathString(currentPath, '/');
                                     if (mod != null) {
-                                        pathName = "(Module) " + mod.sourceName();
-                                        if (permission == PLUGIN_AND_MODULES) break;
-                                        if (permission == MODULE_ONLY) {
-                                            Module src = modManager.loader().findByClass(targetClazz);
-                                            if (!src.equals(mod)) {
-                                                throw new SecurityException("Cannot access module method " + method + " from an unsafe source. " + pathName);
-                                            }
-
-                                            break;
+                                        pathName = "(Module) " + mod.getDescription().getName();
+                                        if (permission != PLUGIN_ONLY) {
+                                            //source.logger().send(LogLevel.SUCCESS, "Allowed class {0}[{1}] to accessing protected method {2}", method, pathName, urlRoute);
+                                            return;
                                         }
                                     }
 
-                                    throw new SecurityException("Cannot access API method " + method + " from an unsafe source. " + pathName);
+                                    throw new SecurityException("Cannot allow source " + pathName + " to access method " + method);
                                 }
                             }
                         }
                     }
-                } catch (ClassNotFoundException ignored) {
-                }
+                } catch (FileSystemNotFoundException | ClassNotFoundException ignored) {}
             }
-        } catch (UnknownProviderException ignored) {}
+        } catch (URISyntaxException ex) {
+            throw new SecurityException(ex);
+        }
     }
 
     /**

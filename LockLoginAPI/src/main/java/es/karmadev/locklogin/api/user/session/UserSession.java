@@ -142,6 +142,16 @@ public interface UserSession {
     <T> SessionField<T> fetch(final String key);
 
     /**
+     * Get a field from the session
+     *
+     * @param key the field key
+     * @param defaultValue the default value if null/none
+     * @return the field
+     * @param <T> the filed type
+     */
+    <T> T fetch(final String key, final T defaultValue);
+
+    /**
      * Get when the session was created
      *
      * @return the session creation date

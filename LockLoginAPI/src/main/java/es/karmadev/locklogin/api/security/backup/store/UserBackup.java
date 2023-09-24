@@ -1,13 +1,13 @@
 package es.karmadev.locklogin.api.security.backup.store;
 
-import es.karmadev.locklogin.api.user.account.migration.Transictionable;
+import es.karmadev.locklogin.api.user.account.migration.Transitional;
 
 import java.time.Instant;
 
 /**
  * User backup data
  */
-public interface UserBackup extends Transictionable {
+public interface UserBackup extends Transitional {
 
     /**
      * Get the transictionable account id

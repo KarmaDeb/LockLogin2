@@ -8,16 +8,12 @@ import lombok.Getter;
 /**
  * Module command
  */
-@SuppressWarnings("unused")
+@SuppressWarnings("unused") @Getter
 public abstract class ModuleCommand {
 
-    @Getter
     private final Module module;
-    @Getter
     private final String name;
-    @Getter
     private final String description;
-    @Getter
     private final String[] aliases;
 
     /**

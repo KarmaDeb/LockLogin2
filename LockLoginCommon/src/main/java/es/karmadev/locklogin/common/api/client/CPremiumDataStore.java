@@ -1,7 +1,10 @@
 package es.karmadev.locklogin.common.api.client;
 
 import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 
 import java.sql.Connection;
@@ -14,22 +17,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class CPremiumDataStore implements PremiumDataStore {
 
-    private final DataDriver driver;
+    private final SQLDriver engine;
     private final Map<String, UUID> cached = new ConcurrentHashMap<>();
 
-    public CPremiumDataStore(final DataDriver driver) {
-        this.driver = driver;
+    public CPremiumDataStore(final SQLDriver engine) {
+        this.engine = engine;
 
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `name`,`premium_uuid` FROM `user` WHERE `premium_uuid` IS NOT NULL")) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.NAME, Row.PREMIUM_UUID)
+                    .where(Row.PREMIUM_UUID, QueryBuilder.IS_NOT, QueryBuilder.NULL).build())) {
                 while (result.next()) {
-                    String name = result.getString("name");
-                    String uniqueId = result.getString("premium_uuid");
+                    String name = result.getString(1);
+                    String uniqueId = result.getString(2);
 
                     if (!ObjectUtils.areNullOrEmpty(false, name, uniqueId)) {
                         UUID id = UUID.fromString(uniqueId);
@@ -38,7 +43,7 @@ public final class CPremiumDataStore implements PremiumDataStore {
                 }
             }
         } catch (SQLException ignored) {} finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -56,12 +61,14 @@ public final class CPremiumDataStore implements PremiumDataStore {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `premium_uuid` FROM `user` WHERE `name` = '" + name + "'")) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.PREMIUM_UUID)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).build())) {
                 if (result.next()) {
-                    String uniqueId = result.getString("premium_uuid");
+                    String uniqueId = result.getString(1);
                     if (!ObjectUtils.isNullOrEmpty(uniqueId)) {
                         cache = UUID.fromString(uniqueId);
                         cached.put(name, cache);
@@ -71,7 +78,7 @@ public final class CPremiumDataStore implements PremiumDataStore {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return cache;
@@ -92,24 +99,23 @@ public final class CPremiumDataStore implements PremiumDataStore {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
             UUID cache = cached.getOrDefault(name, null);
             if (onlineId.equals(cache) || onlineId.equals(offline)) return;
 
-            if (cache == null) {
-                driver.close(null, statement);
-                statement = connection.createStatement();
+            engine.close(null, statement);
+            statement = connection.createStatement();
 
-                statement.executeUpdate("UPDATE `user` SET `premium_uuid` = '" + onlineId + "' WHERE `name` = '" + name + "'");
-            } else {
-                statement.execute("INSERT INTO `user` (`name`,`uuid`,`premium_uuid`) VALUES ('" + name + "','" + offline + "','" + onlineId + "')");
-            }
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.USER)
+                    .set(Row.PREMIUM_UUID, onlineId)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 }

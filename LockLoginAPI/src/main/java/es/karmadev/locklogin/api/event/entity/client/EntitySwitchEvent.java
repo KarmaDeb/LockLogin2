@@ -7,8 +7,7 @@ import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import lombok.Getter;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This event is fired when an entity is connected
@@ -50,7 +49,7 @@ public class EntitySwitchEvent extends EntityEvent implements Cancellable {
      * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent(Module)}
      * @throws IllegalArgumentException if the target server is not valid
      */
-    public EntitySwitchEvent(final Module caller, final LocalNetworkClient entity, final NetworkServer from, final NetworkServer to) throws SecurityException, IllegalArgumentException {
+    public EntitySwitchEvent(final Module caller, final LocalNetworkClient entity, final @Nullable NetworkServer from, final NetworkServer to) throws SecurityException, IllegalArgumentException {
         super(caller, entity);
         this.from = from;
         this.to = to;

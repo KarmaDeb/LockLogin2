@@ -2,7 +2,10 @@ package es.karmadev.locklogin.common.api.user.storage.session;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
 
@@ -18,23 +21,23 @@ public class CSession implements UserSession {
 
     private final int id;
     private final int session_id;
-    private final DataDriver pool;
+    private final SQLDriver engine;
 
     private boolean valid = false;
 
-    private final static Map<Integer, Map<String, SessionField<?>>> fields = new ConcurrentHashMap<>();
+    private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
 
     /**
      * Initialize the session
      *
      * @param user_id the client id
      * @param session_id the session id
-     * @param pool the session pool
+     * @param engine the session pool
      */
-    public CSession(final int user_id, final int session_id, final DataDriver pool) {
+    public CSession(final int user_id, final int session_id, final SQLDriver engine) {
         this.id = user_id;
         this.session_id = session_id;
-        this.pool = pool;
+        this.engine = engine;
     }
 
     /**
@@ -94,17 +97,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `captcha_login` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.LOGIN_CAPTCHA)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("captcha_login");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -120,13 +125,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `captcha_login` = " + status + " WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.LOGIN_CAPTCHA, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -140,17 +148,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `pass_login` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.LOGIN_PASSWORD)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("pass_login");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -166,13 +176,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `pass_login` = " + status + " WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.LOGIN_PASSWORD, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -186,17 +199,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `pin_login` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.LOGIN_PIN)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("pin_login");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -212,13 +227,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `pin_login` = " + status + " WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.LOGIN_PIN, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -232,17 +250,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `2fa_login` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.LOGIN_2FA)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("2fa_login");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -258,13 +278,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `2fa_login` = " + status + " WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.LOGIN_2FA, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -278,13 +301,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `captcha` = '" + captcha + "' WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.CAPTCHA, captcha)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -300,17 +326,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `captcha` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.CAPTCHA)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    captcha = result.getString("captcha");
+                    captcha = result.getString(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return captcha;
@@ -326,17 +354,19 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `persistence` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.PERSISTENT)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    return result.getBoolean("persistence");
+                    return result.getBoolean(1);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return false;
@@ -352,13 +382,16 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            statement.executeUpdate("UPDATE `session` SET `persistence` = " + status + " WHERE `id` = " + session_id);
+            statement.executeUpdate(QueryBuilder.createQuery()
+                    .update(Table.SESSION)
+                    .set(Row.PERSISTENT, status)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
     }
 
@@ -369,10 +402,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void append(final SessionField<?> value) {
-        Map<String, SessionField<?>> fieldMap = fields.computeIfAbsent(id, (map) -> new ConcurrentHashMap<>());
-        fieldMap.put(value.key(), value);
-
-        fields.put(id, fieldMap);
+        if (value.get() == null) {
+            fields.remove(value.key());
+        } else {
+            fields.put(value.key(), value);
+        }
     }
 
     /**
@@ -383,8 +417,29 @@ public class CSession implements UserSession {
      */
     @Override @SuppressWarnings("unchecked")
     public <T> SessionField<T> fetch(final String key) {
-        Map<String, SessionField<?>> fieldMap = fields.computeIfAbsent(id, (map) -> new ConcurrentHashMap<>());
-        return (SessionField<T>) fieldMap.get(key);
+        try {
+            return (SessionField<T>) fields.get(key);
+        } catch (ClassCastException ignored) {}
+        return null;
+    }
+
+    /**
+     * Get a field from the session
+     *
+     * @param key          the field key
+     * @param defaultValue the default value if null/none
+     * @return the field
+     */
+    @Override @SuppressWarnings("unchecked")
+    public <T> T fetch(final String key, final T defaultValue) {
+        if (fields.containsKey(key)) {
+            try {
+                SessionField<T> field = (SessionField<T>) fields.get(key);
+                if (field != null && field.get() != null) return field.get();
+            } catch (ClassCastException ignored) {}
+        }
+
+        return defaultValue;
     }
 
     /**
@@ -397,18 +452,20 @@ public class CSession implements UserSession {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = pool.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery("SELECT `created_at` FROM `session` WHERE `id` = " + session_id)) {
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SESSION, Row.CREATED_AT)
+                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
-                    long millis = result.getLong("created_at");
+                    long millis = result.getLong(1);
                     return Instant.ofEpochMilli(millis);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            pool.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return Instant.now();

@@ -3,7 +3,10 @@ package es.karmadev.locklogin.common.api.server;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 
 import java.net.InetSocketAddress;
@@ -15,9 +18,9 @@ import java.time.Instant;
 
 public class CServerFactory implements ServerFactory<CServer> {
 
-    private final DataDriver driver;
+    private final SQLDriver driver;
 
-    public CServerFactory(final DataDriver driver) {
+    public CServerFactory(final SQLDriver driver) {
         this.driver = driver;
     }
 
@@ -41,7 +44,12 @@ public class CServerFactory implements ServerFactory<CServer> {
 
             long now = Instant.now().toEpochMilli();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `id` FROM `server` WHERE `name` = '" + name + "' OR `address` = '" + address.getHostString() + "' AND `port` = " + address.getPort())) {
+            //"SELECT `id` FROM `server` WHERE `name` = '" + name + "' OR `address` = '" + address.getHostString() + "' AND `port` = " + address.getPort()
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.SERVER, Row.ID)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).or()
+                    .where(Row.ADDRESS, QueryBuilder.EQUALS, address.getHostString()).and()
+                    .where(Row.PORT, QueryBuilder.EQUALS, address.getPort()).build())) {
                 if (fetch_result.next()) {
                     int id = fetch_result.getInt("id");
 
@@ -61,7 +69,10 @@ public class CServerFactory implements ServerFactory<CServer> {
                     driver.close(null, statement);
                     statement = connection.createStatement();
 
-                    statement.execute("INSERT INTO `server` (`name`,`address`,`port`,`created_at`) VALUES ('" + name + "','" + address.getHostString() + "'," + address.getPort() + "," + now + ")");
+                    //"INSERT INTO `server` (`name`,`address`,`port`,`created_at`) VALUES ('" + name + "','" + address.getHostString() + "'," + address.getPort() + "," + now + ")"
+                    statement.execute(QueryBuilder.createQuery()
+                            .insert(Table.SERVER, Row.NAME, Row.ADDRESS, Row.PORT, Row.CREATED_AT)
+                            .values(name, address.getHostString(), address.getPort(), now).build());
                     driver.close(null, statement);
 
                     try (ResultSet insert_result = statement.executeQuery("SELECT last_insert_rowid()")) {

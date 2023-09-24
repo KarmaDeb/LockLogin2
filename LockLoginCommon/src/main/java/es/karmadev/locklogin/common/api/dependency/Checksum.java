@@ -15,13 +15,18 @@ class Checksum implements DependencyChecksum {
 
     private final LockLoginDependency dependency;
     private final Map<String, Long> values = new ConcurrentHashMap<>();
+    private String hash;
 
     public Checksum(final LockLoginDependency owner) {
         dependency = owner;
     }
 
-    public void define(final String name, final long value) {
+    protected void define(final String name, final long value) {
         values.put(name, value);
+    }
+
+    protected void hash(final String hash) {
+        this.hash = hash;
     }
 
     /**
@@ -33,6 +38,37 @@ class Checksum implements DependencyChecksum {
     @Override
     public long value(final String name) {
         return values.getOrDefault(name, 0L);
+    }
+
+    /**
+     * Get the checksum hash
+     *
+     * @return the check hash
+     */
+    @Override
+    public String hash() {
+        if (hash != null) return hash;
+
+        Path file = dependency.file();
+        byte[] data = PathUtilities.readBytes(file);
+
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("md5");
+            md5.update(data);
+            byte[] result = md5.digest();
+
+            StringBuilder hexBuilder = new StringBuilder();
+            for (byte b : result) {
+                int rawInt = Byte.toUnsignedInt(b);
+                hexBuilder.append(Integer.toString(rawInt, 16));
+            }
+
+            return hexBuilder.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            CurrentPlugin.getPlugin().log(ex, "Failed to verify integrity of {0}", dependency.name());
+        }
+
+        return null;
     }
 
     /**
@@ -55,36 +91,6 @@ class Checksum implements DependencyChecksum {
             }
         }
 
-        return true;
-    }
-
-    /**
-     * Verify the existing file with the
-     * provided hash
-     *
-     * @param hash the hash
-     * @return if the hash matches
-     */
-    public boolean verify(final String hash) {
-        Path file = dependency.file();
-        byte[] data = PathUtilities.readBytes(file);
-
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("md5");
-            md5.update(data);
-            byte[] result = md5.digest();
-
-            StringBuilder hexBuilder = new StringBuilder();
-            for (byte b : result) {
-                int rawInt = Byte.toUnsignedInt(b);
-                hexBuilder.append(Integer.toString(rawInt, 16));
-            }
-
-            String currentHash = hexBuilder.toString();
-            return currentHash.equals(hash);
-        } catch (NoSuchAlgorithmException ex) {
-            CurrentPlugin.getPlugin().log(ex, "Failed to verify integrity of {0}", dependency.name());
-            return false;
-        }
+        return other.hash().equals(hash());
     }
 }

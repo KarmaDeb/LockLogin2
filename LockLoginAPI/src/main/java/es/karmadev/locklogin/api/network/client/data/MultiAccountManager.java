@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 /**
- * LockLogin mutli account manager
+ * LockLogin multi account manager
  */
 public interface MultiAccountManager {
 

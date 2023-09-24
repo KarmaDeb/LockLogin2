@@ -14,6 +14,13 @@ public interface DependencyChecksum {
     long value(final String name);
 
     /**
+     * Get the checksum hash
+     *
+     * @return the check hash
+     */
+    String hash();
+
+    /**
      * Verifies if the provided checksum matches the
      * current one
      *

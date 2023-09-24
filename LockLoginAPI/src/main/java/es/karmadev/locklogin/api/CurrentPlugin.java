@@ -1,18 +1,19 @@
 package es.karmadev.locklogin.api;
 
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import lombok.Getter;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
  * Current LockLogin plugin
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused"})
 public final class CurrentPlugin {
 
+    @Getter
     private static LockLogin plugin;
     private final static Set<Consumer<LockLogin>> available_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final static Set<Consumer<LockLogin>> sql_available_queue = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -76,15 +77,6 @@ public final class CurrentPlugin {
         } else {
             available_queue.add(action);
         }
-    }
-
-    /**
-     * Get the LockLogin plugin
-     *
-     * @return the plugin
-     */
-    public static LockLogin getPlugin() {
-        return plugin;
     }
 
     /**

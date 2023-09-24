@@ -1,53 +1,46 @@
 package es.karmadev.locklogin.spigot.command;
 
-import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
-import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
-import es.karmadev.locklogin.api.security.hash.HashResult;
-import es.karmadev.locklogin.api.user.account.UserAccount;
-import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class SpawnCommand implements CommandExecutor {
+@PluginCommand(command = "setloginspawn", useInBungeecord = true)
+public class SpawnCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
     private final Map<UUID, Location> previousLocations = new HashMap<>();
 
+    public SpawnCommand(final String cmd) {
+        super(cmd);
+    }
+
     /**
-     * Executes the given command, returning its success.
-     * <br>
-     * If false is returned, then the "usage" plugin.yml entry for this command
-     * (if defined) will be sent to the player.
+     * Executes the command, returning its success
      *
-     * @param sender  Source of the command
-     * @param command Command which was executed
-     * @param label   Alias of the command which was used
-     * @param args    Passed command arguments
-     * @return true if a valid command, otherwise false
+     * @param sender       Source object which is executing this command
+     * @param label        The alias of the command used
+     * @param args         All arguments passed to the command, split via ' '
+     * @return true if the command was successful, otherwise false
      */
     @Override
-    public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, @NotNull String[] args) {
+    public boolean execute(final @NotNull CommandSender sender, final @NotNull String label, @NotNull String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             Messages messages = plugin.messages();
@@ -173,43 +166,5 @@ public class SpawnCommand implements CommandExecutor {
         }
 
         return false;
-    }
-
-    private void validate(final Player player, final NetworkClient client, final UserAccount account, UserSession session, final String inputPassword) {
-        HashResult hash = account.password();
-        Messages messages = plugin.messages();
-        Configuration configuration = plugin.configuration();
-
-        if (hash.verify(inputPassword)) {
-            session.login(true);
-            session._2faLogin(true);
-            session.pinLogin(true);
-            client.sendMessage(messages.prefix() + messages.logged());
-
-            if (player.hasMetadata("walkSpeed")) {
-                float walkSpeed = player.getMetadata("walkSpeed").get(0).asFloat();
-                player.setWalkSpeed(walkSpeed);
-
-                player.removeMetadata("walkSpeed", (Plugin) plugin.plugin());
-            }
-            if (player.hasMetadata("flySpeed")) {
-                float flySpeed = player.getMetadata("flySpeed").get(0).asFloat();
-                player.setFlySpeed(flySpeed);
-
-                player.removeMetadata("flySpeed", (Plugin) plugin.plugin());
-            }
-
-            SpawnSection spawn = configuration.spawn();
-            if (spawn.takeBack()) {
-                PlayerLocationStorage storage = new PlayerLocationStorage(client);
-                Location location = storage.load();
-
-                if (location != null) {
-                    player.teleport(location);
-                }
-            }
-        } else {
-            client.sendMessage(messages.prefix() + messages.incorrectPassword());
-        }
     }
 }

@@ -8,6 +8,7 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.EncryptionConfiguration;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
+import es.karmadev.locklogin.api.security.hash.LegacyPluginHash;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
@@ -26,7 +27,7 @@ import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SHA512Hash extends PluginHash {
+public class SHA512Hash extends PluginHash implements LegacyPluginHash {
 
     /**
      * basically number of iterations
@@ -117,7 +118,8 @@ public class SHA512Hash extends PluginHash {
      * @param token    the token of password stored in database
      * @return true if passwords match
      */
-    private boolean auth(final String password, final String token) {
+    @Override
+    public boolean auth(final String password, final String token) {
         String[] info = token.split("\\$");
         String salt_str = info[1];
         Pattern layout = Pattern.compile("\\$" + salt_str + "\\$(\\d\\d\\d?)\\$(.{512})");
@@ -175,7 +177,7 @@ public class SHA512Hash extends PluginHash {
             VirtualID id = hasher.virtualID();
             virtualized = id.virtualize(input);
         } else {
-            virtualized = CVirtualInput.of(new int[0], false, input.getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.raw(input.getBytes(StandardCharsets.UTF_8));
         }
 
         String pwd = new String(virtualized.product(), StandardCharsets.UTF_8);

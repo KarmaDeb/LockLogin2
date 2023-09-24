@@ -1,8 +1,9 @@
 package es.karmadev.locklogin.common.api.user;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.UserFactory;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
@@ -15,10 +16,10 @@ import java.util.UUID;
 
 public class CUserFactory implements UserFactory<CLocalClient> {
 
-    private final DataDriver driver;
+    private final SQLDriver engine;
 
-    public CUserFactory(final DataDriver driver) {
-        this.driver = driver;
+    public CUserFactory(final SQLDriver engine) {
+        this.engine = engine;
     }
 
     /**
@@ -35,66 +36,78 @@ public class CUserFactory implements UserFactory<CLocalClient> {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
             long now = Instant.now().toEpochMilli();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `id` FROM `user` WHERE `name` = '" + name + "' OR `uuid` = '" + uniqueId + "'")) {
+            //"SELECT `id` FROM `user` WHERE `name` = '" + name + "' OR `uuid` = '" + uniqueId + "'"
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ID)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).or()
+                    .where(Row.UUID, QueryBuilder.EQUALS, uniqueId).build())) {
                 if (fetch_result.next()) {
                     int id = fetch_result.getInt("id");
-                    return new CLocalClient(id, driver);
+                    return new CLocalClient(id, engine);
                 } else {
-                    driver.close(null, statement);
+                    engine.close(null, statement);
                     statement = connection.createStatement();
 
-                    statement.execute("INSERT INTO `user` (`name`,`uuid`,`account_id`,`session_id`,`created_at`) VALUES ('" + name + "','" + uniqueId + "'," + account + "," + session + "," + now + ")");
+                    //"INSERT INTO `user` (`name`,`uuid`,`account_id`,`session_id`,`created_at`) VALUES ('" + name + "','" + uniqueId + "'," + account + "," + session + "," + now + ")"
+                    statement.execute(QueryBuilder.createQuery()
+                            .insert(Table.USER, Row.NAME, Row.UUID, Row.ACCOUNT_ID, Row.SESSION_ID, Row.CREATED_AT)
+                            .values(name, uniqueId, account, session, now).build());
                     return create(name, uniqueId, account, session);
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
     }
 
     /**
-     * Create an user without an account and
+     * Create a user without an account and
      * session
      *
-     * @param name     the user name
+     * @param name     the username
      * @param uniqueId the user unique id
      * @return the new created user
      */
     @Override
     public CLocalClient create(final String name, final UUID uniqueId) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
             long now = Instant.now().toEpochMilli();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `id` FROM `user` WHERE `name` = '" + name + "' OR `uuid` = '" + uniqueId + "'")) {
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ID)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).or()
+                    .where(Row.UUID, QueryBuilder.EQUALS, uniqueId).build())) {
                 if (fetch_result.next()) {
                     int id = fetch_result.getInt("id");
-                    return new CLocalClient(id, driver);
+                    return new CLocalClient(id, engine);
                 } else {
-                    driver.close(null, statement);
+                    engine.close(null, statement);
                     statement = connection.createStatement();
 
-                    statement.execute("INSERT INTO `user` (`name`,`uuid`,`created_at`) VALUES ('" + name + "','" + uniqueId + "'," + now + ")");
-                    driver.close(null, statement);
+                    //"INSERT INTO `user` (`name`,`uuid`,`created_at`) VALUES ('" + name + "','" + uniqueId + "'," + now + ")"
+                    statement.execute(QueryBuilder.createQuery()
+                            .insert(Table.USER, Row.NAME, Row.UUID, Row.CREATED_AT)
+                            .values(name, uniqueId, now).build());
+                    engine.close(null, statement);
 
                     try (ResultSet insert_result = statement.executeQuery("SELECT last_insert_rowid()")) {
                         if (insert_result.next()) {
                             int id = insert_result.getInt(1);
-                            return new CLocalClient(id, driver);
+                            return new CLocalClient(id, engine);
                         }
                     }
                 }
@@ -102,7 +115,7 @@ public class CUserFactory implements UserFactory<CLocalClient> {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;

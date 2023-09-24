@@ -21,38 +21,14 @@ public class InternalPack {
         String lang = configuration.language();
 
         String name = "messages.yml";
-        String dir = lang.replaceAll("\\s", "_");
         switch (lang.toLowerCase().replace("_", " ")) {
             case "en_en":
             case "english":
                 name = "messages_en.yml";
-                dir = "english";
                 break;
             case "es_es":
             case "spanish":
                 name = "messages_es.yml";
-                dir = "castillian";
-                break;
-            case "fr_fr":
-            case "french":
-                name = "messages_fr.yml";
-                dir = "french";
-                break;
-            case "zh_cn":
-            case "chinese simplified":
-            case "simplified chinese":
-                name = "messages_zh.yml";
-                dir = "simplified_chinese";
-                break;
-            case "pl_pl":
-            case "polish":
-                name = "messages_pl.yml";
-                dir = "polish";
-                break;
-            case "tr_tr":
-            case "turkish":
-                name = "messages_tr.yml";
-                dir = "turkish";
                 break;
         }
 
@@ -72,23 +48,6 @@ public class InternalPack {
             case "es_es":
             case "spanish":
                 dir = "castillian";
-                break;
-            case "fr_fr":
-            case "french":
-                dir = "french";
-                break;
-            case "zh_cn":
-            case "chinese simplified":
-            case "simplified chinese":
-                dir = "simplified_chinese";
-                break;
-            case "pl_pl":
-            case "polish":
-                dir = "polish";
-                break;
-            case "tr_tr":
-            case "turkish":
-                dir = "turkish";
                 break;
         }
 
@@ -117,27 +76,6 @@ public class InternalPack {
             case "spanish":
                 name = "messages_es.yml";
                 dir = "castillian";
-                break;
-            case "fr_fr":
-            case "french":
-                name = "messages_fr.yml";
-                dir = "french";
-                break;
-            case "zh_cn":
-            case "chinese simplified":
-            case "simplified chinese":
-                name = "messages_zh.yml";
-                dir = "simplified_chinese";
-                break;
-            case "pl_pl":
-            case "polish":
-                name = "messages_pl.yml";
-                dir = "polish";
-                break;
-            case "tr_tr":
-            case "turkish":
-                name = "messages_tr.yml";
-                dir = "turkish";
                 break;
         }
 

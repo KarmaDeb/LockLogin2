@@ -6,21 +6,20 @@ import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import lombok.Getter;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This event is fired when an entity account is created.
  * This doesn't mean the client is registered, but his account
  * is ready to handle it
  */
+@Getter
 @SuppressWarnings("unused")
 public class EntityAccountCreatedEvent extends EntityEvent {
 
     private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
 
     @Nullable
-    @Getter
     private final UserAccount account;
 
     /**

@@ -1,34 +1,49 @@
 package es.karmadev.locklogin.spigot;
 
-import es.karmadev.api.core.KarmaPlugin;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import es.karmadev.api.core.KarmaAPI;
 import es.karmadev.api.database.DatabaseManager;
 import es.karmadev.api.database.model.JsonDatabase;
 import es.karmadev.api.database.model.json.JsonConnection;
+import es.karmadev.api.file.FileEncryptor;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.spigot.core.KarmaPlugin;
 import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
 import es.karmadev.api.spigot.reflection.title.SpigotTitle;
 import es.karmadev.api.strings.StringUtils;
+import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.ModuleConverter;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 import es.karmadev.locklogin.api.plugin.ServerHash;
-import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -42,10 +57,12 @@ import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CPremiumDataStore;
+import es.karmadev.locklogin.common.api.dependency.CPluginDependency;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
+import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.plugin.service.brute.CBruteForce;
 import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
@@ -53,30 +70,43 @@ import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
 import es.karmadev.locklogin.common.api.plugin.service.password.CPasswordProvider;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
-import es.karmadev.locklogin.common.api.runtime.CRuntime;
+import es.karmadev.locklogin.common.api.runtime.SubmissiveRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
-import es.karmadev.locklogin.common.api.sql.CSQLDriver;
+import es.karmadev.locklogin.common.api.database.sql.CSQLDriver;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.common.api.packet.COutPacket;
 import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
+import es.karmadev.locklogin.spigot.protocol.injector.NMSHelper;
 import es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker;
 import lombok.Getter;
-import ml.karmaconfigs.api.common.karma.file.KarmaMain;
-import ml.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
-import ml.karmaconfigs.api.common.karma.file.element.types.Element;
+import es.karmaconfigs.api.common.karma.file.KarmaMain;
+import es.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
+import es.karmaconfigs.api.common.karma.file.element.types.Element;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.jetbrains.annotations.NotNull;
 
+import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.sql.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,7 +121,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     private final KarmaPlugin plugin;
 
     private final CModuleManager moduleManager = new CModuleManager();
-    private final CRuntime runtime = new CRuntime(moduleManager);
+    private final SubmissiveRuntime runtime = new SubmissiveRuntime(moduleManager);
     private CPluginNetwork network;
     private CPremiumDataStore premiumDataStore;
     private final CPluginHasher hasher;
@@ -112,9 +142,15 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
     final Map<String, PluginService> service_provider = new ConcurrentHashMap<>();
 
+    @Getter
     private final Instant startup = Instant.now();
     @Getter
     private final ClientInjector injector;
+
+    public boolean boot = true;
+    private final KeyPair pair;
+    @Getter
+    private PrivateKey sharedSecret;
 
     public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) throws RuntimeException {
         this.plugin = plugin;
@@ -130,7 +166,130 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             throw new RuntimeException("Couldn't initialize LockLogin");
         }
 
+        plugin.logger().send(LogLevel.WARNING, "Preparing to inject dependencies. Please wait...");
+        CPluginDependency.load();
+
+        PluginManager pluginManager = Bukkit.getServer().getPluginManager();
+        for (LockLoginDependency dependency : CPluginDependency.getAll()) {
+            if (dependency.type().equals(DependencyType.PLUGIN)) {
+                String name = dependency.name();
+                Version version = Version.parse(dependency.version().plugin());
+
+                if (name.equalsIgnoreCase("KarmaAPI")) {
+                    Version platform = Version.parse(dependency.version().project());
+
+                    Version API_VERSION = Version.parse(KarmaAPI.VERSION);
+                    Version PLUGIN_VERSION = Version.parse(KarmaAPI.BUILD);
+
+                    if (API_VERSION.equals(platform)) {
+                        if (API_VERSION.compareTo(version) >= 1) {
+                            plugin.logger().send(LogLevel.INFO, "KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
+                        } else {
+                            plugin.logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", version, PLUGIN_VERSION);
+                            boot = false;
+                            break;
+                        }
+                    } else {
+                        plugin.logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", platform, API_VERSION);
+                        boot = false;
+                        break;
+                    }
+                } else {
+                    if (pluginManager.isPluginEnabled(name)) {
+                        Plugin tmpPlugin = pluginManager.getPlugin(name);
+                        if (tmpPlugin != null) {
+                            Version pluginVersion = Version.parse(tmpPlugin.getDescription().getVersion());
+
+                            if (pluginVersion.compareTo(version) < 0) {
+                                plugin.logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
+                            } else {
+                                plugin.logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
+                                if (name.equalsIgnoreCase("Spartan")) {
+                                    registerService("spartan", new SpartanService());
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                //console().send("Injecting dependency {0}", Level.INFO, dependency.name());
+                runtime.dependencyManager().append(dependency);
+            }
+        }
+
         configuration = new CPluginConfiguration();
+
+        KeyPair pair = null;
+        try {
+            Path keyStore = workingDirectory().resolve("cache").resolve("keys.json");
+            IvParameterSpec spec = new IvParameterSpec(configuration.secretKey().iv());
+
+            FileEncryptor encryptor = new FileEncryptor(keyStore, configuration.secretKey().token());
+            if (Files.exists(keyStore)) {
+                encryptor.decrypt(spec);
+
+                Gson gson = new GsonBuilder().create();
+                JsonObject data = gson.fromJson(PathUtilities.read(keyStore), JsonObject.class);
+
+                if (data.has("public") && data.has("private")) {
+                    byte[] publicBytes = Base64.getDecoder().decode(data.get("public").getAsString());
+                    byte[] privateBytes = Base64.getDecoder().decode(data.get("private").getAsString());
+
+                    KeyFactory factory = KeyFactory.getInstance("RSA");
+
+                    X509EncodedKeySpec publicKey = new X509EncodedKeySpec(publicBytes);
+                    PKCS8EncodedKeySpec privateKey = new PKCS8EncodedKeySpec(privateBytes);
+
+                    PublicKey pub = factory.generatePublic(publicKey);
+                    PrivateKey pri = factory.generatePrivate(privateKey);
+
+                    pair = new KeyPair(pub, pri);
+                } else {
+                    err("Cannot initialize LockLogin because the key storage is invalid");
+                    boot = false;
+                }
+
+                encryptor.encrypt(spec);
+            } else {
+                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+                generator.initialize(2048);
+
+                pair = generator.generateKeyPair();
+
+                PathUtilities.createPath(keyStore);
+                JsonObject object = new JsonObject();
+                object.addProperty("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
+                object.addProperty("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
+
+                String raw = new GsonBuilder().create().toJson(object);
+                PathUtilities.write(keyStore, raw);
+
+                encryptor.encrypt(spec);
+            }
+        } catch (Exception ex) {
+            boot = false;
+        }
+
+        /*if (boot && bungeeMode()) {
+            Driver dr = configuration.database().driver();
+            if (dr.isLocal()) {
+                err("LockLogin won't start, as BungeeCord mode is enabled, LockLogin needs a SQL server to work properly");
+                boot = false;
+            }
+        }*/
+
+        this.pair = pair;
+        if (!boot) {
+            driver = null;
+            messages = null;
+            hasher = null;
+            process_factory = null;
+            moduleMaker = null;
+            injector = null;
+            return; //We won't boot
+        }
+
+        runtime.becomeCRuntime();
         messages = new InternalPack();
         hasher = new CPluginHasher();
 
@@ -151,7 +310,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             plugin.logger().send(LogLevel.WARNING, "Failed to detect FloodGate API. FloodGate service will be disabled");
         }
 
-        driver = new CSQLDriver();
+        driver = new CSQLDriver(configuration.database().driver());
         CurrentPlugin.updateState();
 
         SpigotCommandManager manager = new SpigotCommandManager(this, map);
@@ -167,12 +326,18 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
         moduleMaker = new SpigotModuleMaker();
         injector = new ClientInjector();
+
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "ll:test", new PluginMessageListener() {
+            @Override
+            public void onPluginMessageReceived(@NotNull final String s, @NotNull final Player player, final byte[] bytes) {
+                info("Received: {0}", Arrays.toString(bytes));
+            }
+        });
+        plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "ll:test");
     }
 
     void installDriver() {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "installDriver()");
-
-        driver.testDriver(Driver.SQLite);
         driver.connect();
 
         if (network == null) network = new CPluginNetwork(driver);
@@ -186,6 +351,130 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         registerService("bruteforce", brute_service);
 
         CurrentPlugin.updateState();
+
+        Path databaseData = plugin.workingDirectory().resolve("cache").resolve("database.json");
+        Gson gson = new GsonBuilder().serializeNulls().disableHtmlEscaping().setPrettyPrinting().create();
+
+        Database database = configuration.database();
+        if (Files.exists(databaseData)) {
+            JsonElement databaseCache = gson.fromJson(PathUtilities.read(databaseData), JsonElement.class);
+            if (databaseCache == null || !databaseCache.isJsonObject()) return;
+
+            JsonObject object = databaseCache.getAsJsonObject();
+            boolean modifications = false;
+            for (Table table : Table.values()) {
+                String rawName = table.name();
+
+                JsonObject tableObject = new JsonObject();
+                if (object.has(rawName) && object.get(rawName).isJsonObject()) {
+                    tableObject = object.getAsJsonObject(rawName);
+                }
+
+                String tableValue = database.tableName(table);
+                if (tableObject.has("name") && tableObject.get("name").isJsonPrimitive() &&
+                        tableObject.getAsJsonPrimitive("name").isString()) {
+                    tableValue = tableObject.get("name").getAsString();
+                }
+
+                String tableName = database.tableName(table);
+                if (!tableName.equals(tableValue)) {
+                    info("Detected outdated table name, renaming {0} to {1}", tableValue, tableName);
+
+                    Connection connection = null;
+                    Statement statement = null;
+                    try {
+                        connection = driver.retrieve();
+                        statement = connection.createStatement();
+
+                        statement.executeUpdate(QueryBuilder.createQuery().alter(table).rename(tableValue).build());
+                        tableObject.addProperty("name", tableName);
+                        modifications = true;
+                    } catch (SQLException ex) {
+                        log(ex, "Failed to rename table {0} from {1} to {2}", table.name(), tableValue, tableName);
+                        return;
+                    } finally {
+                        driver.close(connection, statement);
+                    }
+                }
+
+                for (Row row : table.getUsableRows()) {
+                    String columnValue = database.columnName(table, row);
+                    if (tableObject.has(row.name()) && tableObject.get(row.name()).isJsonPrimitive() &&
+                            tableObject.getAsJsonPrimitive(row.name()).isString()) {
+                        columnValue = tableObject.get(row.name()).getAsString();
+                    }
+
+                    String columnName = database.columnName(table, row);
+                    if (!columnName.equals(columnValue)) {
+                        info("Detected outdated column name at {0}, renaming {1} to {2}", tableName, columnValue, columnName);
+
+                        Connection connection = null;
+                        Statement statement = null;
+                        try {
+                            connection = driver.retrieve();
+                            DatabaseMetaData meta = connection.getMetaData();
+                            ResultSet columns = meta.getColumns(null, null, tableName, columnValue);
+
+                            statement = connection.createStatement();
+
+                            if (!columns.next()) {
+                                err("Column {0} not found at {1}, plugin cannot proceed", columnValue, tableName, columnName);
+                                Bukkit.getServer().getPluginManager().disablePlugin(plugin);
+                                return;
+                            }
+
+                            try {
+                                columns.close();
+                            } catch (SQLException ignored) {}
+
+                            statement.executeUpdate(QueryBuilder.createQuery().alter(table).rename(row, columnValue).build());
+                            tableObject.addProperty(row.name(), columnName);
+                            modifications = true;
+                        } catch (SQLException ex) {
+                            log(ex, "Failed to rename column {0} from {1} to {2} at {3}", row.name(), columnValue, columnName, tableName);
+                            return;
+                        } finally {
+                            driver.close(connection, statement);
+                        }
+                    }
+                }
+
+                object.add(table.name(), tableObject);
+            }
+
+            if (modifications) {
+                String raw = gson.toJson(object);
+                PathUtilities.write(databaseData, raw);
+            }
+        } else {
+            JsonObject object = new JsonObject();
+            for (Table table : Table.values()) {
+                String name = database.tableName(table);
+
+                JsonObject tableObject = new JsonObject();
+                tableObject.addProperty("name", name);
+
+                for (Row row : table.getUsableRows()) {
+                    String rowName = database.columnName(table, row);
+                    tableObject.addProperty(row.name(), rowName);
+                }
+
+                object.add(table.name(), tableObject);
+            }
+
+            String raw = gson.toJson(object);
+            PathUtilities.write(databaseData, raw);
+        }
+    }
+
+    /**
+     * Get the plugin communication keys
+     *
+     * @return the plugin keys
+     */
+    public KeyPair getCommunicationKeys() {
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "getCommunicationKeys");
+        return pair;
     }
 
     /**
@@ -305,7 +594,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public CRuntime getRuntime() throws SecurityException {
+    public SubmissiveRuntime getRuntime() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "getRuntime()");
         return runtime;
     }
@@ -662,7 +951,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void info(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "info(String, Object[])");
-        plugin.logger().send(LogLevel.INFO, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().send(LogLevel.INFO, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().send(LogLevel.INFO, message, replaces);
+        }
     }
 
     /**
@@ -674,7 +970,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void warn(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "warn(String, Object[])");
-        plugin.logger().send(LogLevel.WARNING, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().send(LogLevel.WARNING, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().send(LogLevel.WARNING, message, replaces);
+        }
     }
 
     /**
@@ -686,7 +989,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void err(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "err(String, Object[])");
-        plugin.logger().send(LogLevel.ERROR, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().send(LogLevel.ERROR, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().send(LogLevel.ERROR, message, replaces);
+        }
     }
 
     /**
@@ -698,7 +1008,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void logInfo(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logInfo(String, Object[])");
-        plugin.logger().log(LogLevel.INFO, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().log(LogLevel.INFO, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().log(LogLevel.INFO, message, replaces);
+        }
     }
 
     /**
@@ -710,7 +1027,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void logWarn(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logWarn(String, Object[])");
-        plugin.logger().log(LogLevel.WARNING, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().log(LogLevel.WARNING, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().log(LogLevel.WARNING, message, replaces);
+        }
     }
 
     /**
@@ -722,7 +1046,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void logErr(final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "logErr(String, Object[])");
-        plugin.logger().log(LogLevel.ERROR, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().log(LogLevel.ERROR, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().log(LogLevel.ERROR, message, replaces);
+        }
     }
 
     /**
@@ -735,7 +1066,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "log(Throwable, String, Object[])");
-        plugin.logger().log(error, message, replaces);
+        Path caller = runtime.caller();
+        Module module = moduleManager.loader().getModule(caller);
+
+        if (module != null) {
+            plugin.logger().log(error, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
+        } else {
+            plugin.logger().log(error, message, replaces);
+        }
     }
 
     /**
@@ -835,12 +1173,6 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
-    @Override
-    public Collection<NetworkClient> onlineClients() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "onlineClients()");
-        return connected();
-    }
-
     /**
      * Get the server packet queue
      *
@@ -850,6 +1182,81 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     public NetworkChannel channel() {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "channel()");
         return null;
+    }
+
+    /**
+     * When a packet is received
+     *
+     * @param packet the packet
+     */
+    @Override
+    public void onReceive(final IncomingPacket packet) {
+        final String identifier = packet.getSequence("identifier");
+
+        final COutPacket out = new COutPacket(packet.getType());
+        out.addProperty("replying", packet.id());
+
+        switch (packet.getType()) {
+            case HELLO:
+                byte[] publicKey = pair.getPublic().getEncoded();
+                //info("Public key: {0}", (Object) publicKey);
+                /*KeyMap map = new KeyMap(pair.getPublic());
+                map.map();*/
+
+                String sharedKey = Base64.getEncoder().encodeToString(publicKey);
+
+                //String str = StringUtils.serialize(map);
+                out.addProperty("key", sharedKey);
+                break;
+            case CHANNEL_INIT:
+                if (this.sharedSecret == null) {
+                    byte[] sharedSecret = Base64.getDecoder().decode(packet.getSequence("key"));
+                    try {
+                        KeyFactory factory = KeyFactory.getInstance("RSA");
+                        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(sharedSecret);
+
+                        this.sharedSecret = factory.generatePrivate(spec);
+                        //info("Stored proxy shared secret message");
+                    } catch (NoSuchAlgorithmException | InvalidKeySpecException ignored) {
+                    }
+                }
+                break;
+            case CHANNEL_CLOSE:
+                this.sharedSecret = null;
+                info("Received channel close message from proxy");
+                break;
+            case CONNECTION_INIT:
+                out.addProperty("hello", "world!");
+                break;
+        }
+
+        Object[] payloads = NMSHelper.createPayloads(identifier, out);
+
+        Player bridge = null;
+        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+            if (player != null && player.isOnline()) {
+                bridge = player;
+                break;
+            }
+        }
+
+        for (Object payload : payloads) {
+            try {
+                NMSHelper.sendPacket(bridge, payload);
+            } catch (InvocationTargetException | IllegalAccessException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * When a packet is sent
+     *
+     * @param packet the packet to send
+     */
+    @Override
+    public void onSend(final OutgoingPacket packet) {
+
     }
 
     /**

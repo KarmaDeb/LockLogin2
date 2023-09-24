@@ -9,6 +9,13 @@ import java.nio.file.Path;
 public interface LockLoginDependency {
 
     /**
+     * Get the dependency type
+     *
+     * @return the type
+     */
+    DependencyType type();
+
+    /**
      * Get the dependency id
      *
      * @return the dependency id
@@ -69,6 +76,8 @@ public interface LockLoginDependency {
      * Get if the dependency is a plugin
      *
      * @return if the dependency is a plugin
+     * @deprecated See {@link LockLoginDependency#type()}
      */
+    @Deprecated
     boolean isPlugin();
 }

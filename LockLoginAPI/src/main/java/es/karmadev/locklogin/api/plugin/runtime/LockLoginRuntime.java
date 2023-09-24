@@ -1,7 +1,5 @@
 package es.karmadev.locklogin.api.plugin.runtime;
 
-import es.karmadev.api.spigot.server.SpigotServer;
-
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 
@@ -15,20 +13,11 @@ public abstract class LockLoginRuntime {
      * Accessible only by the plugin
      */
     public static final int PLUGIN_ONLY = 100;
-    /**
-     * Accessible only by the module
-     */
-    public static final int MODULE_ONLY = 99;
+
     /**
      * Accessible only by the plugin and its modules
      */
     public static final int PLUGIN_AND_MODULES = 98;
-    /**
-     * Accessible from any source
-     * @deprecated useless
-     */
-    @Deprecated
-    public static final int ANY = 0;
 
     /**
      * Initialize the LockLogin runtime
@@ -61,11 +50,25 @@ public abstract class LockLoginRuntime {
      * Verify the runtime integrity
      *
      * @param permission the minimum permission authorization level
+     * @deprecated this method won't show any additional information from
+     * where the method was called, {@link #verifyIntegrity(int, Class, String)} should
+     * be used instead, (ex:
+     *  verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginRuntime.class, "#verifyIntegrity(int, Class, String)")
+     * )
+     */
+    @Deprecated
+    public void verifyIntegrity(final int permission) {
+        verifyIntegrity(permission, LockLoginRuntime.class, "#verifyIntegrity(Class)");
+    }
+
+    /**
+     * Verify the runtime integrity
+     *
+     * @param permission the minimum permission authorization level
      * @param clazz the clazz that is verifying integrity
      * @param method the method that is verifying integrity
-     * @throws SecurityException if the integrity fails to check
      */
-    public abstract void verifyIntegrity(final int permission, final Class<?> clazz, final String method) throws SecurityException;
+    public abstract void verifyIntegrity(final int permission, final Class<?> clazz, final String method);
 
     /**
      * Get if the runtime is completely booted. Meaning
@@ -93,7 +96,7 @@ public abstract class LockLoginRuntime {
 
             return Platform.BUNGEE.version(version);
         } catch (Throwable ex) {
-            return Platform.BUKKIT.version(SpigotServer.getVersion().toString());
+            return Platform.BUKKIT.version("UNKNOWN");
         }
     }
 }

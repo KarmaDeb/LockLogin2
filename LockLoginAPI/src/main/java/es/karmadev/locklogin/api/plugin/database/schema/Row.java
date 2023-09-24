@@ -1,133 +1,131 @@
 package es.karmadev.locklogin.api.plugin.database.schema;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /**
  * LockLogin valid rows
  */
+@AllArgsConstructor
+@Getter
 public enum Row {
     /**
      * LockLogin row
      */
-    ID("id"),
+    ID("id", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    PASSWORD("password"),
+    PASSWORD("password", RowType.BLOB),
     /**
      * LockLogin row
      */
-    PIN("pin"),
+    PIN("pin", RowType.BLOB),
     /**
      * LockLogin row
      */
-    TOKEN_2FA("2fa_token"),
+    TOKEN_2FA("2fa_token", RowType.BLOB),
     /**
      * LockLogin row
      */
-    PANIC("panic"),
+    PANIC("panic", RowType.BLOB),
     /**
      * LockLogin row
      */
-    STATUS_2FA("2fa"),
+    STATUS_2FA("2fa", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    LOGIN_CAPTCHA("captcha"),
+    LOGIN_CAPTCHA("captcha", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    LOGIN_PASSWORD("login"),
+    LOGIN_PASSWORD("login", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    LOGIN_PIN("pin"),
+    LOGIN_PIN("pin", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    LOGIN_2FA("gAuth"),
+    LOGIN_2FA("gAuth", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    PERSISTENT("persistent"),
+    PERSISTENT("persistent", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    CAPTCHA("code"),
+    CAPTCHA("code", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    NAME("name"),
+    NAME("name", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    EMAIL("email"),
+    EMAIL("email", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    ADDRESS("address"),
+    ADDRESS("address", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    PORT("port"),
+    PORT("port", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    UUID("uuid"),
+    UUID("uuid", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    PREMIUM_UUID("premium"),
+    PREMIUM_UUID("premium", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    CONNECTION_TYPE("connection"),
+    CONNECTION_TYPE("connection", RowType.VARCHAR),
     /**
      * LockLogin row
      */
-    ACCOUNT_ID("account"),
+    ACCOUNT_ID("account", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    SESSION_ID("session"),
+    SESSION_ID("session", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    LAST_SERVER("server"),
+    LAST_SERVER("server", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    PREV_SERVER("pre_server"),
+    PREV_SERVER("pre_server", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    TRIES("tries"),
+    TRIES("tries", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    BLOCKED("blocked"),
+    BLOCKED("blocked", RowType.INTEGER),
     /**
      * LockLogin row
      */
-    REMAINING("remaining"),
+    REMAINING("remaining", RowType.LONG),
     /**
      * LockLogin row
      */
-    STATUS("panicking"),
+    STATUS("panicking", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
-    CREATED_AT("creation");
+    CREATED_AT("creation", RowType.TIMESTAMP);
 
     /**
      * The row path
      */
     public final String name;
 
-    /**
-     * Initialize the row
-     *
-     * @param name the row name
-     */
-    Row(final String name) {
-        this.name = name;
-    }
+    private final RowType<?> rowType;
 }

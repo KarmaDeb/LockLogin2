@@ -32,7 +32,7 @@ public class CCommandMap implements CommandRegistrar {
     public void register(final Module module, final ModuleCommand command) {
         if (manager.onCommandRegistered != null && manager.onCommandRegistered.apply(command)) {
             String name = command.getName();
-            commands.put(module.sourceName() + ":" + name, command);
+            commands.put(module.getName() + ":" + name, command);
         }
     }
 
@@ -44,7 +44,7 @@ public class CCommandMap implements CommandRegistrar {
     public void unregisterAll(final Module module) {
         List<String> remove = new ArrayList<>();
 
-        String name = module.sourceName();
+        String name = module.getName();
         for (String key : commands.keySet()) {
             if (key.startsWith(name + ":")) {
                 remove.add(key);
@@ -71,18 +71,18 @@ public class CCommandMap implements CommandRegistrar {
 
         if (!name.contains(":")) {
             Path caller = runtime.caller();
-            Module module = manager.loader().findByFile(caller);
+            Module module = manager.loader().getModule(caller);
             if (module == null) throw new RuntimeException("Cannot get command from invalid module");
 
-            tmpName = module.sourceName() + ":" + name;
+            tmpName = module.getName() + ":" + name;
         } else {
             String[] data = name.split(":");
             String modName = data[0];
             String rawName = name.replaceFirst(modName + ":", "");
 
             Path caller = runtime.caller();
-            Module module = manager.loader().findByFile(caller);
-            Module cmdMod = manager.loader().findByName(modName);
+            Module module = manager.loader().getModule(caller);
+            Module cmdMod = manager.loader().getModule(modName);
 
             if (module == null) throw new RuntimeException("Cannot get command from invalid module");
             if (cmdMod == null) throw new IllegalArgumentException("Unknown command: " + rawName);

@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.extension;
 
-import es.karmadev.locklogin.api.extension.plugin.PluginModule;
+import es.karmadev.locklogin.api.extension.module.PluginModule;
 
 /**
  * LockLogin module converter
@@ -13,14 +13,14 @@ public interface ModuleConverter<T> {
      * @param plugin the plugin to extend
      * @return the extended module
      */
-    PluginModule<T> extend(final T plugin);
+    PluginModule<T> implement(final T plugin);
 
     /**
      * Undo the plugin module extension
      *
      * @param module the extension
      */
-    void retract(final PluginModule<T> module);
+    void dispose(final PluginModule<T> module);
 
     /**
      * Undo the plugin module extension
@@ -28,7 +28,7 @@ public interface ModuleConverter<T> {
      * @param plugin the plugin owning the
      *               extension
      */
-    void retract(final T plugin);
+    void dispose(final T plugin);
 
     /**
      * Get if the plugin is extended
@@ -36,5 +36,5 @@ public interface ModuleConverter<T> {
      * @param plugin the plugin
      * @return if the plugin is extended
      */
-    boolean isExtended(final T plugin);
+    boolean isImplemented(final T plugin);
 }

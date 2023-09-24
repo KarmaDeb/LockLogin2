@@ -1,71 +1,60 @@
 package es.karmadev.locklogin.spigot.util.converter;
 
-import es.karmadev.api.core.CoreModule;
-import es.karmadev.api.core.DefaultRuntime;
-import es.karmadev.api.core.ExceptionCollector;
-import es.karmadev.api.core.source.KarmaSource;
-import es.karmadev.api.core.source.runtime.SourceRuntime;
-import es.karmadev.api.file.util.NamedStream;
-import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.api.file.util.StreamUtils;
-import es.karmadev.api.logger.LogManager;
-import es.karmadev.api.logger.SourceLogger;
-import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.schedule.task.TaskScheduler;
-import es.karmadev.api.strings.StringFilter;
-import es.karmadev.api.strings.placeholder.PlaceholderEngine;
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.extension.plugin.PluginModule;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-import es.karmadev.locklogin.common.api.runtime.CRuntime;
-import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.ModuleDescription;
+import es.karmadev.locklogin.api.extension.module.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.PluginModule;
+import es.karmadev.locklogin.api.extension.module.resource.ResourceHandle;
+import es.karmadev.locklogin.api.network.PluginNetwork;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.Optional;
+import java.util.logging.Level;
 
-public class SpigotModule extends PluginModule<JavaPlugin> {
+public class SpigotModule implements PluginModule<JavaPlugin> {
 
-    private final static LockLoginSpigot spigot = (LockLoginSpigot) CurrentPlugin.getPlugin();
-    private final SourceRuntime runtime = new DefaultRuntime(this);
-    private final Path pluginFile;
+    private final JavaPlugin plugin;
+    private final Path file;
+    private final SPDescription description;
+    private final SpigotModuleMaker maker;
+    private final PluginNetwork network;
+    private final ModuleLoader loader;
 
-    public SpigotModule(final JavaPlugin owner, final Path pluginFile) {
-        super(owner,
-                owner.getName(),
-                owner.getDescription().getVersion(),
-                owner.getDescription().getDescription(),
-                owner.getDescription().getAuthors().toArray(new String[0]));
-        this.pluginFile = pluginFile;
-    }
+    private final MethodHandle onModDisable;
+    private final MethodHandle onModEnable;
 
-    /**
-     * When the module gets loaded
-     */
-    @Override
-    public void onLoad() {
-        //We expect the plugin to be already loaded
-    }
+    public SpigotModule(final JavaPlugin plugin, final Path file, final SpigotModuleMaker maker, final PluginNetwork network, final ModuleLoader loader) {
+        this.plugin = plugin;
+        this.file = file;
+        this.description = new SPDescription(this);
+        this.maker = maker;
+        this.network = network;
+        this.loader = loader;
 
-    /**
-     * When the module gets disabled
-     */
-    @Override
-    public void onUnload() {
-        //We better don't touch this
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+        MethodHandle onDisable = null;
+        try {
+            Method method = plugin.getClass().getDeclaredMethod("onDisabled", Module.class);
+            onDisable = lookup.unreflect(method).bindTo(plugin);
+        } catch (NoSuchMethodException | IllegalAccessException ex) {
+            plugin.getLogger().log(Level.WARNING, "Hooked into LockLogin as a plugin without #onDisabled(Module)");
+        }
+        onModDisable = onDisable;
+
+        MethodHandle onEnable = null;
+        try {
+            Method method = plugin.getClass().getDeclaredMethod("onEnabled", Module.class);
+            onEnable = lookup.unreflect(method).bindTo(plugin);
+        } catch (NoSuchMethodException | IllegalAccessException ex) {
+            plugin.getLogger().log(Level.WARNING, "Hooked into LockLogin as a plugin without #onEnabled(Module)");
+        }
+        onModEnable = onEnable;
     }
 
     /**
@@ -74,199 +63,120 @@ public class SpigotModule extends PluginModule<JavaPlugin> {
      * @return the module file
      */
     @Override
-    public Path getFile() {
-        return pluginFile;
+    public @NotNull Path getFile() {
+        return file;
     }
 
+    /**
+     * Get the module data folder
+     *
+     * @return the module data folder
+     */
     @Override
-    public @NotNull String identifier() {
-        return plugin.getDescription().getMain();
-    }
-
-    @Override
-    public @Nullable URI sourceUpdateURI() {
-        return null;
-    }
-
-    @Override
-    public @NotNull SourceRuntime runtime() {
-        return runtime;
-    }
-
-    @Override
-    public @NotNull PlaceholderEngine placeholderEngine(final String s) {
-        return spigot.plugin().placeholderEngine(s);
-    }
-
-    @Override
-    public @NotNull TaskScheduler scheduler(final String s) {
-        return spigot.plugin().scheduler(s);
-    }
-
-    @Override
-    public @NotNull Path workingDirectory() {
+    public @NotNull Path getDataFolder() {
         return plugin.getDataFolder().toPath();
     }
 
+    /**
+     * Get the module description
+     *
+     * @return the module description
+     */
     @Override
-    public @NotNull Path navigate(final String s, final String... strings) {
-        Path initial = workingDirectory();
-        for (String str : strings) {
-            initial = initial.resolve(str);
-        }
-
-        return initial.resolve(s);
+    public @NotNull ModuleDescription getDescription() {
+        return description;
     }
 
+    /**
+     * Get a stream of a resource
+     *
+     * @param resource the resource name
+     * @return the resource
+     */
     @Override
-    public @Nullable NamedStream findResource(final String s) {
-        JarFile jarHandle = null;
-        NamedStream stream = null;
-        try {
-            Class<? extends SpigotModule> clazz = getClass();
-            ProtectionDomain domain = clazz.getProtectionDomain();
-            if (domain == null) return null;
-
-            CodeSource source = domain.getCodeSource();
-            if (source == null) return null;
-
-            URL location = source.getLocation();
-            if (location == null) return null;
-
-            String filePath = location.getFile().replaceAll("%20", " ");
-            File file = new File(filePath);
-
-            jarHandle = new JarFile(file);
-
-            JarEntry entry = jarHandle.getJarEntry(s);
-            if (entry == null || entry.isDirectory()) return null;
-
-            InputStream streamHandle = jarHandle.getInputStream(entry);
-            stream = NamedStream.newStream(entry.getName(), StreamUtils.clone(streamHandle, true));
-        } catch (IOException ex) {
-            ExceptionCollector.catchException(KarmaSource.class, ex);
-        } finally {
-            if (jarHandle != null) {
-                try {
-                    jarHandle.close();
-                } catch (IOException ignored) {}
-            }
-        }
-
-        return stream;
+    public @NotNull Optional<ResourceHandle> getResource(String resource) {
+        return Optional.empty();
     }
 
+    /**
+     * Get the plugin network
+     *
+     * @return the network
+     */
     @Override
-    public @NotNull NamedStream[] findResources(final String s, @Nullable StringFilter stringFilter) {
-        JarFile jarHandle = null;
-        List<NamedStream> handles = new ArrayList<>();
-        try {
-            Class<? extends SpigotModule> clazz = getClass();
-            ProtectionDomain domain = clazz.getProtectionDomain();
-            if (domain == null) return null;
-
-            CodeSource source = domain.getCodeSource();
-            if (source == null) return null;
-
-            URL location = source.getLocation();
-            if (location == null) return null;
-
-            String filePath = location.getFile().replaceAll("%20", " ");
-            File file = new File(filePath);
-
-            jarHandle = new JarFile(file);
-            Enumeration<JarEntry> entries = jarHandle.entries();
-
-            do {
-                JarEntry entry = entries.nextElement();
-                if (entry.isDirectory()) continue;
-
-                String name = entry.getName();
-                if (stringFilter == null || stringFilter.accept(name)) {
-                    try (InputStream stream = jarHandle.getInputStream(entry)) {
-                        handles.add(NamedStream.newStream(name, stream));
-                    }
-                }
-            } while (entries.hasMoreElements());
-        } catch (IOException ex) {
-            ExceptionCollector.catchException(KarmaSource.class, ex);
-        } finally {
-            if (jarHandle != null) {
-                try {
-                    jarHandle.close();
-                } catch (IOException ignored) {}
-            }
-        }
-
-        return handles.toArray(new NamedStream[0]);
+    public @NotNull PluginNetwork getNetwork() {
+        return network;
     }
 
+    /**
+     * Get the module loader
+     *
+     * @return the loader
+     */
     @Override
-    public boolean export(final String s, final Path path) {
-        try (NamedStream single = findResource(s)) {
-            if (single != null) {
-                return tryExport(single, path);
-            }
-        } catch (IOException ex) {
-            ExceptionCollector.catchException(KarmaSource.class, ex);
-        }
+    public @NotNull ModuleLoader getLoader() {
+        return loader;
+    }
 
-        NamedStream[] streams = findResources(s, null);
-        if (streams.length == 0) return false; //We export nothing
+    /**
+     * Returns whether this module is
+     * enabled
+     *
+     * @return the module status
+     */
+    @Override
+    public boolean isEnabled() {
+        return maker.isImplemented(plugin);
+    }
 
-        int success = 0;
-        for (NamedStream stream : streams) {
+    /**
+     * The actions to perform when the module
+     * gets loaded
+     */
+    @Override
+    public void onLoad() {
+
+    }
+
+    /**
+     * The actions to perform when the module
+     * gets enabled
+     */
+    @Override
+    public void onEnable() {
+        if (onModEnable != null) {
             try {
-                if (tryExport(stream, path)) {
-                    success++;
-                }
-            } finally {
-                try {
-                    stream.close();
-                } catch (IOException ignored) {}
+                onModEnable.invoke(this);
+            } catch (Throwable ex) {
+                throw new RuntimeException("An exception occurred while execute plugin module enable handler");
             }
         }
-
-        return success == streams.length;
     }
 
+    /**
+     * The actions to perform when the module
+     * gets disabled
+     */
     @Override
-    public SourceLogger logger() {
-        return LogManager.getLogger(this);
-    }
-
-    @Override
-    public @Nullable CoreModule getModule(final String s) {
-        return null;
-    }
-
-    @Override
-    public boolean registerModule(final CoreModule coreModule) {
-        return false;
-    }
-
-    @Override
-    public void loadIdentifier(final String s) {}
-
-    @Override
-    public void saveIdentifier(final String s) {}
-
-    private boolean tryExport(final NamedStream stream, final Path directory) {
-        String name = stream.getName();
-        Path targetFile = directory;
-        if (name.contains("/")) {
-            String[] data = name.split("/");
-            for (String dir : data) {
-                //Are we the start route?
-                if (!ObjectUtils.isNullOrEmpty(dir)) {
-                    targetFile = targetFile.resolve(dir);
-                }
+    public void onDisable() {
+        if (onModDisable != null) {
+            try {
+                onModDisable.invoke(this);
+            } catch (Throwable ex) {
+                throw new RuntimeException("An exception occurred while execute plugin module disable handler");
             }
-        } else {
-            targetFile = targetFile.resolve(name);
         }
+    }
 
-        String raw = StreamUtils.streamToString(stream);
-        return PathUtilities.write(targetFile, raw);
+    /**
+     * Get the plugin that instantiates the
+     * module
+     *
+     * @return the plugin instantiating the
+     * module
+     */
+    @Override
+    public @NotNull JavaPlugin getPlugin() {
+        return plugin;
     }
 }

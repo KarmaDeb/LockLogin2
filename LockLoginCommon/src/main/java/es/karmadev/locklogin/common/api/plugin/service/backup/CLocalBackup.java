@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.common.api.plugin.service.backup;
 
-import com.google.gson.*;
+import es.karmadev.api.shaded.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;

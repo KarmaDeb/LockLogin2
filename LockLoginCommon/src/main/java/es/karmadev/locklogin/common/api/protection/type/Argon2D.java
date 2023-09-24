@@ -8,6 +8,7 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.EncryptionConfiguration;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
+import es.karmadev.locklogin.api.security.hash.LegacyPluginHash;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
@@ -16,7 +17,7 @@ import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
 
 import java.nio.charset.StandardCharsets;
 
-public class Argon2D extends PluginHash {
+public class Argon2D extends PluginHash implements LegacyPluginHash {
 
     /**
      * Get the hashing name
@@ -48,7 +49,7 @@ public class Argon2D extends PluginHash {
             VirtualID id = hasher.virtualID();
             virtualized = id.virtualize(input);
         } else {
-            virtualized = CVirtualInput.of(new int[0], false, input.getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.raw(input.getBytes(StandardCharsets.UTF_8));
         }
 
 
@@ -101,7 +102,6 @@ public class Argon2D extends PluginHash {
         LockLoginHasher hasher = plugin.hasher();
 
         VirtualizedInput virtualized = result.product();
-        EncryptionConfiguration encryption = plugin.configuration().encryption();
 
         String token = new String(virtualized.product(), StandardCharsets.UTF_8);
         String password = input;
@@ -119,5 +119,18 @@ public class Argon2D extends PluginHash {
         }
 
         return argon.verify(token, password.toCharArray());
+    }
+
+    /**
+     * Validates the legacy hash
+     *
+     * @param input the input
+     * @param token the legacy hash token
+     * @return if the input matches the token
+     */
+    @Override
+    public boolean auth(final String input, final String token) {
+        Argon2 argon = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2d);
+        return argon.verify(token, input.toCharArray());
     }
 }

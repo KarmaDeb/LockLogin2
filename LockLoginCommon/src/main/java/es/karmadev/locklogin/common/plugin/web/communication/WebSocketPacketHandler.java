@@ -11,7 +11,7 @@ import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDa
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.common.plugin.web.SocketService;
-import es.karmadev.locklogin.common.plugin.web.communication.packet.CInPacket;
+import es.karmadev.locklogin.common.api.packet.CInPacket;
 import io.socket.client.Ack;
 import io.socket.client.Socket;
 

@@ -1,8 +1,10 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
-import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 
 import java.sql.Connection;
@@ -15,11 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CSessionFactory implements SessionFactory<CSession> {
 
-    private final DataDriver driver;
+    private final SQLDriver engine;
     private final Set<CSession> session_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    public CSessionFactory(final DataDriver driver) {
-        this.driver = driver;
+    public CSessionFactory(final SQLDriver engine) {
+        this.engine = engine;
     }
 
     /**
@@ -38,35 +40,40 @@ public class CSessionFactory implements SessionFactory<CSession> {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
             long now = Instant.now().toEpochMilli();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `session_id` FROM `user` WHERE `id` = " + client.id())) {
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.SESSION_ID)
+                    .where(Row.ID, QueryBuilder.EQUALS, client.id()).build())) {
                 if (fetch_result.next()) {
-                    int session_id = fetch_result.getInt("session_id");
+                    int session_id = fetch_result.getInt(1);
                     if (fetch_result.wasNull()) {
-                        driver.close(null, statement);
+                        engine.close(null, statement);
                         statement = connection.createStatement();
 
-                        statement.execute("INSERT INTO `session` (`created_at`) VALUES (" + now + ")");
-                        driver.close(null, statement);
+                        statement.execute(QueryBuilder.createQuery()
+                                .insert(Table.SESSION, Row.CREATED_AT).values(now).build());
+                        engine.close(null, statement);
 
                         statement = connection.createStatement();
                         try (ResultSet result = statement.executeQuery("SELECT last_insert_rowid()")) {
                             if (result.next()) {
                                 session_id = result.getInt(1);
 
-                                driver.close(null, statement);
+                                engine.close(null, statement);
                                 statement = connection.createStatement();
 
-                                statement.executeUpdate("UPDATE `user` SET `session_id` = " + session_id + " WHERE `id` = " + client.id());
+                                statement.executeUpdate(QueryBuilder.createQuery()
+                                        .update(Table.USER).set(Row.SESSION_ID, session_id)
+                                        .where(Row.ID, QueryBuilder.EQUALS, client.id()).build());
                             }
                         }
                     }
 
-                    CSession session = new CSession(client.id(), session_id, driver);
+                    CSession session = new CSession(client.id(), session_id, engine);
                     session_cache.add(session);
 
                     return session;
@@ -75,7 +82,7 @@ public class CSessionFactory implements SessionFactory<CSession> {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -90,26 +97,27 @@ public class CSessionFactory implements SessionFactory<CSession> {
     public Collection<CSession> getSessions() {
         List<CSession> offline = new ArrayList<>(session_cache);
 
-        StringBuilder idIgnorer = new StringBuilder();
+        List<Integer> ids = new ArrayList<>();
         for (CSession account : offline) {
-            idIgnorer.append(account.id()).append(",");
+            ids.add(account.id());
         }
-        String not_in = StringUtils.replaceLast(idIgnorer.toString(), ",", "");
+        List<CSession> sessions = new ArrayList<>(session_cache);
 
         Connection connection = null;
         Statement statement = null;
-        List<CSession> sessions = new ArrayList<>(session_cache);
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `id`,`session_id` FROM `user` WHERE `session_id` NOT IN (" + not_in + ")")) {
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.SESSION_ID, Row.ID)
+                    .where(Row.SESSION_ID, QueryBuilder.NOT_IN(ids)).build())) {
                 while (fetch_result.next()) {
-                    int session_id = fetch_result.getInt("session_id");
+                    int session_id = fetch_result.getInt(1);
                     if (!fetch_result.wasNull()) {
-                        int user_id = fetch_result.getInt("id");
+                        int user_id = fetch_result.getInt(1);
                         if (!fetch_result.wasNull()) {
-                            CSession account = new CSession(user_id, session_id, driver);
+                            CSession account = new CSession(user_id, session_id, engine);
 
                             session_cache.add(account);
                             sessions.add(account);
@@ -120,7 +128,7 @@ public class CSessionFactory implements SessionFactory<CSession> {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return Collections.unmodifiableList(sessions);

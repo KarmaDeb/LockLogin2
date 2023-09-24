@@ -3,6 +3,98 @@
   "update": "${locklogin.version.type}",
   "dependencies": [
     {
+      "type": "single",
+      "id": "cfr_decompiler",
+      "name": "CFR",
+      "file": "CFR.jar",
+      "test": "${cfr.decompiler.test}",
+      "version": {
+        "project": "${cfr.decompiler.version}",
+        "required": "${cfr.decompiler.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "legacy_locklogin",
+      "name": "LockLogin Legacy",
+      "file": "LockLogin.jar",
+      "test": "eu.locklogin.api.util.platform.CurrentPlatform",
+      "version": {
+        "project": "1.13.66",
+        "required": "1.13.66"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "legacy_karmaapi",
+      "name": "KarmaAPI Legacy",
+      "file": "KarmaAPI.jar",
+      "test": "ml.karmaconfigs.api.common.karma.source.APISource",
+      "version": {
+        "project": "1.3.4-SNAPSHOT",
+        "required": "1.3.4-SNAPSHOT"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "asm_bytecode",
+      "name": "ASM",
+      "file": "ASM.jar",
+      "test": "${asm.bytecode.test}",
+      "version": {
+        "project": "${asm.bytecode.version}",
+        "required": "${asm.bytecode.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "asm_commons",
+      "name": "ASM Commons",
+      "file": "ASMCommons.jar",
+      "test": "${asm.commons.test}",
+      "version": {
+        "project": "${asm.commons.version}",
+        "required": "${asm.commons.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ],
+      "depends": [
+        "asm_bytecode"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "jar_relocator",
+      "name": "Jar Relocator",
+      "file": "JarRelocator.jar",
+      "test": "${jar.relocator.test}",
+      "version": {
+        "project": "${jar.relocator.version}",
+        "required": "${jar.relocator.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ],
+      "depends": [
+        "asm_bytecode",
+        "asm_commons"
+      ]
+    },
+    {
+      "type": "single",
       "id": "apache_commons",
       "name": "Apache Commons",
       "file": "ApacheCommons.jar",
@@ -13,10 +105,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "google_authenticator",
       "name": "Google Authenticator",
       "file": "GoogleAuthenticator.jar",
@@ -27,10 +119,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "google_guava",
       "name": "Google Guava",
       "file": "GoogleGuava.jar",
@@ -41,10 +133,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "log4j_core",
       "name": "Log4J",
       "file": "Log4J.jar",
@@ -55,10 +147,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "log4j_web",
       "name": "Log4J Web",
       "file": "Log4JWeb.jar",
@@ -70,9 +162,26 @@
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
       ],
-      "plugin": false
+      "depends": [
+        "log4j_core"
+      ]
     },
     {
+      "type": "single",
+      "id": "slf4j_api",
+      "name": "SLF4j",
+      "file": "SLF4J.jar",
+      "test": "${slf.api.test}",
+      "version": {
+        "project": "${slf.api.version}",
+        "required": "${slf.api.version}"
+      },
+      "download": [
+        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
       "id": "socket_io",
       "name": "Socket IO",
       "file": "SocketIO.jar",
@@ -83,10 +192,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "hikari_cp",
       "name": "HikariCP",
       "file": "HikariCP.jar",
@@ -97,10 +206,10 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
     {
+      "type": "single",
       "id": "java_native_access",
       "name": "Java Native Access",
       "file": "JavaNA.jar",
@@ -111,11 +220,11 @@
       },
       "download": [
         "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ],
-      "plugin": false
+      ]
     },
 
     {
+      "type": "plugin",
       "id": "karma_api",
       "name": "KarmaAPI",
       "file": "KarmaAPI.jar",
@@ -124,10 +233,10 @@
         "project": "${locklogin.karmaapi.version}",
         "required": "${locklogin.karmaapi.platform}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "placeholder_api",
       "name": "PlaceholderAPI",
       "file": "PlaceholderAPI.jar",
@@ -136,10 +245,10 @@
         "project": "${placeholder.api.version}",
         "required": "${placeholder.api.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "protocol_lib",
       "name": "ProtocolLib",
       "file": "ProtocolLib.jar",
@@ -148,10 +257,10 @@
         "project": "${protocol.lib.version}",
         "required": "${protocol.lib.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "floodgate",
       "name": "floodgate",
       "file": "floodgate.jar",
@@ -160,10 +269,10 @@
         "project": "${floodgate.version}",
         "required": "${floodgate.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "spartan",
       "name": "Spartan",
       "file": "Spartan.jar",
@@ -172,10 +281,10 @@
         "project": "${spartan.version}",
         "required": "${spartan.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "luckperms",
       "name": "LuckPerms",
       "file": "LuckPerms.jar",
@@ -184,10 +293,10 @@
         "project": "${luckperms.version}",
         "required": "${luckperms.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     },
     {
+      "type": "plugin",
       "id": "vault",
       "name": "Vault",
       "file": "Vault.jar",
@@ -196,8 +305,7 @@
         "project": "${vault.version}",
         "required": "${vault.version}"
       },
-      "download": [],
-      "plugin": true
+      "download": []
     }
   ],
   "version": {

@@ -1,8 +1,6 @@
 package es.karmadev.locklogin.common.api.extension;
 
 import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.strings.ListSpacer;
-import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.LockLoginEvent;
@@ -13,14 +11,12 @@ import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.command.error.CommandRuntimeException;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleLoader;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
-import es.karmadev.locklogin.common.api.extension.loader.CModuleLoader;
-import es.karmadev.locklogin.common.api.runtime.CRuntime;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,7 +29,7 @@ import java.util.function.Function;
 
 public class CModuleManager implements ModuleManager {
 
-    private final CModuleLoader loader = new CModuleLoader(this);
+    private final ModuleLoader loader = new ModuleLoader();
     private final CCommandMap commands = new CCommandMap(this);
     private final Map<Module, Set<Class<? extends LockLoginEvent>>> module_events = new ConcurrentHashMap<>();
 
@@ -99,7 +95,7 @@ public class CModuleManager implements ModuleManager {
         LockLoginRuntime runtime = plugin.getRuntime();
         Path caller = runtime.caller();
 
-        Module module = loader.findByFile(caller);
+        Module module = loader.getModule(caller);
         if (module != null) {
             for (Method method : methods) {
                 Parameter[] parameters = method.getParameters();
@@ -135,8 +131,7 @@ public class CModuleManager implements ModuleManager {
         LockLoginRuntime runtime = plugin.getRuntime();
         Path caller = runtime.caller();
 
-        Module module = loader.findByFile(caller);
-        System.out.println(module);
+        Module module = loader.getModule(caller);
         if (module != null) {
             EventHandler handler = new EventHandler() {
 
@@ -205,7 +200,7 @@ public class CModuleManager implements ModuleManager {
                         LockLoginRuntime runtime = plugin.getRuntime();
                         Path caller = runtime.caller();
 
-                        Module moduleCaller = loader.findByFile(caller);
+                        Module moduleCaller = loader.getModule(caller);
                         StringBuilder commandBuilder = new StringBuilder("/").append(command);
                         for (int i = 0; i < arguments.length; i++) {
                             commandBuilder.append(arguments[i]);
@@ -229,7 +224,7 @@ public class CModuleManager implements ModuleManager {
                         }
                     }
                 } catch (Throwable ex) {
-                    throw new CommandRuntimeException(ex, "Nag author(s) of module " + owner.sourceName() + " (" + StringUtils.listToString(owner.sourceAuthors(), ListSpacer.COMMA) + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
+                    throw new CommandRuntimeException(ex, "Blame author(s) of module " + owner.getDescription().getName() + " (" + owner.getDescription().getAuthor() + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
                 }
             }
         }

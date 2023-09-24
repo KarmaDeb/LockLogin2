@@ -6,8 +6,10 @@ import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
-import es.karmadev.locklogin.api.user.UserFactory;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
@@ -19,13 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CPluginNetwork implements PluginNetwork {
 
-    private final DataDriver driver;
+    private final SQLDriver engine;
     private final Set<NetworkClient> clients = ConcurrentHashMap.newKeySet();
     private final Set<NetworkServer> servers = ConcurrentHashMap.newKeySet();
     private final Set<LocalNetworkClient> offline_cache = ConcurrentHashMap.newKeySet();
 
-    public CPluginNetwork(final DataDriver driver) {
-        this.driver = driver;
+    public CPluginNetwork(final SQLDriver engine) {
+        this.engine = engine;
 
         CurrentPlugin.whenAvailable((plugin) -> {
             Collection<LocalNetworkClient> offline_clients = getPlayers();
@@ -108,12 +110,15 @@ public class CPluginNetwork implements PluginNetwork {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `id` = " + id)) {
+            QueryBuilder builder = QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ID).where(Row.ID, "=", id);
+
+            try (ResultSet result = statement.executeQuery(builder.build(""))) {
                 if (result.next()) {
-                    CLocalClient cl = new CLocalClient(id, driver);
+                    CLocalClient cl = new CLocalClient(id, engine);
                     offline_cache.add(cl);
 
                     return cl;
@@ -122,7 +127,7 @@ public class CPluginNetwork implements PluginNetwork {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -143,14 +148,19 @@ public class CPluginNetwork implements PluginNetwork {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `uuid` = '" + uniqueId + "' OR `premium_uuid` = '" + uniqueId + "'")) {
-                if (result.next()) {
-                    int id = result.getInt("id");
+            QueryBuilder builder = QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ID)
+                    .where(Row.UUID, "=", uniqueId).or()
+                    .where(Row.PREMIUM_UUID, "=", uniqueId);
 
-                    CLocalClient cl = new CLocalClient(id, driver);
+            try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                if (result.next()) {
+                    int id = result.getInt(1);
+
+                    CLocalClient cl = new CLocalClient(id, engine);
                     offline_cache.add(cl);
 
                     return cl;
@@ -159,7 +169,7 @@ public class CPluginNetwork implements PluginNetwork {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -211,23 +221,26 @@ public class CPluginNetwork implements PluginNetwork {
     public Collection<LocalNetworkClient> getPlayers() {
         List<LocalNetworkClient> offline = new ArrayList<>(offline_cache);
 
-        StringBuilder idIgnorer = new StringBuilder();
+        List<Integer> ids = new ArrayList<>();
         for (LocalNetworkClient client : offline) {
-            idIgnorer.append(client.id()).append(",");
+            ids.add(client.id());
         }
-        String not_in = StringUtils.replaceLast(idIgnorer.toString(), ",", "");
 
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet result = statement.executeQuery("SELECT `id` FROM `user` WHERE `id` NOT IN (" + not_in + ")")) {
+            QueryBuilder builder = QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ID)
+                    .where(Row.ID, QueryBuilder.NOT_IN(ids));
+
+            try (ResultSet result = statement.executeQuery(builder.build(""))) {
                 while (result.next()) {
-                    int id = result.getInt("id");
+                    int id = result.getInt(1);
                     if (!result.wasNull()) {
-                        CLocalClient cl = new CLocalClient(id, driver);
+                        CLocalClient cl = new CLocalClient(id, engine);
                         offline_cache.add(cl);
                         offline.add(cl);
                     }
@@ -236,7 +249,7 @@ public class CPluginNetwork implements PluginNetwork {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return offline;

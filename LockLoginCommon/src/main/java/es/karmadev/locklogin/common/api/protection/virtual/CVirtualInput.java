@@ -13,4 +13,14 @@ public class CVirtualInput implements VirtualizedInput {
     boolean valid;
 
     byte[] product;
+
+    /**
+     * Create an invalid-raw product
+     *
+     * @param product the product
+     * @return the virtualized input
+     */
+    public static CVirtualInput raw(final byte[] product) {
+        return of(new int[0], false, product);
+    }
 }

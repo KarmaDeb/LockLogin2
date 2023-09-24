@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.api.security.hash;
 
-import java.io.Serializable;
+import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,16 +11,31 @@ import java.util.regex.Pattern;
 /**
  * LockLogin hashing method
  */
-public abstract class PluginHash implements Serializable {
+public abstract class PluginHash {
 
     protected final Set<String> protected_properties = Collections.newSetFromMap(new ConcurrentHashMap<>());
     protected final Map<String, String> temporal_properties = new ConcurrentHashMap<>();
     protected final Map<String, String> permanent_properties = new ConcurrentHashMap<>();
 
+    @Getter
+    protected final boolean legacy;
+
     /**
      * Initialize the plugin hash
+     *
+     * @param properties the hash properties
      */
     public PluginHash(final String... properties) {
+        this(false, properties);
+    }
+
+    /**
+     * Initialize the plugin hash
+     * @param legacy the hash legacy support status
+     * @param properties the hash properties
+     */
+    public PluginHash(final boolean legacy, final String... properties) {
+        this.legacy = legacy;
         protected_properties.addAll(Arrays.asList(properties));
     }
 
@@ -28,6 +45,20 @@ public abstract class PluginHash implements Serializable {
      * @return the hashing name
      */
     public abstract String name();
+
+    /**
+     * Get the plugin legacy hasher
+     *
+     * @return the legacy hasher
+     */
+    @Nullable
+    public LegacyPluginHash legacyHasher() {
+        if (this instanceof LegacyPluginHash) {
+            return (LegacyPluginHash) this; //Hack for not having to implement in our implementations
+        }
+
+        return null;
+    }
 
     /**
      * Hash the input

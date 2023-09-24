@@ -5,7 +5,7 @@ author: "KarmaDev"
 website: "https://karmadev.es/"
 #main: ${spigot.main}
 main: es.karmadev.locklogin.spigot.SpigotPlugin
-database: true
+#database: false
 api-version: 1.13
 depend:
   - KarmaAPI
@@ -15,10 +15,10 @@ softdepend:
   - ProtocolLib
   - floodgate
 
-commands:
-  register:
-    description: The principal command to create an account
-  login:
-    description: The principal command to authenticate an user
-  setloginspawn:
-    description: The principal command to set the spawn location
+#commands:
+#  register:
+#    description: The principal command to create an account
+#  login:
+#    description: The principal command to authenticate an user
+#  setloginspawn:
+#    description: The principal command to set the spawn location

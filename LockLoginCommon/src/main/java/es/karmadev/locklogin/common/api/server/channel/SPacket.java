@@ -29,7 +29,7 @@ public class SPacket implements NetworkPacket {
 
         Path caller = plugin.getRuntime().caller();
 
-        sender = plugin.moduleManager().loader().findByFile(caller);
+        sender = plugin.moduleManager().loader().getModule(caller);
         raw_data = Base64.getEncoder().encode(message);
     }
 
@@ -39,7 +39,7 @@ public class SPacket implements NetworkPacket {
 
         Path caller = plugin.getRuntime().caller();
 
-        sender = plugin.moduleManager().loader().findByFile(caller);
+        sender = plugin.moduleManager().loader().getModule(caller);
         raw_data = Base64.getEncoder().encode(raw.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -49,7 +49,7 @@ public class SPacket implements NetworkPacket {
 
         Path caller = plugin.getRuntime().caller();
 
-        sender = plugin.moduleManager().loader().findByFile(caller);
+        sender = plugin.moduleManager().loader().getModule(caller);
         Gson gson = new GsonBuilder().create();
         raw_data = gson.toJson(element).getBytes(StandardCharsets.UTF_8);
     }

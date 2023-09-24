@@ -2,14 +2,14 @@ package es.karmadev.locklogin.api;
 
 import es.karmadev.api.file.yaml.handler.ResourceLoader;
 import es.karmadev.locklogin.api.extension.ModuleConverter;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.ServerHash;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
@@ -61,7 +61,7 @@ public interface LockLogin extends ResourceLoader {
      *
      * @return the plugin data driver
      */
-    DataDriver driver();
+    SQLDriver driver();
 
     /**
      * Get the plugin build type

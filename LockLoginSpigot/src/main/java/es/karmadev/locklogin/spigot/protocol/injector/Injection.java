@@ -1,28 +1,55 @@
 package es.karmadev.locklogin.spigot.protocol.injector;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import es.karmadev.api.spigot.server.SpigotServer;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.network.communication.data.DataType;
+import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
+import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.frame.FrameBuilder;
+import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
+import es.karmadev.locklogin.common.api.packet.CInPacket;
+import es.karmadev.locklogin.common.api.packet.COutPacket;
+import es.karmadev.locklogin.common.api.packet.frame.CFrameBuilder;
+import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
+import javax.crypto.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * LockLogin client injection
  */
 public class Injection extends ChannelDuplexHandler {
 
-    private final LockLogin plugin = CurrentPlugin.getPlugin();
+    private final LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
+    static PublicKey sharedPublic;
 
+    private UUID client;
     @Getter
     private boolean injected = false;
+    private Object playerConnection;
     private Channel channel = null;
+
+    private final Map<String, FrameBuilder> frames = new ConcurrentHashMap<>();
 
     /**
      * Calls {@link ChannelHandlerContext#fireChannelRead(Object)} to forward
@@ -49,37 +76,121 @@ public class Injection extends ChannelDuplexHandler {
                 if (ftName.equalsIgnoreCase("String") || ftName.toLowerCase().contains("key")) {
                     identifierField = field.getName();
                 }
-                if (ftName.contains("byte") || ftName.equalsIgnoreCase("PacketDataSerializer")) {
+                if (ftName.equalsIgnoreCase("PacketDataSerializer")) {
                     dataField = field.getName();
                 }
-            }
-
-            if (identifierField == null || dataField == null) {
-                System.out.println("Unable to identify");
             }
 
             Object identifierObject = getField(packet, identifierField);
             Object dataObject = getField(packet, dataField);
 
-            if (identifierObject == null || dataObject == null) {
-                System.out.println("Unable to read");
-            }
             assert identifierObject != null && dataObject != null;
 
             String identifier = identifierObject.toString();
+            //if (!identifier.equals("test:test")) return;
+
             byte[] data;
             try {
-                data = (byte[]) dataObject;
+                ByteBuf buf = (ByteBuf) dataObject;
+                data = new byte[buf.readableBytes()];
+                buf.readBytes(data);
             } catch (ClassCastException ex) {
-                int readAbleBytes = (int) invokeMethod(dataObject, "readableBytes");
-                data = new byte[readAbleBytes];
-
-                invokeMethod(dataObject, "readBytes", new Class[]{byte[].class}, new Object[]{data});
-                //nmsData.invokeMethodForNmsObject("readBytes", new Class[]{byte[].class}, new Object[]{data});
+                return;
             }
 
             String rawData = new String(data, StandardCharsets.UTF_8);
-            //TODO: Make identifier to be shared-generated
+            Object object = StringUtils.load(rawData).orElse(null);
+
+            if (object instanceof PacketFrame) {
+                PacketFrame frame = (PacketFrame) object;
+                FrameBuilder builder = frames.computeIfAbsent(identifier, (b) -> new CFrameBuilder((rawPacket) -> {
+                    KeyPair pair = plugin.getCommunicationKeys();
+
+                    try {
+                        Cipher cipher = Cipher.getInstance("RSA");
+                        cipher.init(Cipher.DECRYPT_MODE, pair.getPrivate());
+                        return cipher.doFinal(rawPacket);
+                    } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
+                             IllegalBlockSizeException |
+                             BadPaddingException ignored) {
+                        //plugin.info(ex.fillInStackTrace().toString());
+                    }
+
+                    return rawPacket;
+                }));
+
+                /*byte[] encrypted = new byte[frame.length()];
+                frame.read(encrypted, 0);*/
+
+                builder.append(frame);
+
+                int position = frame.position();
+                int max = frame.frames();
+
+                //plugin.info("Frame {0} encrypted is: {1}", position, new String(encrypted));
+
+                if (position == max) {
+                    try {
+                        byte[] rawPacket = builder.build();
+
+                        String raw = new String(rawPacket, StandardCharsets.UTF_8);
+                        Object comPacket = StringUtils.load(raw).orElse(null);
+
+                        if (comPacket instanceof OutgoingPacket) {
+                            OutgoingPacket out = (OutgoingPacket) comPacket;
+                            JsonObject outBuild = out.build();
+
+                            outBuild.addProperty("identifier", identifier);
+                            outBuild.addProperty("replying", out.id());
+
+                            Gson gson = new GsonBuilder().create();
+                            raw = gson.toJson(outBuild);
+
+                            IncomingPacket converted = new CInPacket(raw);
+                            plugin.onReceive(converted);
+                        }
+
+                        if (comPacket instanceof IncomingPacket) {
+                            IncomingPacket incoming = (IncomingPacket) comPacket;
+                            byte[] inData = incoming.getData();
+
+                            Gson gson = new GsonBuilder().create();
+                            JsonObject obj = gson.fromJson(new String(inData, StandardCharsets.UTF_8), JsonObject.class);
+                            obj.addProperty("identifier", identifier);
+                            obj.addProperty("replying", incoming.id());
+
+                            String rawJson = gson.toJson(obj);
+                            incoming = new CInPacket(rawJson);
+
+                            plugin.onReceive(incoming);
+                        }
+                    } catch (InvalidPacketDataException ex) {
+                        plugin.log(ex, "Failed to handle packet under tag {0}", identifier);
+                    }
+                }
+            }
+
+            if (object instanceof OutgoingPacket) {
+                OutgoingPacket out = (COutPacket) object;
+                JsonObject outBuild = out.build();
+
+                if (out.getType().equals(DataType.HELLO)) {
+                    out.addProperty("identifier", identifier);
+                    byte[] rawKey = Base64.getDecoder().decode(outBuild.get("key").getAsString());
+                    KeyFactory factory = KeyFactory.getInstance("RSA");
+                    EncodedKeySpec keySpec = new X509EncodedKeySpec(rawKey);
+                    sharedPublic = factory.generatePublic(keySpec);
+
+                    outBuild.addProperty("identifier", identifier);
+                    outBuild.addProperty("replying", out.id());
+
+                    Gson gson = new GsonBuilder().create();
+                    String raw = gson.toJson(outBuild);
+
+                    IncomingPacket converted = new CInPacket(raw);
+                    plugin.onReceive(converted);
+                }
+            }
         }
 
         super.channelRead(context, packet);
@@ -89,14 +200,14 @@ public class Injection extends ChannelDuplexHandler {
         if (!injected) {
             if (player == null) return;
 
+            this.client = player.getUniqueId();
+
             this.channel = getChannel(player);
             if (channel == null) return;
 
             ChannelPipeline pipeline = channel.pipeline();
             pipeline.addBefore("packet_handler", "LockLogin:" + player.getName(), this);
             injected = true;
-
-            plugin.info("Successfully injected into {0}", player.getName());
         }
     }
 
@@ -107,8 +218,10 @@ public class Injection extends ChannelDuplexHandler {
                 loop.submit(() -> channel.pipeline().remove(this));
             }
 
-            plugin.info("Successfully released");
+            this.client = null;
             injected = false;
+            channel = null;
+            playerConnection = null;
         }
     }
 
@@ -197,10 +310,12 @@ public class Injection extends ChannelDuplexHandler {
     }
 
     public Channel getChannel(final Player player) {
-        Object entityHandle = toEntityHandle(player);
-        if (entityHandle == null) return null;
+        if (playerConnection == null) {
+            Object entityHandle = toEntityHandle(player);
+            if (entityHandle == null) return null;
 
-        Object playerConnection = playerConnection(entityHandle);
+            playerConnection = playerConnection(entityHandle);
+        }
         if (playerConnection == null) return null;
 
         Object networkManager = networkManager(playerConnection);

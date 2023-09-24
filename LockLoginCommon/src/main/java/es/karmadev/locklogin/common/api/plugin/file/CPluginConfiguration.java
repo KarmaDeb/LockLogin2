@@ -10,11 +10,12 @@ import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
+import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
 
 import javax.crypto.SecretKey;
@@ -147,9 +148,12 @@ public class CPluginConfiguration implements Configuration {
      */
     @Override
     public SecretStore secretKey() {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        LockLoginRuntime runtime = plugin.getRuntime();
+        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, Configuration.class, "secretKey()");
+
         String raw = yaml.getString("SecretKey", "");
 
-        LockLogin plugin = CurrentPlugin.getPlugin();
         if (ObjectUtils.isNullOrEmpty(raw) || !raw.contains("$")) {
             String password = StringUtils.generateString(16);
             byte[] salt = new byte[16];
@@ -576,7 +580,17 @@ public class CPluginConfiguration implements Configuration {
      */
     @Override
     public String language() {
-        return yaml.getString("Lang", "English");
+        String lang = yaml.getString("Language.Name", "English");
+        switch (lang.toLowerCase()) {
+            case "en_en":
+                lang = "English";
+                break;
+            case "es_es":
+                lang = "Spanish";
+                break;
+        }
+
+        return lang.substring(0, 1).toUpperCase() + lang.substring(1).toLowerCase();
     }
 
     /**

@@ -40,10 +40,12 @@
             <scope>provided</scope>
         </dependency>
 
+
         <dependency>
             <groupId>es.karmadev</groupId>
-            <artifactId>KarmaAPI-Spigot</artifactId>
+            <artifactId>KarmaAPI-Bungee</artifactId>
         </dependency>
+
         <dependency>
             <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Core</artifactId>
@@ -51,6 +53,11 @@
         <dependency>
             <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Minecraft</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
 
         <dependency>
@@ -63,5 +70,12 @@
             <artifactId>LockLoginCommon</artifactId>
             <scope>compile</scope>
         </dependency>
+
+        <!--
+        <dependency>
+            <groupId>es.karmadev</groupId>
+            <artifactId>protocolize-bungeecord</artifactId>
+        </dependency>
+        -->
     </dependencies>
 </project>

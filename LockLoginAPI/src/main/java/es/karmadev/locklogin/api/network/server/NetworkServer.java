@@ -4,6 +4,8 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 
 import java.net.InetSocketAddress;
@@ -52,12 +54,24 @@ public interface NetworkServer extends NetworkEntity, TextContainer {
      */
     Collection<LocalNetworkClient> offlineClients();
 
-    Collection<NetworkClient> onlineClients();
-
     /**
      * Get the server packet queue
      *
      * @return the server packet queue
      */
     NetworkChannel channel();
+
+    /**
+     * When a packet is received
+     *
+     * @param packet the packet
+     */
+    void onReceive(final IncomingPacket packet);
+
+    /**
+     * When a packet is sent
+     *
+     * @param packet the packet to send
+     */
+    void onSend(final OutgoingPacket packet);
 }

@@ -17,7 +17,7 @@ public interface AccountMigrator<T extends UserAccount> {
      * @param ignore the fields to ignore
      * @return the migrated account
      */
-    T migrate(final LocalNetworkClient owner, final Transictionable transictionable, final AccountField... ignore);
+    T migrate(final LocalNetworkClient owner, final Transitional transictionable, final AccountField... ignore);
 
     /**
      * Export an account into a transictionable
@@ -26,5 +26,5 @@ public interface AccountMigrator<T extends UserAccount> {
      * @param account the account to export
      * @return the transictionable account
      */
-    Transictionable export(final T account);
+    Transitional export(final T account);
 }

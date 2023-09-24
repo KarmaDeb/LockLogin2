@@ -11,11 +11,10 @@ import lombok.Value;
  */
 @Value(staticConstructor = "at")
 @AllArgsConstructor(staticName = "at")
+@Getter
 public class JoinRow {
 
-    @Getter
     Row row;
-    @Getter
     Table table;
 
     /**

@@ -1,8 +1,10 @@
 package es.karmadev.locklogin.common.api.user.storage.account;
 
-import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
-import es.karmadev.locklogin.api.plugin.database.DataDriver;
+import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
+import es.karmadev.locklogin.api.plugin.database.schema.Row;
+import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.migration.AccountMigrator;
 import es.karmadev.locklogin.common.api.user.storage.account.transiction.CMigrator;
@@ -12,21 +14,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CAccountFactory implements AccountFactory<CAccount> {
 
-    private final DataDriver driver;
+    private final SQLDriver engine;
     private final Set<CAccount> account_cache = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CMigrator migrator;
 
-    public CAccountFactory(final DataDriver driver) {
-        this.driver = driver;
-        this.migrator = new CMigrator(this, driver);
+    public CAccountFactory(final SQLDriver engine) {
+        this.engine = engine;
+        this.migrator = new CMigrator(this);
     }
 
     /**
@@ -45,35 +44,42 @@ public class CAccountFactory implements AccountFactory<CAccount> {
         Connection connection = null;
         Statement statement = null;
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
             long now = Instant.now().toEpochMilli();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `account_id` FROM `user` WHERE `id` = " + client.id())) {
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.ACCOUNT_ID)
+                    .where(Row.ID, QueryBuilder.EQUALS, client.id()).build())) {
                 if (fetch_result.next()) {
-                    int account_id = fetch_result.getInt("account_id");
+                    int account_id = fetch_result.getInt(1);
+
                     if (fetch_result.wasNull()) {
-                        driver.close(null, statement);
+                        engine.close(null, statement);
                         statement = connection.createStatement();
 
-                        statement.execute("INSERT INTO `account` (`created_at`) VALUES (" + now + ")");
-                        driver.close(null, statement);
+                        statement.execute(QueryBuilder.createQuery()
+                                .insert(Table.ACCOUNT, Row.CREATED_AT).values(now)
+                                .build());
+                        engine.close(null, statement);
 
                         statement = connection.createStatement();
                         try (ResultSet result = statement.executeQuery("SELECT last_insert_rowid()")) {
                             if (result.next()) {
                                 account_id = result.getInt(1);
 
-                                driver.close(null, statement);
+                                engine.close(null, statement);
                                 statement = connection.createStatement();
 
-                                statement.executeUpdate("UPDATE `user` SET `account_id` = " + account_id + " WHERE `id` = " + client.id());
+                                statement.executeUpdate(QueryBuilder.createQuery()
+                                        .update(Table.USER).set(Row.ACCOUNT_ID, account_id)
+                                        .where(Row.ID, QueryBuilder.EQUALS, client.id()).build());
                             }
                         }
                     }
 
-                    CAccount account = new CAccount(client.id(), account_id, driver);
+                    CAccount account = new CAccount(client.id(), account_id, engine);
                     account_cache.add(account);
 
                     return account;
@@ -82,7 +88,7 @@ public class CAccountFactory implements AccountFactory<CAccount> {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return null;
@@ -97,26 +103,27 @@ public class CAccountFactory implements AccountFactory<CAccount> {
     public CAccount[] getAllAccounts() {
         List<CAccount> offline = new ArrayList<>(account_cache);
 
-        StringBuilder idIgnorer = new StringBuilder();
+        List<Integer> ids = new ArrayList<>();
         for (CAccount account : offline) {
-            idIgnorer.append(account.id()).append(",");
+            ids.add(account.id());
         }
-        String not_in = StringUtils.replaceLast(idIgnorer.toString(), ",", "");
+
+        List<CAccount> accounts = new ArrayList<>(account_cache);
 
         Connection connection = null;
         Statement statement = null;
-        List<CAccount> accounts = new ArrayList<>(account_cache);
         try {
-            connection = driver.retrieve();
+            connection = engine.retrieve();
             statement = connection.createStatement();
 
-            try (ResultSet fetch_result = statement.executeQuery("SELECT `id`,`account_id` FROM `user` WHERE `account_id` NOT IN (" + not_in + ")")) {
+            try (ResultSet fetch_result = statement.executeQuery(QueryBuilder.createQuery().select(Table.USER, Row.ACCOUNT_ID, Row.ID)
+                    .where(Row.ACCOUNT_ID, QueryBuilder.NOT_IN(ids)).build())) {
                 while (fetch_result.next()) {
-                    int account_id = fetch_result.getInt("account_id");
+                    int account_id = fetch_result.getInt(1);
                     if (!fetch_result.wasNull()) {
-                        int user_id = fetch_result.getInt("id");
+                        int user_id = fetch_result.getInt(1);
                         if (!fetch_result.wasNull()) {
-                            CAccount account = new CAccount(user_id, account_id, driver);
+                            CAccount account = new CAccount(user_id, account_id, engine);
                             account_cache.add(account);
                             accounts.add(account);
                         }
@@ -126,7 +133,7 @@ public class CAccountFactory implements AccountFactory<CAccount> {
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {
-            driver.close(connection, statement);
+            engine.close(connection, statement);
         }
 
         return accounts.toArray(new CAccount[0]);

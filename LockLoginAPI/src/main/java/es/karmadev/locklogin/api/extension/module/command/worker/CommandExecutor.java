@@ -3,7 +3,7 @@ package es.karmadev.locklogin.api.extension.module.command.worker;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
 /**
- * LockLogin module command execturo
+ * LockLogin module command executor
  */
 public interface CommandExecutor {
 

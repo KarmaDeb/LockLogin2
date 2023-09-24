@@ -11,6 +11,7 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
+import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
 
 import java.util.*;
@@ -20,6 +21,10 @@ public class CPluginHasher implements LockLoginHasher {
 
     private final Set<PluginHash> hashes = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final VirtualID virtualID = new CVirtualId();
+
+    public CPluginHasher() {
+        hashes.add(new LegacyHash());
+    }
 
     /**
      * Register a new hash method

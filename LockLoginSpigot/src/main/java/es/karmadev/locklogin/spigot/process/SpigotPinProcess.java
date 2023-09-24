@@ -129,10 +129,14 @@ public class SpigotPinProcess implements UserAuthProcess {
         Bukkit.getServer().getPluginManager().registerEvent(InventoryCloseEvent.class, new Listener() {}, EventPriority.HIGHEST, ((listener, event) -> {
             assert event instanceof InventoryCloseEvent;
             InventoryCloseEvent e = (InventoryCloseEvent) event;
-            if (e.getInventory().getHolder().equals(holder)) {
-                task.complete(CAuthProcess.forResult(true, this));
-            } else {
-                task.complete(CAuthProcess.forResult(false, this));
+            Inventory eInventory = e.getInventory();
+            InventoryHolder eHolder = eInventory.getHolder();
+            if (eHolder != null) {
+                if (eHolder.equals(holder)){
+                    task.complete(CAuthProcess.forResult(true, this));
+                } else{
+                    task.complete(CAuthProcess.forResult(false, this));
+                }
             }
         }), plugin.plugin());
 

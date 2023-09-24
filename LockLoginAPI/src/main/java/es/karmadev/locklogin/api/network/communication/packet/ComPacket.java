@@ -1,11 +1,12 @@
 package es.karmadev.locklogin.api.network.communication.packet;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * LockLogin json packet
  */
-public interface ComPacket {
+public interface ComPacket extends Serializable {
 
     /**
      * Get the packet ID

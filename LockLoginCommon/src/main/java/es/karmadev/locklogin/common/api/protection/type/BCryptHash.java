@@ -8,6 +8,7 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.EncryptionConfiguration;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
+import es.karmadev.locklogin.api.security.hash.LegacyPluginHash;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
@@ -16,7 +17,7 @@ import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
 
 import java.nio.charset.StandardCharsets;
 
-public final class BCryptHash extends PluginHash {
+public final class BCryptHash extends PluginHash implements LegacyPluginHash {
 
     public BCryptHash() {
         super("version");
@@ -51,7 +52,7 @@ public final class BCryptHash extends PluginHash {
             VirtualID id = hasher.virtualID();
             virtualized = id.virtualize(input);
         } else {
-            virtualized = CVirtualInput.of(new int[0], false, input.getBytes(StandardCharsets.UTF_8));
+            virtualized = CVirtualInput.raw(input.getBytes(StandardCharsets.UTF_8));
         }
 
         BCrypt.Version version = getMainVersion();
@@ -162,5 +163,28 @@ public final class BCryptHash extends PluginHash {
         }
 
         return bCryptVersion;
+    }
+
+    /**
+     * Validates the legacy hash
+     *
+     * @param input the input
+     * @param token the legacy hash token
+     * @return if the input matches the token
+     */
+    @Override
+    public boolean auth(final String input, final String token) {
+        BCrypt.Version checkVersion = getMainVersion();
+
+        boolean valid = BCrypt.verifyer(checkVersion, LongPasswordStrategies.hashSha512(checkVersion)).verify(input.toCharArray(), token).verified;
+        if (valid) return true;
+
+        for (BCrypt.Version version : BCrypt.Version.SUPPORTED_VERSIONS) {
+            if (BCrypt.verifyer(version, LongPasswordStrategies.hashSha512(version)).verify(input.toCharArray(), token).verified) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

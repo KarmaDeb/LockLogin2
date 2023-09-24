@@ -6,6 +6,7 @@ import es.karmadev.api.shaded.google.gson.*;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 
 import java.io.*;
@@ -85,7 +86,7 @@ public class CPluginDependency {
                         JsonObject dependencyJson = element.getAsJsonObject();
                         JsonDependency dependency = new JsonDependency(dependencyJson);
 
-                        if (dependency.isPlugin()) continue; //Ignore plugin dependencies
+                        if (dependency.type().equals(DependencyType.PLUGIN)) continue; //Ignore plugin dependencies
 
                         String id = dependencyJson.get("id").getAsString();
                         long adler = 0;
@@ -122,16 +123,18 @@ public class CPluginDependency {
 
                             dependency.generateChecksum().define("adler", rAdler.getValue());
                             dependency.generateChecksum().define("crc", rCrc.getValue());
+                            dependency.generateChecksum().hash(hash);
                         } else {
                             dependency.generateChecksum().define("adler", 0);
                             dependency.generateChecksum().define("crc", 0);
+                            dependency.generateChecksum().hash(null);
                         }
 
                         dependency.checksum().define("adler", adler);
                         dependency.checksum().define("crc", crc);
 
                         Checksum checksum = dependency.checksum();
-                        if (checksum.matches(dependency.generateChecksum()) && !checksum.verify(hash)) {
+                        if (checksum.matches(dependency.generateChecksum())) {
                             if (!ignore.contains(dependency))
                                 ignore.add(dependency);
 

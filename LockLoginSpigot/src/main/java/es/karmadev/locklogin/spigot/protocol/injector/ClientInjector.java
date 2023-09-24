@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.protocol.injector;
 
-import es.karmadev.api.core.KarmaPlugin;
+import es.karmadev.api.spigot.core.KarmaPlugin;
 import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
