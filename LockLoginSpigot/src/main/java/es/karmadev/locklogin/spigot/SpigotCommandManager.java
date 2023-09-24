@@ -5,7 +5,7 @@ import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.module.manager.ModuleManager;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.plugin.file.Messages;
@@ -44,7 +44,7 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
             CommandHandler handler = handlers.remove(command);
             handler.unregister(map);
 
-            plugin.info("Unregistered command {0} from module {1}", command.getName(), command.getModule().sourceName());
+            plugin.info("Unregistered command {0} from module {1}", command.getName(), command.getModule().getName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {
@@ -120,9 +120,9 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
                     }
                 })).build();
 
-        if (map.register(command.getName(), module.sourceName(), handler)) {
+        if (map.register(command.getName(), module.getName(), handler)) {
             handlers.put(command, handler);
-            plugin.info("Registered command {0} from module {1}", command.getName(), module.sourceName());
+            plugin.info("Registered command {0} from module {1}", command.getName(), module.getName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {

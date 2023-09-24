@@ -42,7 +42,7 @@ public class CModCommand extends ModuleCommand {
         LockLoginRuntime runtime = plugin.getRuntime();
 
         Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().findByFile(caller);
+        Module callerModule = plugin.moduleManager().loader().getModule(caller);
 
         if (callerModule == null || !callerModule.equals(module)) {
             throw new SecurityException("Cannot set module executor from an unverified source");
@@ -64,7 +64,7 @@ public class CModCommand extends ModuleCommand {
         LockLoginRuntime runtime = plugin.getRuntime();
 
         Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().findByFile(caller);
+        Module callerModule = plugin.moduleManager().loader().getModule(caller);
 
         if (callerModule == null || !callerModule.equals(module)) {
             throw new SecurityException("Cannot set module tab completor from an unverified source");

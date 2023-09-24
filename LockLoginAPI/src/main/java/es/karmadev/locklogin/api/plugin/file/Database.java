@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.plugin.file;
 
-import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 

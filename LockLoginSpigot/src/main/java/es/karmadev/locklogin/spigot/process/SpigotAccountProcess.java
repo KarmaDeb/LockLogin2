@@ -10,6 +10,7 @@ import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.user.auth.CAuthProcess;
+import es.karmadev.locklogin.common.api.user.session.CSessionChecker;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.Bukkit;

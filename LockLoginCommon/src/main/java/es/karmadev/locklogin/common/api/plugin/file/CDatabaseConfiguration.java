@@ -1,12 +1,11 @@
 package es.karmadev.locklogin.common.api.plugin.file;
 
-import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.database.Driver;
+import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Database;
@@ -27,7 +26,7 @@ public class CDatabaseConfiguration implements Database {
         final Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("database.yml");
 
         LockLogin plugin = CurrentPlugin.getPlugin();
-        PathUtilities.copy(plugin, "plugin/yaml/database.yml", file);
+        //PathUtilities.copy(plugin, "plugin/yaml/database.yml", file);
 
         try {
             YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));

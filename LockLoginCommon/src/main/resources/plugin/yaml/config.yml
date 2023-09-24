@@ -13,16 +13,6 @@
 #and some plugin messages
 ServerName: ""
 
-#Manage the web services communication
-#server.
-#
-# DO NOT CHANGE THIS UNLESS YOU KNOW WHAT
-# YOU ARE DOING
-Communications:
-  Server: "karmadev.es"
-  Port: 2053
-  SSL: true
-
 #Allow bedrock players to bypass login if
 #they already have an account on LockLogin
 BedrockLogin: false
@@ -54,8 +44,6 @@ Statistics:
 
 #Account backups configuration
 #
-# NOTE: THIS OPTIONS DON'T WORK CURRENTLY
-#
 # Backup.Enable -> Enable periodical backups (A backup is always performed on server startup and server stop)
 # Backup.Max -> The maximum amount of backups. If max limit reached, the oldest backup will be removed (Leeave to 0 to disable)
 # Backup.Period -> The period to store player accounts (in minutes)
@@ -69,12 +57,14 @@ Backup:
 #Premium configuration
 #
 # Enable -> Enable the premium feature
+# AutoToggle -> Tries to enable premium mode automatically
 # ForceUUID -> This will ensure the client uses the correct UUID.
 #              For example, on an offline mode server, the client will
 #              use his offline UUID. In an online-mode server, the client
 #              will use his online UUID
 Premium:
   Enable: true
+  AutoToggle: true
   ForceUUID: true
 
 #While true, if your server is in bungeecord
@@ -421,9 +411,9 @@ NameCheckProtocol: 2
 # Available languages are:
 # English ( en_EN | English )
 # Spanish ( es_ES | Spanish )
-# French ( fr_FR | French )
-# Simplified Chinese ( zh_CN | Chinese simplified | Simplified chinese )
-# being english by default
+# being english by default. You can install
+# more languages remotely by using
+# lpm command (LockLogin's language-pack-manager)
 Language:
   Name: en_EN
 
@@ -434,6 +424,5 @@ Language:
 # Valid drivers are:
 #  SQLite
 #  MySQL
-#  MariaDB
-#  MongoDB
+#  MariaDB [Recommended over MySQL]
 DataDriver: SQLITE
