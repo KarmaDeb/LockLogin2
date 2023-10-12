@@ -126,34 +126,10 @@
             <artifactId>netty-transport</artifactId>
         </dependency>
 
-        <!-- Migration purposes only -->
-        <!--
         <dependency>
-            <groupId>eu.locklogin</groupId>
-            <artifactId>LockLogin-API</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>eu.locklogin</groupId>
-            <artifactId>LockLogin-Common</artifactId>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>eu.locklogin</groupId>
-            <artifactId>LockLogin-Spigot</artifactId>
-        </dependency>
-        -->
-
-        <!--
-        <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Bukkit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ml.karmaconfigs</groupId>
-            <artifactId>KarmaAPI-Common</artifactId>
-        </dependency>
-        -->
     </dependencies>
 
     <distributionManagement>

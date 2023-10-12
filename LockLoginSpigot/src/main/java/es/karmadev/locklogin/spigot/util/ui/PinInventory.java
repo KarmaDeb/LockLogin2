@@ -1,14 +1,17 @@
 package es.karmadev.locklogin.spigot.util.ui;
 
 import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.spigot.core.scheduler.SpigotTask;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -33,8 +36,14 @@ public class PinInventory {
     private final static LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
     private final static Map<UUID, String[]> inputs = new ConcurrentHashMap<>();
     private final static Map<UUID, PinInventory> inventories = new ConcurrentHashMap<>();
+
+    @Getter
     private final Inventory inventory;
+
+    private final ItemStack inputDisplay;
+
     private NetworkClient player;
+    private Runnable onSuccess;
 
     public PinInventory(final NetworkClient player) {
         this.player = player;
@@ -47,6 +56,14 @@ public class PinInventory {
             if (title.length() > 32) title = title.substring(0, 32);
 
             inventory = Bukkit.getServer().createInventory(null, 45, title);
+            inputDisplay = new ItemStack(Material.PAPER);
+            ItemMeta meta = inputDisplay.getItemMeta();
+            assert meta != null;
+
+            meta.setDisplayName(ColorComponent.parse("&7____"));
+            meta.addItemFlags(ItemFlag.values());
+
+            inputDisplay.setItemMeta(meta);
             inventories.put(player.uniqueId(), this);
         } else {
             if (!stored.player.equals(player)) {
@@ -55,13 +72,17 @@ public class PinInventory {
             }
 
             inventory = stored.inventory;
+            inputDisplay = stored.inputDisplay;
         }
     }
 
     /**
      * Open the inventory to client
+     * @param onSuccess the action to execute when the
+     *                  client types in the pin correctly
      */
-    public void open() {
+    public void open(final Runnable onSuccess) {
+        this.onSuccess = onSuccess;
         SpigotTask task = plugin.plugin().scheduler("sync")
                 .schedule(() -> {
                     Player client = UserDataHandler.getPlayer(player);
@@ -83,20 +104,86 @@ public class PinInventory {
      */
     public void close() {
         inventories.remove(player.uniqueId());
+        inputs.remove(player.uniqueId());
         List<HumanEntity> views = new ArrayList<>(inventory.getViewers());
         views.forEach(HumanEntity::closeInventory);
+        onSuccess = null;
+    }
+
+    /**
+     * Trigger a button click
+     *
+     * @param button the button that has been clicked
+     */
+    public void click(final PinButton button) {
+        if (button.equals(PinButton.CONFIRM)) {
+            confirm();
+            return;
+        }
+
+        if (button.equals(PinButton.DELETE)) {
+            String[] inputs = PinInventory.inputs.computeIfAbsent(player.uniqueId(), (d) -> new String[4]);
+            int index = -1;
+            for (int i = 0; i < inputs.length; i++) {
+                String val = inputs[i];
+                if (!ObjectUtils.isNullOrEmpty(val)) {
+                    index = i;
+                }
+            }
+
+            if (index >= 0) {
+                inputs[index] = null;
+                PinInventory.inputs.put(player.uniqueId(), inputs);
+                rebuildInput();
+                return;
+            }
+
+            return;
+        }
+
+        String[] inputs = PinInventory.inputs.computeIfAbsent(player.uniqueId(), (d) -> new String[4]);
+        int index = -1;
+        for (int i = 0; i < inputs.length; i++) {
+            String val = inputs[i];
+            if (ObjectUtils.isNullOrEmpty(val)) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index >= 0) {
+            inputs[index] = String.valueOf(button.toNumber());
+            rebuildInput();
+        }
+    }
+
+    private void rebuildInput() {
+        String[] inputs = PinInventory.inputs.computeIfAbsent(player.uniqueId(), (d) -> new String[4]);
+        StringBuilder inputBuilder = new StringBuilder();
+        for (String value : inputs) {
+            if (!ObjectUtils.isNullOrEmpty(value)) {
+                inputBuilder.append(value);
+            } else {
+                inputBuilder.append("_");
+            }
+        }
+
+        ItemMeta displayMeta = inputDisplay.getItemMeta();
+        assert displayMeta != null;
+
+        displayMeta.setDisplayName(ColorComponent.parse("&7{0}", inputBuilder));
+        inputDisplay.setItemMeta(displayMeta);
+        inventory.setItem(25, inputDisplay);
     }
 
     /**
      * Confirm the pin
      */
-    public boolean confirm() {
+    private void confirm() {
         String[] input = inputs.computeIfAbsent(player.uniqueId(), (data) -> new String[4]);
         if (invalidInput(input)) {
             Messages messages = plugin.messages();
             player.sendMessage(messages.prefix() + messages.pinLength());
-
-            return false;
         }
 
         StringBuilder pinBuilder = new StringBuilder();
@@ -113,13 +200,15 @@ public class PinInventory {
             }
 
             if (plugin.bungeeMode()) {
-
+                //TODO: Send pin auth status
             }
 
-            return true;
-        }
+            player.session().append(CSessionField.newField(Boolean.class, "pin_logged", true));
+            if (onSuccess != null)
+                onSuccess.run();
 
-        return false;
+            close();
+        }
     }
 
     private boolean invalidInput(final String[] data) {
@@ -145,28 +234,47 @@ public class PinInventory {
         for (PinButton button : PinButton.values()) {
             inventory.setItem(button.getSlot(), button.toItemStack());
         }
+        inventory.setItem(25, inputDisplay);
 
-        Material emptySlot;
+        Material emptySlot = Material.DIRT;
         try {
             emptySlot = Material.matchMaterial("STAINED_GLASS_PANE", true);
         } catch (Throwable ex) {
-            emptySlot = Material.matchMaterial("STAINED_GLASS_PANE");
+            try {
+                emptySlot = Material.matchMaterial("STAINED_GLASS_PANE");
+            } catch (IllegalArgumentException ignored) {}
         }
+        try {
+            if (emptySlot == null) emptySlot = Material.LEGACY_STAINED_GLASS_PANE;
+            /*
+            Even though we don't really provide official support
+            for legacy versions, let the plugin kinda work on them
+             */
+        } catch (Throwable ignored) {}
 
-        if (emptySlot == null) emptySlot = Material.LEGACY_STAINED_GLASS_PANE;
         ItemStack empty = new ItemStack(emptySlot);
         ItemMeta meta = empty.getItemMeta();
         assert meta != null;
+
         meta.setDisplayName("");
         meta.addItemFlags(ItemFlag.values());
 
         empty.setItemMeta(meta);
-
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack stack = inventory.getItem(i);
             if (stack == null || stack.getType().isAir()) {
                 inventory.setItem(i, empty);
             }
         }
+    }
+
+    /**
+     * Get the pin inventory of the client
+     *
+     * @param client the client
+     * @return the client pin inventory
+     */
+    public static PinInventory getInstance(final NetworkClient client) {
+        return inventories.getOrDefault(client.uniqueId(), null);
     }
 }

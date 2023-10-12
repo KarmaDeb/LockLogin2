@@ -54,6 +54,13 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @return the plugin message
+     */
+    String completeExtra();
+
+    /**
+     * Get a plugin message
+     *
      * @return plugin message
      */
     String bungeeProxy();
@@ -555,6 +562,13 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @return the plugin message
+     */
+    String gAuthDisableUsage();
+
+    /**
+     * Get a plugin message
+     *
      * @return plugin message
      */
     String gAuthRequired();
@@ -635,7 +649,7 @@ public interface Messages {
      * @param codes message replace
      * @return plugin message
      */
-    String gAuthScratchCodes(final List<Integer> codes);
+    String gAuthScratchCodes(final List<String> codes);
 
     /**
      * Get a plugin message
