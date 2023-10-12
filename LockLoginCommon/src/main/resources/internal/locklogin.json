@@ -4,58 +4,51 @@
   "dependencies": [
     {
       "type": "single",
-      "id": "cfr_decompiler",
-      "name": "CFR",
-      "file": "CFR.jar",
-      "test": "${cfr.decompiler.test}",
-      "version": {
-        "project": "${cfr.decompiler.version}",
-        "required": "${cfr.decompiler.version}"
-      },
-      "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "legacy_locklogin",
-      "name": "LockLogin Legacy",
-      "file": "LockLogin.jar",
-      "test": "eu.locklogin.api.util.platform.CurrentPlatform",
-      "version": {
-        "project": "1.13.66",
-        "required": "1.13.66"
-      },
-      "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "legacy_karmaapi",
-      "name": "KarmaAPI Legacy",
-      "file": "KarmaAPI.jar",
-      "test": "ml.karmaconfigs.api.common.karma.source.APISource",
-      "version": {
-        "project": "1.3.4-SNAPSHOT",
-        "required": "1.3.4-SNAPSHOT"
-      },
-      "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "asm_bytecode",
+      "id": "relocator_asm",
       "name": "ASM",
       "file": "ASM.jar",
-      "test": "${asm.bytecode.test}",
+      "test": "${asm.relocator.test}",
       "version": {
-        "project": "${asm.bytecode.version}",
-        "required": "${asm.bytecode.version}"
+        "project": "${asm.relocator.version}",
+        "required": "${asm.relocator.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "asm_tree",
+      "name": "ASM Tree",
+      "file": "ASMTree.jar",
+      "test": "${asm.tree.test}",
+      "version": {
+        "project": "${asm.tree.version}",
+        "required": "${asm.tree.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ],
+      "depends": [
+        "asm"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "asm_analysis",
+      "name": "ASM Analysis",
+      "file": "ASMAnalysis.jar",
+      "test": "${asm.analysis.test}",
+      "version": {
+        "project": "${asm.analysis.version}",
+        "required": "${asm.analysis.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ],
+      "depends": [
+        "asm",
+        "asm_tree"
       ]
     },
     {
@@ -69,28 +62,67 @@
         "required": "${asm.commons.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ],
       "depends": [
-        "asm_bytecode"
+        "asm",
+        "asm_tree",
+        "asm_analysis"
       ]
     },
     {
       "type": "single",
-      "id": "jar_relocator",
-      "name": "Jar Relocator",
-      "file": "JarRelocator.jar",
-      "test": "${jar.relocator.test}",
+      "id": "jakarta_api",
+      "name": "Jakarta API",
+      "file": "JakartaAPI.jar",
+      "test": "${jakarta.api.test}",
       "version": {
-        "project": "${jar.relocator.version}",
-        "required": "${jar.relocator.version}"
+        "project": "${jakarta.api.version}",
+        "required": "${jakarta.api.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "jakarta_activation",
+      "name": "Jakarta Activation",
+      "file": "JakartaActivation.jar",
+      "test": "${jakarta.activation.test}",
+      "version": {
+        "project": "${jakarta.activation.version}",
+        "required": "${jakarta.activation.version}"
+      },
+      "depends": [
+        "jakarta_api"
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "angus_mail",
+      "name": "Angus Mail",
+      "file": "AngusMail.jar",
+      "test": "${angus.mail.test}",
+      "version": {
+        "project": "${angus.mail.version}",
+        "required": "${angus.mail.version}"
+      },
+      "relocations": [
+        {
+          "from": "org.eclipse.angus.mail",
+          "to": "es.karmadev.locklogin.shaded.mail"
+        }
       ],
       "depends": [
-        "asm_bytecode",
-        "asm_commons"
+        "jakarta_api",
+        "jakarta_activation"
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -104,21 +136,7 @@
         "required": "${apache.commons.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "google_authenticator",
-      "name": "Google Authenticator",
-      "file": "GoogleAuthenticator.jar",
-      "test": "${google.auth.test}",
-      "version": {
-        "project": "${google.auth.version}",
-        "required": "${google.auth.version}"
-      },
-      "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -132,7 +150,7 @@
         "required": "${google.guava.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -146,7 +164,7 @@
         "required": "${log4j.core.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -160,7 +178,7 @@
         "required": "${log4j.web.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ],
       "depends": [
         "log4j_core"
@@ -177,21 +195,7 @@
         "required": "${slf.api.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "socket_io",
-      "name": "Socket IO",
-      "file": "SocketIO.jar",
-      "test": "${socket.io.test}",
-      "version": {
-        "project": "${socket.io.version}",
-        "required": "${socket.io.version}"
-      },
-      "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -205,7 +209,107 @@
         "required": "${hikari.cp.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "favre_bytes",
+      "name": "Bytes",
+      "file" : "Bytes.jar",
+      "test": "${favre.bytes.test}",
+      "version": {
+        "project": "${favre.bytes.version}",
+        "required": "${favre.bytes.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "favre_bcrypt",
+      "name": "BCrypt",
+      "file" : "BCrypt.jar",
+      "test": "${favre.bcrypt.test}",
+      "version": {
+        "project": "${favre.bcrypt.version}",
+        "required": "${favre.bcrypt.version}"
+      },
+      "relocations": [
+        {
+          "from": "at.favre.lib.crypto.bcrypt",
+          "to": "es.karmadev.locklogin.shaded.bcrypt"
+        }
+      ],
+      "depends": [
+        "favre_bytes"
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "argon2_flat",
+      "name": "Argon2 flat version",
+      "file": "Argon2.jar",
+      "test": "${argon.flat.test}",
+      "version": {
+        "project": "${argon.flat.version}",
+        "required": "${argon.flat.version}"
+      },
+      "relocations": [
+        {
+          "from": "de.mkammerer.argon2",
+          "to": "es.karmadev.locklogin.shaded.argon2"
+        }
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "argon2_jvm",
+      "name": "Argon2 for Java",
+      "file": "Argon2JVM.jar",
+      "test": "${argon.java.test}",
+      "version": {
+        "project": "${argon.java.version}",
+        "required": "${argon.java.version}"
+      },
+      "relocations": [
+        {
+          "from": "de.mkammerer.argon2",
+          "to": "es.karmadev.locklogin.shaded.argon2"
+        }
+      ],
+      "depends": [
+        "argon2_flat"
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
+    {
+      "type": "single",
+      "id": "craft_api",
+      "name": "CraftAPI",
+      "file": "CraftAPI.jar",
+      "test": "${craft.api.test}",
+      "version": {
+        "project": "${craft.api.version}",
+        "required": "${craft.api.version}"
+      },
+      "relocations": [
+        {
+          "from": "com.github.games647.craftapi",
+          "to": "es.karmadev.locklogin.shaded.craftapi"
+        }
+      ],
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
     {
@@ -219,7 +323,7 @@
         "required": "${java.native.version}"
       },
       "download": [
-        "https://reddo.es/repository/locklogin/dependency/${locklogin.repository.version}/"
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
 
@@ -313,13 +417,11 @@
     "type": "${locklogin.update.name}",
     "check": [
       "https://karmadev.es/locklogin/version/",
-      "https://backup.karmadev.es/locklogin/version",
-      "https://reddo.es/karmadev/locklogin/version/",
-      "https://github.io/karmadeb/updates/locklogin/version/"
+      "https://raw.githubusercontent.com/KarmaDeb/updates/master/LockLogin/version/"
     ],
-    "download": []
+    "marketplace": "${locklogin.market.version}"
   },
   "checksum": [
-    "https://reddo.es/repository/locklogin/${locklogin.checksum.version}/checksum.json"
+    "https://karmadev.es/locklogin-repository/${locklogin.checksum.version}/checksum.json"
   ]
 }

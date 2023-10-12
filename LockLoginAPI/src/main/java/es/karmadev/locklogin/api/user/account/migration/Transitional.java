@@ -6,28 +6,28 @@ import java.io.Serializable;
 import java.util.UUID;
 
 /**
- * LockLogin transictionable account
+ * LockLogin transitional account
  */
 public interface Transitional extends Serializable {
 
     /**
      * Get the transitional account player
      *
-     * @return the transictionable
+     * @return the transitional
      * player
      */
     String player();
 
     /**
-     * Get teh transictionable account
+     * Get teh transitional account
      * unique id
      *
-     * @return the transictionable uuid
+     * @return the transitional uuid
      */
     UUID uniqueId();
 
     /**
-     * Get the transictionable account
+     * Get the transitional account
      * password
      *
      * @return the account password
@@ -35,7 +35,7 @@ public interface Transitional extends Serializable {
     HashResult password();
 
     /**
-     * Get the transictionable account
+     * Get the transitional account
      * pin
      *
      * @return the account pin
@@ -43,15 +43,15 @@ public interface Transitional extends Serializable {
     HashResult pin();
 
     /**
-     * Get the transictionable account
-     * 2fa token
+     * Get the transitional account
+     * totp token
      *
-     * @return the account 2fa token
+     * @return the account totp token
      */
-    String _2fa();
+    String totp();
 
     /**
-     * Get the transictionable account
+     * Get the transitional account
      * panic token
      *
      * @return the account panic token
@@ -59,7 +59,7 @@ public interface Transitional extends Serializable {
     HashResult panic();
 
     /**
-     * Get if the transictionable account
+     * Get if the transitional account
      * has a password
      *
      * @return if the account has password
@@ -67,31 +67,31 @@ public interface Transitional extends Serializable {
     boolean hasPassword();
 
     /**
-     * Get if the transictionable account
+     * Get if the transitional account
      * has a pin
      *
-     * @return if the account has passwpinord
+     * @return if the account has pin
      */
     boolean hasPin();
 
     /**
-     * Get if the transictionable account
-     * has a 2fa
+     * Get if the transitional account
+     * has a totp
      *
-     * @return if the account has 2fa enabled
+     * @return if the account has totp enabled
      */
-    boolean has2fa();
+    boolean hasTotp();
 
     /**
-     * Get if the transictionable account
-     * has a 2fa token
+     * Get if the transitional account
+     * has a totp token
      *
-     * @return if the account has 2fa token
+     * @return if the account has totp token
      */
-    boolean isTokenSet();
+    boolean isTotpSet();
 
     /**
-     * Get if the transictionable account
+     * Get if the transitional account
      * has a panic token
      *
      * @return if the account has panic token

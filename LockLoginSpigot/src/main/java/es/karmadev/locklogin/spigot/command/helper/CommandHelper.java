@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.spigot.command.helper;
 
+import es.karmadev.locklogin.api.user.auth.ProcessFactory;
+import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import org.bukkit.command.Command;
 import org.bukkit.command.SimpleCommandMap;
@@ -19,6 +21,7 @@ import java.util.zip.ZipEntry;
 public class CommandHelper {
 
     private final Set<String> toUnregister = new HashSet<>();
+    private final Map<Command, Set<String>> commandToUnregister = new HashMap<>();
 
     private final SimpleCommandMap map;
 
@@ -40,6 +43,17 @@ public class CommandHelper {
         toUnregister.clear();
     }
 
+    private void unMap(final Command command) {
+        for (String label : commandToUnregister.getOrDefault(command, new HashSet<>())) {
+            Map<String, Command> knownCommands = getMap();
+
+            Command c = knownCommands.remove(label);
+            c.unregister(map);
+        }
+
+        commandToUnregister.remove(command);
+    }
+
     public void mapCommand(final LockLoginSpigot spigot) throws IOException, ClassNotFoundException {
         List<Class<?>> result = getClassesAt(spigot.getRuntime().file().toFile());
         for (Class<?> file : result) {
@@ -58,27 +72,56 @@ public class CommandHelper {
                         continue;
                     }
 
-                    try {
-                        Constructor<? extends Command> commandConstructor = executor.getConstructor(String.class);
-                        commandConstructor.setAccessible(true);
+                    Class<? extends UserAuthProcess> processAttachment = command.processAttachment();
+                    if (!processAttachment.equals(UserAuthProcess.class)) {
+                        ProcessFactory factory = spigot.getProcessFactory();
+                        if (!factory.isEnabled(processAttachment)) {
+                            String cmd = command.command();
+                            Command registered = map.getCommand("locklogin:" + cmd);
+                            if (registered != null) {
+                                unMap(registered);
+                                spigot.info("Unregistered command {0}", command.command());
+                            }
 
-                        Map<String, Command> knownCommands = getMap();
-                        if (!knownCommands.containsKey(command.command())) {
-                            toUnregister.add(command.command());
+                            continue;
                         }
-                        toUnregister.add("locklogin:" + command.command());
+                    }
 
-                        Command unknownCommand = commandConstructor.newInstance(command.command());
-                        boolean success = map.register(command.command(), "locklogin", unknownCommand);
+                    Command registered = map.getCommand("locklogin:" + command.command());
+                    if (registered == null) {
+                        try {
+                            Constructor<? extends Command> commandConstructor = executor.getConstructor(String.class);
+                            commandConstructor.setAccessible(true);
 
-                        if (success) {
-                            spigot.logInfo("Registered command {0}", command.command());
-                        } else {
-                            spigot.logInfo("Failed to register command {0}", command.command());
+                            Map<String, Command> knownCommands = getMap();
+                            Set<String> localUnregister = new HashSet<>();
+                            if (!knownCommands.containsKey(command.command())) {
+                                toUnregister.add(command.command());
+                                localUnregister.add(command.command());
+                            }
+                            toUnregister.add("locklogin:" + command.command());
+                            localUnregister.add("locklogin:" + command.command());
+
+                            Command unknownCommand = commandConstructor.newInstance(command.command());
+                            boolean success = map.register(command.command(), "locklogin", unknownCommand);
+
+                            commandToUnregister.put(unknownCommand, localUnregister);
+
+                            if (success) {
+                                spigot.info("Registered command {0}", command.command());
+                            } else {
+                                spigot.err("Failed to register command {0}", command.command());
+                            }
+                        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+                                 IllegalAccessException ex) {
+                            spigot.log(ex, "An error occurred while registering command {0}", command.command());
+                            spigot.err("Something went wrong while registering command {0}", command.command());
                         }
-                    } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException ex) {
-                        spigot.log(ex, "An error occurred while registering command {0}", command.command());
-                        spigot.err("Something went wrong while registering command {0}", command.command());
+                    } else {
+                        if (!registered.isRegistered()) {
+                            registered.register(map);
+                            spigot.info("Registered command {0}", command.command());
+                        }
                     }
                 }
             }
@@ -136,5 +179,9 @@ public class CommandHelper {
         }
 
         return count;
+    }
+
+    public Set<String> getCommands() {
+        return Collections.unmodifiableSet(toUnregister);
     }
 }

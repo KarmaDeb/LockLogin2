@@ -34,7 +34,7 @@ public class CBackupUser implements UserBackup {
     private HashResult pin;
     @Getter
     @Accessors(fluent = true)
-    private String _2fa;
+    private String totp;
     @Getter
     @Accessors(fluent = true)
     private HashResult panic;
@@ -47,10 +47,10 @@ public class CBackupUser implements UserBackup {
     private boolean hasPin;
     @Getter
     @Accessors(fluent = true)
-    private boolean has2fa;
+    private boolean hasTotp;
     @Getter
     @Accessors(fluent = true)
-    private boolean isTokenSet;
+    private boolean isTotpSet;
     @Getter
     @Accessors(fluent = true)
     private boolean hasPanic;
@@ -78,12 +78,12 @@ public class CBackupUser implements UserBackup {
         instance.uniqueId = client.uniqueId();
         instance.password = account.password();
         instance.pin = account.pin();
-        instance._2fa = account._2FA();
+        instance.totp = account.totp();
         instance.panic = account.panic();
         instance.hasPassword = account.isRegistered();
         instance.hasPin = account.hasPin();
-        instance.has2fa = account.has2FA();
-        instance.isTokenSet = account._2faSet();
+        instance.hasTotp = account.hasTotp();
+        instance.isTotpSet = account.totpSet();
         instance.hasPanic = account.isProtected();
         instance.sessionPersistent = client.session() != null && client.session().isPersistent();
         instance.creation = client.creation().toEpochMilli();

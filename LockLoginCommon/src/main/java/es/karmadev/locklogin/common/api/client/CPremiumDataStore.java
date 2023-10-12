@@ -85,6 +85,46 @@ public final class CPremiumDataStore implements PremiumDataStore {
     }
 
     /**
+     * Get if the client has a premium
+     * ID
+     *
+     * @param name the client name
+     * @return if the client has a premium ID
+     */
+    @Override
+    public boolean exists(final String name) {
+        UUID cache = cached.getOrDefault(name, null);
+        if (cache != null) return true;
+
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
+
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                    .select(Table.USER, Row.PREMIUM_UUID)
+                    .where(Row.NAME, QueryBuilder.EQUALS, name).build())) {
+                if (result.next()) {
+                    String uniqueId = result.getString(1);
+                    if (!ObjectUtils.isNullOrEmpty(uniqueId)) {
+                        cache = UUID.fromString(uniqueId);
+                        cached.put(name, cache);
+
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
+        }
+
+        return false;
+    }
+
+    /**
      * Save the client online id
      *
      * @param name     the client name

@@ -9,11 +9,11 @@ public enum Table {
     /**
      * Accounts table
      */
-    ACCOUNT("Accounts", Row.PASSWORD, Row.PIN, Row.PIN, Row.TOKEN_2FA, Row.PANIC, Row.STATUS_2FA, Row.CREATED_AT),
+    ACCOUNT("Accounts", Row.PASSWORD, Row.PIN, Row.PIN, Row.TOKEN_TOTP, Row.PANIC, Row.STATUS_TOTP, Row.CREATED_AT),
     /**
      * Sessions table
      */
-    SESSION("Sessions", Row.LOGIN_CAPTCHA, Row.LOGIN_PASSWORD, Row.LOGIN_PIN, Row.LOGIN_2FA, Row.PERSISTENT, Row.CAPTCHA, Row.CREATED_AT),
+    SESSION("Sessions", Row.LOGIN_CAPTCHA, Row.LOGIN_PASSWORD, Row.LOGIN_PIN, Row.LOGIN_TOTP, Row.PERSISTENT, Row.CAPTCHA, Row.CREATED_AT),
     /**
      * Servers table
      */

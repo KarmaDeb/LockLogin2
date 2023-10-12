@@ -2,10 +2,11 @@ package es.karmadev.locklogin.common.api.dependency;
 
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.shaded.google.gson.*;
+import com.google.gson.*;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 
@@ -133,7 +134,7 @@ public class CPluginDependency {
                         dependency.checksum().define("adler", adler);
                         dependency.checksum().define("crc", crc);
 
-                        Checksum checksum = dependency.checksum();
+                        DependencyChecksum checksum = dependency.checksum();
                         if (checksum.matches(dependency.generateChecksum())) {
                             if (!ignore.contains(dependency))
                                 ignore.add(dependency);
@@ -155,6 +156,8 @@ public class CPluginDependency {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+
+        sort();
     }
 
     /**
@@ -174,5 +177,34 @@ public class CPluginDependency {
      */
     public static LockLoginDependency get(final String id) {
         return dependencies.getOrDefault(id, null);
+    }
+
+    private static void sort() {
+        Map<String, LockLoginDependency> sortedMap = new LinkedHashMap<>();
+        Set<String> visited = new HashSet<>();
+
+        for (Map.Entry<String, LockLoginDependency> entry : CPluginDependency.dependencies.entrySet()) {
+            String key = entry.getKey();
+            LockLoginDependency dependency = entry.getValue();
+
+            if (!visited.contains(key)) {
+                visitNode(key, dependency, CPluginDependency.dependencies, visited, sortedMap);
+            }
+        }
+
+        CPluginDependency.dependencies.putAll(sortedMap);
+    }
+
+    private static void visitNode(String key, LockLoginDependency dependency, Map<String, LockLoginDependency> dependencyMap, Set<String> visited, Map<String, LockLoginDependency> sortedMap) {
+        visited.add(key);
+
+        for (String depKey : dependency.getDependencies()) {
+            LockLoginDependency dep = dependencyMap.get(depKey);
+            if (dep != null && !visited.contains(depKey)) {
+                visitNode(depKey, dep, dependencyMap, visited, sortedMap);
+            }
+        }
+
+        sortedMap.put(key, dependency);
     }
 }

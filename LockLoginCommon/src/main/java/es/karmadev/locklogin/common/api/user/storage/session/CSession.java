@@ -241,19 +241,19 @@ public class CSession implements UserSession {
     }
 
     /**
-     * Get if the session is 2fa logged
+     * Get if the session is totp logged
      *
-     * @return if the session is 2fa login
+     * @return if the session is totp login
      */
     @Override
-    public boolean is2FALogged() {
+    public boolean isTotpLogged() {
         Connection connection = null;
         Statement statement = null;
         try {
             connection = engine.retrieve();
             statement = connection.createStatement();
             try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.LOGIN_2FA)
+                    .select(Table.SESSION, Row.LOGIN_TOTP)
                     .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
                 if (result.next()) {
                     return result.getBoolean(1);
@@ -269,12 +269,12 @@ public class CSession implements UserSession {
     }
 
     /**
-     * Perform 2fa login for this session
+     * Perform totp login for this session
      *
      * @param status the login status
      */
     @Override
-    public void _2faLogin(final boolean status) {
+    public void totpLogin(final boolean status) {
         Connection connection = null;
         Statement statement = null;
         try {
@@ -282,7 +282,7 @@ public class CSession implements UserSession {
             statement = connection.createStatement();
             statement.executeUpdate(QueryBuilder.createQuery()
                     .update(Table.SESSION)
-                    .set(Row.LOGIN_2FA, status)
+                    .set(Row.LOGIN_TOTP, status)
                     .where(Row.ID, QueryBuilder.EQUALS, session_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();

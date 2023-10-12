@@ -32,17 +32,17 @@ public enum AccountField {
      */
     PIN(Table.ACCOUNT, Row.PIN, HashResult.class),
     /**
-     * A field containing the user 2fa token
+     * A field containing the user totp token
      */
-    TOKEN_2FA(Table.ACCOUNT, Row.TOKEN_2FA, String.class),
+    TOKEN_TOTP(Table.ACCOUNT, Row.TOKEN_TOTP, String.class),
     /**
      * A field containing the user panic token
      */
     PANIC(Table.ACCOUNT, Row.PANIC, HashResult.class),
     /**
-     * A field containing the user 2fa status
+     * A field containing the user totp status
      */
-    STATUS_2FA(Table.ACCOUNT, Row.STATUS_2FA, Boolean.class),
+    STATUS_TOTP(Table.ACCOUNT, Row.STATUS_TOTP, Boolean.class),
     /**
      * A field containing the user session persistence configuration
      */

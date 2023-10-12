@@ -1,7 +1,11 @@
 package es.karmadev.locklogin.api.plugin.runtime.dependency;
 
+import es.karmadev.locklogin.api.plugin.runtime.dependency.shade.RelocationSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * LockLogin dependency
@@ -64,6 +68,22 @@ public interface LockLoginDependency {
      * @return the dependency checksum
      */
     DependencyChecksum generateChecksum();
+
+    /**
+     * Get the dependency relocations
+     *
+     * @return the dependency relocations
+     */
+    @NotNull
+    RelocationSet getRelocations();
+
+    /**
+     * Get the dependency dependencies
+     *
+     * @return the dependencies
+     */
+    @NotNull
+    List<String> getDependencies();
 
     /**
      * Get the dependency download URL

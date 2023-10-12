@@ -9,7 +9,6 @@ import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.account.migration.Transitional;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +16,6 @@ import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 @Getter @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -39,7 +37,7 @@ public class CTransitional implements Transitional {
     private HashResult pin;
     @Accessors(fluent = true)
     @Nullable
-    private String _2fa;
+    private String totp;
     @Accessors(fluent = true)
     @Nullable
     private HashResult panic;
@@ -49,9 +47,9 @@ public class CTransitional implements Transitional {
     @Accessors(fluent = true)
     private boolean hasPin;
     @Accessors(fluent = true)
-    private boolean has2fa;
+    private boolean hasTotp;
     @Accessors(fluent = true)
-    private boolean isTokenSet;
+    private boolean isTotpSet;
     @Accessors(fluent = true)
     private boolean hasPanic;
 
@@ -129,26 +127,26 @@ public class CTransitional implements Transitional {
         HashResult panic = null;
         boolean hasPassword = false;
         boolean hasPin = false;
-        boolean has2fa = false;
-        boolean isTokenSet = false;
+        boolean hasTotp = false;
+        boolean isTotpSet = false;
         boolean hasPanic = false;
         boolean persistent = session != null && session.isPersistent();
         if (account != null) {
             password = account.password();
             pin = account.pin();
-            authToken = account._2FA();
+            authToken = account.totp();
             panic = account.panic();
             hasPassword = account.isRegistered();
             hasPin = account.hasPin();
-            has2fa = account.has2FA();
-            isTokenSet = account._2faSet();
+            hasTotp = account.hasTotp();
+            isTotpSet = account.totpSet();
             hasPanic = account.isProtected();
         }
 
         return new CTransitional(player, uniqueId,
                 password, pin, authToken,
                 panic, hasPassword, hasPin,
-                has2fa, isTokenSet, hasPanic,
+                hasTotp, isTotpSet, hasPanic,
                 persistent);
     }
 }

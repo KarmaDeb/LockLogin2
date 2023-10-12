@@ -73,8 +73,6 @@ public final class QueryBuilder {
      * @param driver the driver to use
      */
     QueryBuilder(final Driver driver) {
-        if (driver.equals(Driver.MongoDB)) throw new UnsupportedOperationException("Cannot create query builder for MongoDB, use the specific driver-controller instead!");
-
         this.driver = driver;
         LockLogin plugin = CurrentPlugin.getPlugin();
 

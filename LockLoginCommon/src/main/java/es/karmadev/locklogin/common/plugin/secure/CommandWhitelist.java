@@ -8,10 +8,8 @@ public class CommandWhitelist {
 
     private final static String[] DEFAULT = {
             "register",
-            "reg",
             "login",
-            "log",
-            "2fa"
+            "totp"
     };
 
     private final static List<String> custom = new ArrayList<>();

@@ -49,7 +49,7 @@ public interface PluginNetwork {
     /**
      * Get an offline client
      *
-     * @param uniqueId the client unqiue id
+     * @param uniqueId the client unique id
      * @return the client
      */
     LocalNetworkClient getOfflinePlayer(final UUID uniqueId);

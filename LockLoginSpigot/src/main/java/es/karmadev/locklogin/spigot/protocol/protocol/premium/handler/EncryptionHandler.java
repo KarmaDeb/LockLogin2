@@ -43,10 +43,9 @@ import com.github.games647.craftapi.model.auth.Verification;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.resolver.MojangResolver;
 import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.minecraft.uuid.UUIDFetcher;
+import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.api.spigot.server.SpigotServer;
-import es.karmadev.api.web.minecraft.MineAPI;
-import es.karmadev.api.web.minecraft.UUIDType;
-import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -175,12 +174,7 @@ public final class EncryptionHandler implements Runnable {
                         UUID offline_id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + session.getUsername()).getBytes());
                         UUID online_uid = premium.onlineId(username);
                         if (online_uid == null) {
-                            /*OKAResponse oka_response = UUIDUtil.fetchOKA(username);
-                            online_uid = oka_response.getId(UUIDType.ONLINE);
-
-                            premium.saveId(username, online_uid);*/
-                            OKARequest request = MineAPI.fetchAndWait(username);
-                            online_uid = request.getUUID(UUIDType.ONLINE);
+                            online_uid = UUIDFetcher.fetchUUID(username, UUIDType.ONLINE);
                             if (online_uid != null) {
                                 premium.saveId(username, online_uid);
                             }

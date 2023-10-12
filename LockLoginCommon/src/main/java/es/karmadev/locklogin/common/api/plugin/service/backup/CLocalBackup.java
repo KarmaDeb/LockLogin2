@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.common.api.plugin.service.backup;
 
-import es.karmadev.api.shaded.google.gson.*;
+import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -430,7 +430,7 @@ public class CLocalBackup implements BackupService {
                                     fields.add(AccountField.USERNAME); //Always set
                                     fields.add(AccountField.UNIQUEID); //Always set
                                     fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                    fields.add(AccountField.STATUS_2FA); //Always set
+                                    fields.add(AccountField.STATUS_TOTP); //Always set
 
                                     if (account == null) {
                                         fields.clear();
@@ -441,8 +441,8 @@ public class CLocalBackup implements BackupService {
                                         if (account.hasPin()) {
                                             fields.add(AccountField.PIN);
                                         }
-                                        if (account._2faSet()) {
-                                            fields.add(AccountField.TOKEN_2FA);
+                                        if (account.totpSet()) {
+                                            fields.add(AccountField.TOKEN_TOTP);
                                         }
                                         if (account.isProtected()) {
                                             fields.add(AccountField.PANIC);
@@ -533,7 +533,7 @@ public class CLocalBackup implements BackupService {
                                 fields.add(AccountField.USERNAME); //Always set
                                 fields.add(AccountField.UNIQUEID); //Always set
                                 fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                fields.add(AccountField.STATUS_2FA); //Always set
+                                fields.add(AccountField.STATUS_TOTP); //Always set
 
                                 if (account == null) {
                                     fields.clear();
@@ -544,8 +544,8 @@ public class CLocalBackup implements BackupService {
                                     if (account.hasPin()) {
                                         fields.add(AccountField.PIN);
                                     }
-                                    if (account._2faSet()) {
-                                        fields.add(AccountField.TOKEN_2FA);
+                                    if (account.totpSet()) {
+                                        fields.add(AccountField.TOKEN_TOTP);
                                     }
                                     if (account.isProtected()) {
                                         fields.add(AccountField.PANIC);
@@ -655,7 +655,7 @@ public class CLocalBackup implements BackupService {
                                     fields.add(AccountField.USERNAME); //Always set
                                     fields.add(AccountField.UNIQUEID); //Always set
                                     fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                    fields.add(AccountField.STATUS_2FA); //Always set
+                                    fields.add(AccountField.STATUS_TOTP); //Always set
 
                                     if (account == null) {
                                         fields.clear();
@@ -666,8 +666,8 @@ public class CLocalBackup implements BackupService {
                                         if (account.hasPin()) {
                                             fields.add(AccountField.PIN);
                                         }
-                                        if (account._2faSet()) {
-                                            fields.add(AccountField.TOKEN_2FA);
+                                        if (account.totpSet()) {
+                                            fields.add(AccountField.TOKEN_TOTP);
                                         }
                                         if (account.isProtected()) {
                                             fields.add(AccountField.PANIC);
@@ -776,7 +776,7 @@ public class CLocalBackup implements BackupService {
                                     fields.add(AccountField.USERNAME); //Always set
                                     fields.add(AccountField.UNIQUEID); //Always set
                                     fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                    fields.add(AccountField.STATUS_2FA); //Always set
+                                    fields.add(AccountField.STATUS_TOTP); //Always set
 
                                     if (account == null) {
                                         fields.clear();
@@ -787,8 +787,8 @@ public class CLocalBackup implements BackupService {
                                         if (account.hasPin()) {
                                             fields.add(AccountField.PIN);
                                         }
-                                        if (account._2faSet()) {
-                                            fields.add(AccountField.TOKEN_2FA);
+                                        if (account.totpSet()) {
+                                            fields.add(AccountField.TOKEN_TOTP);
                                         }
                                         if (account.isProtected()) {
                                             fields.add(AccountField.PANIC);
@@ -897,7 +897,7 @@ public class CLocalBackup implements BackupService {
                                     fields.add(AccountField.USERNAME); //Always set
                                     fields.add(AccountField.UNIQUEID); //Always set
                                     fields.add(AccountField.SESSION_PERSISTENCE); //Always set
-                                    fields.add(AccountField.STATUS_2FA); //Always set
+                                    fields.add(AccountField.STATUS_TOTP); //Always set
 
                                     if (account == null) {
                                         fields.clear();
@@ -908,8 +908,8 @@ public class CLocalBackup implements BackupService {
                                         if (account.hasPin()) {
                                             fields.add(AccountField.PIN);
                                         }
-                                        if (account._2faSet()) {
-                                            fields.add(AccountField.TOKEN_2FA);
+                                        if (account.totpSet()) {
+                                            fields.add(AccountField.TOKEN_TOTP);
                                         }
                                         if (account.isProtected()) {
                                             fields.add(AccountField.PANIC);

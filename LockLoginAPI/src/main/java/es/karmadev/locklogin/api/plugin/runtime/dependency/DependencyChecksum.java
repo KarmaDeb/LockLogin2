@@ -6,6 +6,21 @@ package es.karmadev.locklogin.api.plugin.runtime.dependency;
 public interface DependencyChecksum {
 
     /**
+     * Set the checksum value
+     *
+     * @param name the checksum type name
+     * @param value the checksum value
+     */
+    void define(final String name, final long value);
+
+    /**
+     * Set the checksum hash
+     *
+     * @param hash the new hash
+     */
+    void hash(final String hash);
+
+    /**
      * Get the checksum value
      *
      * @param name the check name

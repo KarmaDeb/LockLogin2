@@ -98,7 +98,7 @@ public class SHA512Hash extends PluginHash implements LegacyPluginHash {
      * @param password The password to hash
      * @return token of salt,pepper(pepper is not stored),id cost and hash
      */
-    private String hashInput(String password) {
+    public String hashInput(String password) {
         byte[] salt = new byte[SIZE / 4]; // size of salt
         random.nextBytes(salt); // generate new salt
         char ppr = pepper[random.nextInt(pepper.length)]; // get random pepper

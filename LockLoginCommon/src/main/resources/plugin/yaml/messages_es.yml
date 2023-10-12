@@ -30,6 +30,9 @@ Prefix: "&eLockLogin &7>> "
 #Permission error message
 PermissionError: "&5&oNo tienes el permiso {permission}"
 
+#Module authentication process uncompleted message
+CompleteExtra: "&5&oPor favor, completa los pasos de autenticación extra"
+
 #BungeeCord proxy message
 BungeeProxy: "&5&oPor favor, entra a través del proxy BungeeCord!"
 
@@ -155,7 +158,7 @@ Password:
     Lowers: "&e- &cTu contraseña tiene {upper} de {min_upper} mayuscuas requeridas"
 
 #Session messages - Pin
-PinUsages: "&5&oArgumentos 2fa válidos: &e<setup>&7, &e<remove>&7, &e<change>"
+PinUsages: "&5&oArgumentos TOTP válidos: &e<setup>&7, &e<remove>&7, &e<change>"
 PinSet: "&dTu pin ha sido establecido correctamente"
 PinReseted: "&6&oPin eliminado, tu cuenta es menos segura"
 PinChanged: "&dTu pin ha sido cambiado correctamente"
@@ -168,34 +171,35 @@ PinDisabled: "&5&oLos pines están deshabilitados"
 PinLength: "&5&oEl pin debe tener ser de 4 dígitos"
 IncorrectPin: "&5&oEse pin no es correcto!"
 
-#Session messages - 2FA
-2FaUsages: "&5&oArgumentos 2fa válidos: &e<setup>&7, &e<remove>&7, &e<código 2fa>"
-2FaSetupUsage: "&5&oPor favor, usa /2fa setup <contraseña>"
-2FaRemoveUsage: "&5&oPor favor, usa /2fa remove <contraseña> <código 2fa>"
-2FaAuthenticate: "&5&oPor favor, usa /2fa <código 2fa>"
-2FaLogged: "&dCódigo 2FA validado"
-2FaAlreadyLogged: "&5&oYa estás verificado con 2FA!"
-2FaIncorrect: "&5&oCódigo 2FA incorrecto"
-2FaAlready: "&5&oYa has establecido tu 2FA!"
-2FaToggleError: "&5&oError al alternar 2FA ( contraseña/código incorrectos )"
-Disabled2FA: "&5&o2FA desactivado, tu cuenta es menos segura"
-Enabled2FA: "&d2FA activado, tu cuenta es segura de nuevo"
-2FaAccountDisabled: "&5&o2FA está desactivado en tu cuenta"
-2FAServerDisabled: "&5&o2FA está desactivado en el servidor"
-2FaLocked: "&5&oEste servidor quiere que tengas 2FA activado"
+#Session messages - TOTP
+2FaUsages: "&5&oArgumentos TOTP válidos: &e<setup>&7, &e<disable>&7, &e<remove>&7, &e<código TOTP>"
+2FaSetupUsage: "&5&oPor favor, usa /totp setup <contraseña>"
+2FaRemoveUsage: "&5&oPor favor, usa /totp remove <contraseña> <código TOTP>"
+2FaDisableUsage: "&5&oPor favor, usa /totp disable <contraseña> <código TOTP>"
+2FaAuthenticate: "&5&oPor favor, usa /totp <código TOTP>"
+2FaLogged: "&dCódigo TOTP validado"
+2FaAlreadyLogged: "&5&oYa estás verificado con TOTP!"
+2FaIncorrect: "&5&oCódigo TOTP incorrecto"
+2FaAlready: "&5&oYa has establecido tu TOTP!"
+2FaToggleError: "&5&oError al alternar TOTP ( contraseña/código incorrectos )"
+Disabled2FA: "&5&oTOTP desactivado, tu cuenta es menos segura"
+Enabled2FA: "&dTOTP activado, tu cuenta es segura de nuevo"
+2FaAccountDisabled: "&5&oTOTP está desactivado en tu cuenta"
+2FAServerDisabled: "&5&oTOTP está desactivado en el servidor"
+2FaLocked: "&5&oEste servidor quiere que tengas TOTP activado"
 2FAScratchCodes:
   - "&7Hey! &b{player}&7, estos son tus códigos de recuperación,"
   - "&7asegúrate de guardarlos bien, ya que esta será la última"
   - "&7vez que los veas:"
 2FaInstructions:
-  - "&fComo verificarse con el 2FA?"
+  - "&fComo verificarse con el TOTP?"
   - "&71 - Haz click en '{message}'"
   - "&72 - Descarga la app Google Authenticator"
   - "&73 - Pulsa en el botón '+' dentro de la app"
   - "&74 - Pulsa en 'Escanear un código QR'"
   - "&75 - Escanea el código QR de la pantalla ( paso #1 )"
   - "&77 - Busca {account} en la aplicación Google Authenticator"
-  - "&78 - Escribe /2fa <código mostrado en la app> o <código de recuperación>"
+  - "&78 - Escribe /totp <código mostrado en la app> o <código de recuperación>"
 2FaLink: "&bHaz click aquí para obtener tu código QR"
 
 #Session messages - Brute force

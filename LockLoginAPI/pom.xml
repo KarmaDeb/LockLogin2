@@ -6,10 +6,23 @@
     <parent>
         <groupId>es.karmadev</groupId>
         <artifactId>LockLogin</artifactId>
-        <version>2.0.0</version>
+        <version>2.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>LockLoginAPI</artifactId>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <!--
@@ -58,4 +71,15 @@
             <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>local_repository</id>
+            <url>file:${project.basedir}/v${project.version}/release</url>
+        </repository>
+        <snapshotRepository>
+            <id>local_snapshot</id>
+            <url>file:${project.basedir}/v${project.version}/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

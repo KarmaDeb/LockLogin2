@@ -16,6 +16,7 @@ import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionFactory;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
+import es.karmadev.locklogin.common.api.plugin.CacheElement;
 import es.karmadev.locklogin.common.api.server.CServer;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccount;
 import es.karmadev.locklogin.common.api.user.storage.session.CSession;
@@ -36,6 +37,9 @@ public class CLocalClient implements LocalNetworkClient {
     protected final SQLDriver engine;
 
     public Function<String, Boolean> hasPermission;
+
+    private final CacheElement<UserSession> session = new CacheElement<>();
+    private final CacheElement<UserAccount> account = new CacheElement<>();
 
     public CLocalClient(final int id, final SQLDriver engine) {
         this.id = id;
@@ -234,7 +238,39 @@ public class CLocalClient implements LocalNetworkClient {
 
             try (ResultSet result = statement.executeQuery(builder.build(""))) {
                 if (result.next()) {
-                    return UUID.fromString(result.getString("uuid"));
+                    return UUID.fromString(result.getString(1));
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            engine.close(connection, statement);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the connection online-mode unique identifier
+     *
+     * @return the connection online-mode unique
+     * identifier
+     */
+    @Override
+    public UUID onlineId() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = engine.retrieve();
+            statement = connection.createStatement();
+
+            QueryBuilder builder = QueryBuilder.createQuery()
+                    .select(Table.USER, Row.PREMIUM_UUID)
+                    .where(Row.ID, "=", id);
+
+            try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                if (result.next()) {
+                    return UUID.fromString(result.getString(1));
                 }
             }
         } catch (SQLException ex) {
@@ -442,27 +478,29 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public UserAccount account() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.ACCOUNT_ID)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    int account_id = result.getInt(1);
-                    return new CAccount(id, account_id, engine);
+        return account.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.ACCOUNT_ID)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        int account_id = result.getInt(1);
+                        return new CAccount(id, account_id, engine);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        AccountFactory<UserAccount> factory = CurrentPlugin.getPlugin().getAccountFactory(false);
-        return factory.create(this);
+            AccountFactory<UserAccount> factory = CurrentPlugin.getPlugin().getAccountFactory(false);
+            return factory.create(this);
+        });
     }
 
     /**
@@ -472,29 +510,31 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public UserSession session() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.SESSION_ID)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    int session_id = result.getInt(1);
-                    if (!result.wasNull()) {
-                        return new CSession(id, session_id, engine);
+        return session.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.SESSION_ID)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        int session_id = result.getInt(1);
+                        if (!result.wasNull()) {
+                            return new CSession(id, session_id, engine);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        SessionFactory<UserSession> factory = CurrentPlugin.getPlugin().getSessionFactory(false);
-        return factory.create(this);
+            SessionFactory<UserSession> factory = CurrentPlugin.getPlugin().getSessionFactory(false);
+            return factory.create(this);
+        });
     }
 
     /**
@@ -584,5 +624,29 @@ public class CLocalClient implements LocalNetworkClient {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "@" + hashCode() + "[" + name() + ";" + uniqueId() + ":" + id + "]";
+    }
+
+    /**
+     * Reset the cache, implementations
+     * should interpreter null as "everything"
+     *
+     * @param name the cache name to reset
+     */
+    @Override
+    public void reset(final String name) {
+        if (name == null) {
+            session.assign(null);
+            account.assign(null);
+            return;
+        }
+
+        switch (name.toLowerCase()) {
+            case "session":
+                session.assign(null);
+                break;
+            case "account":
+                account.assign(null);
+                break;
+        }
     }
 }

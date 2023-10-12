@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.api.plugin.file;
 
 import es.karmadev.locklogin.api.plugin.file.section.*;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * LockLogin configuration
@@ -197,23 +198,36 @@ public interface Configuration {
      * Get if the plugin enables base authentication
      *
      * @return if the plugin uses login and register
+     * @deprecated use the specific method {@link #authSettings()}
      */
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
     boolean enableAuthentication();
+
+    /**
+     * Get the plugin authentication settings
+     *
+     * @return the plugin authentication settings
+     */
+    AuthenticationConfiguration authSettings();
 
     /**
      * Get if the plugin enables the pin
      * login. Globally
      *
      * @return if the plugin uses pin
+     * @deprecated use the specific method {@link #authSettings()}
      */
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
     boolean enablePin();
 
     /**
      * Get if the plugin enables the
-     * 2fa login. Globally
+     * totp login. Globally
      *
-     * @return if the plugin uses 2fa
+     * @return if the plugin uses totp
+     * @deprecated use the specific method {@link #authSettings()}
      */
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
     boolean enable2fa();
 
     /**

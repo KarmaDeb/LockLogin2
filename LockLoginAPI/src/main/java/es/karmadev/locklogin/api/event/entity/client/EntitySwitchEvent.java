@@ -33,7 +33,7 @@ public class EntitySwitchEvent extends EntityEvent implements Cancellable {
      * @param from the server the client is comming from
      * @param to the server the client has been connected to
      * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
-     * @throws IllegalArgumentException as part of {@link EntitySwitchEvent(LocalNetworkClient, NetworkServer, NetworkServer)}
+     * @throws IllegalArgumentException as part of {@link #EntitySwitchEvent(Module, LocalNetworkClient, NetworkServer, NetworkServer)}
      */
     public EntitySwitchEvent(final LocalNetworkClient entity, final NetworkServer from, final NetworkServer to) throws SecurityException, IllegalArgumentException {
         this(null, entity, from, to);

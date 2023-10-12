@@ -19,21 +19,16 @@ import java.util.concurrent.ConcurrentMap;
 public class UserDataHandler {
 
     private final static Set<UUID> readyToHandle = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Player player;
 
-    public UserDataHandler(final Player player) {
-        this.player = player;
-    }
-
-    public boolean isReady() {
+    public static boolean isReady(final Player player) {
         return readyToHandle.contains(player.getUniqueId());
     }
 
-    public void setReady() {
+    public static void setReady(final Player player) {
         readyToHandle.add(player.getUniqueId());
     }
 
-    public void handleDisconnect() {
+    public static void handleDisconnect(final Player player) {
         readyToHandle.remove(player.getUniqueId());
     }
 

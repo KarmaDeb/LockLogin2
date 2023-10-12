@@ -84,18 +84,18 @@ public interface UserSession {
     void pinLogin(final boolean status);
 
     /**
-     * Get if the session is 2fa logged
+     * Get if the session is totp logged
      *
-     * @return if the session is 2fa login
+     * @return if the session is totp login
      */
-    boolean is2FALogged();
+    boolean isTotpLogged();
 
     /**
-     * Perform 2fa login for this session
+     * Perform totp login for this session
      *
      * @param status the login status
      */
-    void _2faLogin(final boolean status);
+    void totpLogin(final boolean status);
 
     /**
      * Set the captcha code

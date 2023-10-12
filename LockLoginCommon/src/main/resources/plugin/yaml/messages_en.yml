@@ -30,6 +30,9 @@ Prefix: "&eLockLogin &7>> "
 #Permission error message
 PermissionError: "&5&oYou do not have the permission {permission}"
 
+#Module authentication process uncompleted message
+CompleteExtra: "&5&oPlease, complete the extra authentication steps"
+
 #BungeeCord proxy message
 BungeeProxy: "&5&oPlease, connect through bungee proxy!"
 
@@ -167,21 +170,22 @@ PinDisabled: "&5&oPins are disabled"
 PinLength: "&5&oPin must have 4 digits"
 IncorrectPin: "&5&oThe specified pin is not correct!"
 
-#Session messages - 2FA
-2FaUsages: "&5&oValid 2FA sub-arguments: &e<setup>&7, &e<remove>&7, &e<2fa code>"
-2FaSetupUsage: "&5&oPlease, use /2fa setup <password>"
-2FaRemoveUsage: "&5&oPlease, use /2fa remove <password> <2fa code>"
-2FaAuthenticate: "&5&oPlease, use /2fa to start playing"
-2FaLogged: "&d2FA code validated"
-2FaAlreadyLogged: "&5&oYou are already authenticated with 2FA!"
-2FaIncorrect: "&5&oIncorrect 2FA code"
-2FaAlready: "&5&oYou already have setup your 2FA!"
-2FaToggleError: "&5&oError while trying to toggle 2FA ( incorrect password/code )"
-Disabled2FA: "&5&o2FA disabled, your account is now less secure"
-Enabled2FA: "&d2FA enabled, your account is secure again"
-2FaAccountDisabled: "&5&o2FA is disabled in your account"
-2FAServerDisabled: "&5&o2FA is currently disabled in this server"
-2FaLocked: "&5&oThis server wants you to have 2FA enabled"
+#Session messages - TOTP
+2FaUsages: "&5&oValid TOTP sub-arguments: &e<setup>&7, &e<remove>&7, &e<TOTP code>"
+2FaSetupUsage: "&5&oPlease, use /totp setup <password>"
+2FaRemoveUsage: "&5&oPlease, use /totp remove <password> <TOTP code>"
+2FaDisableUsage: "&5&oPlease, use /totp disable <password> <TOTP code>"
+2FaAuthenticate: "&5&oPlease, use /totp to start playing"
+2FaLogged: "&dTOTP code validated"
+2FaAlreadyLogged: "&5&oYou are already authenticated with TOTP!"
+2FaIncorrect: "&5&oIncorrect TOTP code"
+2FaAlready: "&5&oYou already have setup your TOTP!"
+2FaToggleError: "&5&oError while trying to toggle TOTP ( incorrect password/code )"
+Disabled2FA: "&5&oTOTP disabled, your account is now less secure"
+Enabled2FA: "&dTOTP enabled, your account is secure again"
+2FaAccountDisabled: "&5&oTOTP is disabled in your account"
+2FAServerDisabled: "&5&oTOTP is currently disabled in this server"
+2FaLocked: "&5&oThis server wants you to have TOTP enabled"
 2FAScratchCodes:
   - "&7Hey! &b{player}&7, these are your recovery codes,"
   - "&7make sure to not lose them as this will be the last"
@@ -194,8 +198,8 @@ Enabled2FA: "&d2FA enabled, your account is secure again"
   - "&74 - Tap on 'Scan a QR code'"
   - "&75 - Scan the QR code shown in screen ( step #1 )"
   - "&77 - Search for {account} in Google Auth app"
-  - "&78 - Type /2fa <code shown in app> or <scratch code>"
-2FaLink: "&bClick here to get your 2FA QR code"
+  - "&78 - Type /totp <code shown in app> or <scratch code>"
+2FaLink: "&bClick here to get your TOTP QR code"
 
 #Session messages - Brute force
 PanicLogin: "&5&oPlease, use /panic <token>"

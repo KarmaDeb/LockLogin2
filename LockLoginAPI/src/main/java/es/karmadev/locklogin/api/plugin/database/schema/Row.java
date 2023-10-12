@@ -24,7 +24,7 @@ public enum Row {
     /**
      * LockLogin row
      */
-    TOKEN_2FA("2fa_token", RowType.BLOB),
+    TOKEN_TOTP("totp_token", RowType.BLOB),
     /**
      * LockLogin row
      */
@@ -32,7 +32,7 @@ public enum Row {
     /**
      * LockLogin row
      */
-    STATUS_2FA("2fa", RowType.BOOLEAN),
+    STATUS_TOTP("totp", RowType.BOOLEAN),
     /**
      * LockLogin row
      */
@@ -48,7 +48,7 @@ public enum Row {
     /**
      * LockLogin row
      */
-    LOGIN_2FA("gAuth", RowType.BOOLEAN),
+    LOGIN_TOTP("totp", RowType.BOOLEAN),
     /**
      * LockLogin row
      */

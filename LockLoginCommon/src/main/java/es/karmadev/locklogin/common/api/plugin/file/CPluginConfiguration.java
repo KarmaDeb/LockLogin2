@@ -17,6 +17,7 @@ import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -29,7 +30,6 @@ import java.util.List;
 
 public class CPluginConfiguration implements Configuration {
 
-    private final Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("config.yml");
     private final YamlFileHandler yaml;
 
     private final CProxyConfiguration proxy_config;
@@ -39,6 +39,7 @@ public class CPluginConfiguration implements Configuration {
      * Initialize the plugin configuration
      */
     public CPluginConfiguration() {
+        Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("config.yml");
         LockLogin plugin = CurrentPlugin.getPlugin();
         if (!Files.exists(file)) {
             PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
@@ -228,9 +229,10 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public PremiumConfiguration premium() {
         boolean enabled = yaml.getBoolean("Premium.Enable", true);
+        boolean auto = yaml.getBoolean("Premium.AutoToggle", true);
         boolean forceOffline = yaml.getBoolean("Premium.ForceUUID", true);
 
-        return CPremiumSection.of(enabled, forceOffline);
+        return CPremiumSection.of(auto, enabled, forceOffline);
     }
 
     /**
@@ -459,10 +461,27 @@ public class CPluginConfiguration implements Configuration {
      * Get if the plugin enables base authentication
      *
      * @return if the plugin uses login and register
+     * @deprecated use specific methods instead
+     */
+    @Override @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
+    public boolean enableAuthentication() {
+        return yaml.getBoolean("Authentication.Register", true) && yaml.getBoolean("Authentication.Login", true);
+    }
+
+    /**
+     * Get the plugin authentication settings
+     *
+     * @return the plugin authentication settings
      */
     @Override
-    public boolean enableAuthentication() {
-        return yaml.getBoolean("Authentication", true);
+    public AuthenticationConfiguration authSettings() {
+        boolean register = yaml.getBoolean("Authentication.Register", true);
+        boolean login = yaml.getBoolean("Authentication.Login", true);
+        boolean pin = yaml.getBoolean("Authentication.Pin", true);
+        boolean totp = yaml.getBoolean("Authentication.Totp", true);
+
+        return CAuthSection.of(register, login, pin, totp);
     }
 
     /**
@@ -471,20 +490,22 @@ public class CPluginConfiguration implements Configuration {
      *
      * @return if the plugin uses pin
      */
-    @Override
+    @Override @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
     public boolean enablePin() {
-        return yaml.getBoolean("Pin", true);
+        return yaml.getBoolean("Authentication.Pin", true);
     }
 
     /**
      * Get if the plugin enables the
-     * 2fa login. Globally
+     * totp login. Globally
      *
-     * @return if the plugin uses 2fa
+     * @return if the plugin uses totp
      */
-    @Override
+    @Override @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2.0.5")
     public boolean enable2fa() {
-        return yaml.getBoolean("2FA", true);
+        return yaml.getBoolean("Authentication.Totp", true);
     }
 
     /**
@@ -513,6 +534,7 @@ public class CPluginConfiguration implements Configuration {
             default:
                 channel = "release";
         }
+
         if (!oChannel.equals(channel)) {
             yaml.set("Updater.Channel", channel);
             try {

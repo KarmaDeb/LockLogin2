@@ -3,6 +3,9 @@ package es.karmadev.locklogin.spigot.command;
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
+import es.karmadev.api.version.BuildStatus;
+import es.karmadev.api.version.Version;
+import es.karmadev.api.version.checker.VersionChecker;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.ModuleLoader;
@@ -16,12 +19,22 @@ import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.common.plugin.InternalMessage;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
+import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
+import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
+import es.karmadev.locklogin.spigot.process.SpigotTotpProcess;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
+import java.net.URL;
 
 @PluginCommand(command = "locklogin", useInBungeecord = true)
 public class LockLoginCommand extends Command {
@@ -87,6 +100,32 @@ public class LockLoginCommand extends Command {
                             if (cfgReloaded) {
                                 sender.sendMessage(ColorComponent.parse(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload configuration", null)));
+
+                                SpigotRegisterProcess.setStatus(configuration.authSettings().register());
+                                SpigotLoginProcess.setStatus(configuration.authSettings().login());
+                                SpigotPinProcess.setStatus(configuration.authSettings().pin());
+                                SpigotTotpProcess.setStatus(configuration.authSettings().totp());
+
+                                try {
+                                    spigot.plugin().getCommandHelper().mapCommand(spigot);
+                                } catch (IOException | ClassNotFoundException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+
+                                Bukkit.getServer().getScheduler().runTask(spigot.plugin(), () -> {
+                                    for (Player online : Bukkit.getOnlinePlayers()) {
+                                        online.updateCommands();
+                                    }
+                                });
+
+                                PluginManager manager = Bukkit.getPluginManager();
+
+                                //PIN inventory events
+                                if (SpigotPinProcess.createDummy().isEnabled()) {
+                                    manager.registerEvents(spigot.plugin().getUI_CloseOpenHandler(), spigot.plugin());
+                                } else {
+                                    InventoryOpenEvent.getHandlerList().unregister(spigot.plugin().getUI_CloseOpenHandler());
+                                }
                             } else {
                                 sender.sendMessage(ColorComponent.parse(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload messages", null)));
@@ -94,6 +133,143 @@ public class LockLoginCommand extends Command {
                         } else{
                             sender.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_RELOAD));
                         }
+                        break;
+                    case "version":
+                        VersionChecker checker = spigot.plugin().getChecker();
+                        Version latest = checker.getVersion();
+                        Version current = spigot.plugin().sourceVersion();
+                        if (latest == null) latest = current;
+
+                        switch (args.length) {
+                            case 1:
+                                if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                    //Whe just want to get the current version
+                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString())));
+                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
+                                } else {
+                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                }
+                                break;
+                            case 2:
+                                String sub = args[1].toLowerCase();
+                                switch (sub) {
+                                    case "current":
+                                        if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                            //Whe just want to get the current version
+                                            //sender.sendMessage(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString()));
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
+                                        } else {
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                        }
+                                        break;
+                                    case "latest":
+                                        if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                            //Whe just want to get the current version
+                                            //sender.sendMessage(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString()));
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", current.toString())));
+                                        } else {
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                        }
+                                        break;
+                                    case "changelog":
+                                        if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_CHANGELOG)) {
+                                            if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                                sender.sendMessage(ColorComponent.parse("&bVersion: &3{0}&7:", latest));
+                                            }
+
+                                            String[] changelog = checker.getChangelog();
+                                            for (String line : changelog) sender.sendMessage(ColorComponent.parse(line));
+                                        } else {
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
+                                        }
+                                        break;
+                                    case "history":
+                                        if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_HISTORY)) {
+                                            Version[] history = checker.getVersionHistory();
+
+                                            int behind = 0;
+                                            boolean countBehind = false;
+                                            for (Version version : history) {
+                                                if (countBehind) behind++;
+                                                if (!countBehind) {
+                                                    if (version.compareTo(current) <= 0) {
+                                                        countBehind = true;
+                                                    }
+                                                }
+
+                                                if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                                    switch (current.compareTo(version)) {
+                                                        case 1: //Current version over version
+                                                            sender.sendMessage(ColorComponent.parse("&e(UP TO DATE) &bVersion: &7{0}", version));
+                                                            break;
+                                                        case 0: //Current version is version
+                                                            sender.sendMessage(ColorComponent.parse("&a(CURRENT) &bVersion: &7{0}", version));
+                                                            break;
+                                                        case -1: //Current version is under version
+                                                            sender.sendMessage(ColorComponent.parse("&c(OVER YOU) &bVersion: &7{0}", version));
+                                                            break;
+                                                    }
+                                                } else {
+                                                    sender.sendMessage(ColorComponent.parse("&bVersion: &7{0}", version));
+                                                }
+                                            }
+
+                                            if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
+                                                if (behind != 0) {
+                                                    sender.sendMessage(ColorComponent.parse("&cYou are (&7{0}&c) versions behind", behind));
+                                                } else {
+                                                    sender.sendMessage(ColorComponent.parse("&aYou are using the latest version", behind));
+                                                }
+                                            }
+                                        } else {
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
+                                        }
+                                        break;
+                                    case "check":
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + "&dChecking for updates..."));
+                                        checker.check().onComplete(() -> {
+                                            if (checker.getStatus().equals(BuildStatus.OUTDATED)) {
+                                                sender.sendMessage(ColorComponent.parse("&cLockLogin has found a new version!"));
+                                                sender.sendMessage("");
+                                                sender.sendMessage(ColorComponent.parse("&7Current version is:&e {0}", current));
+                                                sender.sendMessage(ColorComponent.parse("&7Latest version is:&e {0}", checker.getVersion()));
+                                                sender.sendMessage("");
+
+                                                sender.sendMessage(ColorComponent.parse("&7Download latest version from:"));
+                                                for (URL url : checker.getUpdateURLs()) {
+                                                    sender.sendMessage(ColorComponent.parse("&b- &7{0}", url));
+                                                }
+
+                                                sender.sendMessage("");
+                                                sender.sendMessage(ColorComponent.parse("&b------ &7Version history&b ------"));
+                                                for (Version version : checker.getVersionHistory()) {
+                                                    String[] changelog = checker.getChangelog(version);
+                                                    if (current.compareTo(version) == 0) {
+                                                        sender.sendMessage(ColorComponent.parse("&bVersion: &a(current) &3{0}&7:", version));
+                                                    } else {
+                                                        sender.sendMessage(ColorComponent.parse("&bVersion: &3{0}&7:", version));
+                                                    }
+
+                                                    for (String line : changelog) {
+                                                        sender.sendMessage(ColorComponent.parse(line));
+                                                    }
+                                                }
+                                            } else {
+                                                sender.sendMessage(ColorComponent.parse("&aLockLogin did not found any update, you are up-to date"));
+                                                sender.sendMessage(ColorComponent.parse("&aCurrent version is:&7 {0}", current));
+                                                sender.sendMessage(ColorComponent.parse("&aLatest version is:&7 {0}", checker.getVersion()));
+                                            }
+                                        });
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                break;
+                            case 3:
+                            default:
+                                break;
+                        }
+
                         break;
                     case "modules":
                         if (args.length >= 2) {

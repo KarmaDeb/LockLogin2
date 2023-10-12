@@ -9,9 +9,10 @@
                 <line line="2">§dUsos del comando LockLogin</line>
                 <line line="3">§5/locklogin help§7 -§d Muestra esto</line>
                 <line line="4">§5/locklogin reload§7 -§d Recarga el plugin</line>
-                <line line="5">§5/locklogin modules [info|list|load|unload|reload] [module]§7 -§d Gestiona los modulos</line>
-                <line line="6" blank="true"/>
-                <line line="7">§0§m----------------------</line>
+                <line line="5">§5/locklogin version [current|latest|changelog|history|check] [version]§7 -§d Muestra informacion sobre las versiones</line>
+                <line line="6">§5/locklogin modules [info|list|load|unload|reload] [module]§7 -§d Gestiona los modulos</line>
+                <line line="7" blank="true"/>
+                <line line="8">§0§m----------------------</line>
             </usage>
         </usages>
 
@@ -33,6 +34,15 @@
             <response command="locklogin" argument="modules info">
                 <success/>
                 <fail argument="module">§5Módulo desconocido: §7module</fail>
+            </response>
+
+            <response command="locklogin" argument="version current">
+                <success argument="$current">§dLa version actual es:§e $current</success>
+                <fail/>
+            </response>
+            <response command="locklogin" argument="version latest">
+                <success argument="$latest">§dLa ultima version es:§e $latest</success>
+                <fail/>
             </response>
         </responses>
     </command>

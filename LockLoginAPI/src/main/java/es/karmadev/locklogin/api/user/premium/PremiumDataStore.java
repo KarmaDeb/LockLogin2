@@ -16,6 +16,15 @@ public interface PremiumDataStore {
     UUID onlineId(final String name);
 
     /**
+     * Get if the client has a premium
+     * ID
+     *
+     * @param name the client name
+     * @return if the client has a premium ID
+     */
+    boolean exists(final String name);
+
+    /**
      * Save the client online id
      *
      * @param name the client name

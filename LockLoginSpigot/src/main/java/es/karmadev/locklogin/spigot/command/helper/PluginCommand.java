@@ -1,5 +1,8 @@
 package es.karmadev.locklogin.spigot.command.helper;
 
+import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
+import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -23,4 +26,11 @@ public @interface PluginCommand {
      * @return the command
      */
     boolean useInBungeecord() default false;
+
+    /**
+     * Set the command to process attachment
+     *
+     * @return the process attachment
+     */
+    Class<? extends UserAuthProcess> processAttachment() default UserAuthProcess.class;
 }

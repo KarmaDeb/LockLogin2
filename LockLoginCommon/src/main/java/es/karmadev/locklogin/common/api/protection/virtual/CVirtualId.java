@@ -11,15 +11,12 @@ import es.karmadev.locklogin.api.plugin.file.section.SecretStore;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
-import es.karmaconfigs.api.common.karma.file.KarmaMain;
-import es.karmaconfigs.api.common.karma.file.element.types.Element;
 
 import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -38,19 +35,7 @@ public class CVirtualId implements VirtualID {
         Configuration configuration = plugin.configuration();
         SecretStore store = configuration.secretKey();
 
-        //Path legacy_id = plugin.workingDirectory().resolve("cache").resolve("virtual_id.kf");
         Path virtual_id = plugin.workingDirectory().resolve("data").resolve("virtual.id");
-
-        /*if (Files.exists(legacy_id)) {
-            KarmaMain legacy = new KarmaMain(legacy_id);
-            if (legacy.isSet("virtual_key")) {
-                Element<?> virtualKey = legacy.get("virtual_key");
-                if (virtualKey.isPrimitive() && virtualKey.getAsPrimitive().isString()) {
-                    PathUtilities.write(virtual_id, Base64.getDecoder().decode(virtualKey.getAsString()));
-                    PathUtilities.destroy(legacy_id);
-                }
-            }
-        }*/
 
         FileEncryptor encryptor = new FileEncryptor(virtual_id, store.token());
         if (Files.exists(virtual_id)) {

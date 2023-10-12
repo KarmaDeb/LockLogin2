@@ -15,7 +15,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class QuitHandler implements Listener {
 
-    private final LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
+    private final LockLoginSpigot spigot;
+
+    public QuitHandler(final LockLoginSpigot spigot) {
+        this.spigot = spigot;
+    }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
@@ -23,18 +27,27 @@ public class QuitHandler implements Listener {
 
         int networkId = UserDataHandler.getNetworkId(player);
         if (networkId > 0) {
-            CPluginNetwork network = (CPluginNetwork) plugin.network();
+            CPluginNetwork network = (CPluginNetwork) spigot.network();
             NetworkClient client = network.getPlayer(networkId);
+            if (client != null) {
+                client.getSessionChecker().cancel();
+                network.disconnectClient(client);
 
-            client.getSessionChecker().cancel();
-            network.disconnectClient(client);
+                PlayerLocationStorage storage = new PlayerLocationStorage(client);
+                storage.assign(player.getLocation());
 
-            PlayerLocationStorage storage = new PlayerLocationStorage(client);
-            storage.assign(player.getLocation());
+                ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
 
-            ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
-
-            plugin.getInjector().release(client);
+                spigot.getInjector().release(client);
+                spigot.getTotpHandler().destroyAll(client);
+            }
         }
+
+        UserDataHandler.handleDisconnect(player);
+        /*
+        We must run always the #handleDisconnect method, as a player
+        could as been marked as ready to handle, but he might not have reach
+        the network ID assignment
+         */
     }
 }

@@ -117,48 +117,50 @@ public class CSessionChecker implements SessionChecker {
             UserAccount account = client.account();
             UserSession session = client.session();
             boolean registered = account.isRegistered();
-            SessionField<?> legacyUser = session.fetch("legacy");
-            if (legacyUser != null) registered = true;
-
             int authTime = (registered ? configuration.login().timeout() : configuration.register().timeout());
 
-            boolean isRegistered = registered;
             runner = new AsyncTaskExecutor(authTime, TimeUnit.SECONDS);
             runner.on(TaskEvent.TICK, (time) -> {
                 long timeLeft = runner.timeLeft(TimeUnit.SECONDS);
 
-                SessionField<Boolean> field = session.fetch("logged");
-                if (field.get()) {
-                    //client.sendMessage(messages.prefix() + messages.logged());
+                SessionField<Boolean> field = session.fetch("pass_logged");
+                if (field != null && field.get()) {
                     runner.stop();
                     return;
                 }
 
                 boolean updatedRegistered = account.isRegistered();
-                SessionField<?> updatedLegacy = session.fetch("legacy");
-                if (updatedLegacy != null) updatedRegistered = true;
-
-                if (updatedRegistered != isRegistered) {
+                if (updatedRegistered != registered) {
                     int updatedAuthTime = (updatedRegistered ? configuration.login().timeout() : configuration.register().timeout());
 
                     runner.forceMaxTime((long) updatedAuthTime);
                     if (updatedAuthTime > authTime) {
                         runner.forceTimeLeft((long) updatedAuthTime);
                     }
-                    //timeLeft = newTimeLeft;
                 }
 
                 String captcha = session.captcha();
                 if (updatedRegistered) {
-                    client.sendTitle(messages.loginTitle(captcha, timeLeft), messages.loginSubtitle(captcha, timeLeft), 0, 3, 0);
+                    client.sendTitle(
+                            messages.loginTitle(captcha, timeLeft)
+                                    .replace('&', '§'),
+                            messages.loginSubtitle(captcha, timeLeft)
+                                    .replace('&', '§'),
+                            0, 20, 0);
                 } else {
-                    client.sendTitle(messages.registerTitle(captcha, timeLeft), messages.registerSubtitle(captcha, timeLeft), 0, 3, 0);
+                    client.sendTitle(
+                            messages.registerTitle(captcha, timeLeft)
+                                    .replace('&', '§'),
+                            messages.registerSubtitle(captcha, timeLeft)
+                                    .replace('&', '§'),
+                            0, 20, 0);
                 }
             });
+
             Runnable endTask = () -> {
                 if (cancelled) return; //Do nothing
 
-                if (!(boolean) session.fetch("logged").get()) {
+                if (!(boolean) session.fetch("pass_logged").get()) {
                     if (account.isRegistered()) {
                         client.kick(messages.loginTimeOut());
                     } else {

@@ -10,6 +10,7 @@ import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
+import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
@@ -141,8 +142,11 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public LocalNetworkClient getOfflinePlayer(final UUID uniqueId) {
-        if (offline_cache.stream().anyMatch((offline) -> offline.uniqueId().equals(uniqueId))) {
-            return offline_cache.stream().filter((offline) -> offline != null && offline.uniqueId().equals(uniqueId)).findAny().orElse(null);
+        if (offline_cache.stream().anyMatch((offline) -> uniqueId.equals(offline.uniqueId()) || uniqueId.equals(offline.onlineId()))) {
+            return offline_cache.stream().filter(
+                    (offline) -> offline != null && (uniqueId.equals(offline.uniqueId()) || uniqueId.equals(offline.onlineId())))
+                    .findAny()
+                    .orElse(null);
         }
 
         Connection connection = null;

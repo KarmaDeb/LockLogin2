@@ -59,14 +59,14 @@ public class CMigrator implements AccountMigrator<CAccount> {
                     case PIN:
                         if (transictionable.hasPin()) account.writeHashField(AccountField.PASSWORD, transictionable.pin());
                         break;
-                    case TOKEN_2FA:
-                        if (transictionable.isTokenSet()) account.writeStringValue(AccountField.TOKEN_2FA, transictionable._2fa());
+                    case TOKEN_TOTP:
+                        if (transictionable.isTotpSet()) account.writeStringValue(AccountField.TOKEN_TOTP, transictionable.totp());
                         break;
                     case PANIC:
                         if (transictionable.hasPanic()) account.writeHashField(AccountField.PASSWORD, transictionable.panic());
                         break;
-                    case STATUS_2FA:
-                        account.writeBooleanValue(AccountField.STATUS_2FA, transictionable.has2fa());
+                    case STATUS_TOTP:
+                        account.writeBooleanValue(AccountField.STATUS_TOTP, transictionable.hasTotp());
                         break;
                     case SESSION_PERSISTENCE:
                         if (session != null) session.persistent(transictionable.sessionPersistent());

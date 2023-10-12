@@ -13,7 +13,6 @@ import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.logger.log.console.LogLevel;
-import es.karmadev.api.spigot.core.KarmaPlugin;
 import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
 import es.karmadev.api.spigot.reflection.title.SpigotTitle;
 import es.karmadev.api.strings.StringUtils;
@@ -41,6 +40,7 @@ import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
@@ -69,6 +69,7 @@ import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
 import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
 import es.karmadev.locklogin.common.api.plugin.service.password.CPasswordProvider;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
+import es.karmadev.locklogin.common.api.protection.totp.CTotpService;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
 import es.karmadev.locklogin.common.api.runtime.SubmissiveRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
@@ -78,15 +79,17 @@ import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
 import es.karmadev.locklogin.common.api.packet.COutPacket;
-import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
+import es.karmadev.locklogin.common.plugin.secure.totp.TotpGlobalHandler;
+import es.karmadev.locklogin.common.plugin.web.CMarketPlace;
+import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
+import es.karmadev.locklogin.spigot.process.SpigotTotpProcess;
 import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
 import es.karmadev.locklogin.spigot.protocol.injector.NMSHelper;
 import es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker;
 import lombok.Getter;
-import es.karmaconfigs.api.common.karma.file.KarmaMain;
-import es.karmaconfigs.api.common.karma.file.element.KarmaPrimitive;
-import es.karmaconfigs.api.common.karma.file.element.types.Element;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
@@ -112,14 +115,17 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LockLoginSpigot implements LockLogin, NetworkServer {
 
     private final CSQLDriver driver;
-    private final KarmaPlugin plugin;
+    private final SpigotPlugin plugin;
 
+    private final CMarketPlace marketPlace = new CMarketPlace();
     private final CModuleManager moduleManager = new CModuleManager();
     private final SubmissiveRuntime runtime = new SubmissiveRuntime(moduleManager);
     private CPluginNetwork network;
@@ -129,6 +135,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     private final InternalPack messages;
     private final CProcessFactory process_factory;
     private final SpigotModuleMaker moduleMaker;
+    @Getter
+    private final TotpGlobalHandler totpHandler = new TotpGlobalHandler();
 
     private CAccountFactory default_account_factory;
     private CSessionFactory default_session_factory;
@@ -145,6 +153,9 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Getter
     private final Instant startup = Instant.now();
     @Getter
+    private Instant postStartup;
+
+    @Getter
     private final ClientInjector injector;
 
     public boolean boot = true;
@@ -152,7 +163,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Getter
     private PrivateKey sharedSecret;
 
-    public LockLoginSpigot(final KarmaPlugin plugin, final CommandMap map) throws RuntimeException {
+    public LockLoginSpigot(final SpigotPlugin plugin, final CommandMap map) throws RuntimeException {
         this.plugin = plugin;
 
         Class<CurrentPlugin> instance = CurrentPlugin.class;
@@ -216,6 +227,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                 runtime.dependencyManager().append(dependency);
             }
         }
+
+        registerService("totp", new CTotpService());
 
         configuration = new CPluginConfiguration();
 
@@ -318,11 +331,15 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         moduleManager.onCommandUnregistered = manager;
 
         process_factory = new CProcessFactory();
-        process_factory.register(SpigotAccountProcess.class);
+        process_factory.register(SpigotRegisterProcess.class);
+        process_factory.register(SpigotLoginProcess.class);
         process_factory.register(SpigotPinProcess.class);
+        process_factory.register(SpigotTotpProcess.class);
 
-        SpigotAccountProcess.setStatus(configuration.enableAuthentication());
-        SpigotPinProcess.setStatus(configuration.enablePin());
+        SpigotRegisterProcess.setStatus(configuration.authSettings().register());
+        SpigotLoginProcess.setStatus(configuration.authSettings().login());
+        SpigotPinProcess.setStatus(configuration.authSettings().pin());
+        SpigotTotpProcess.setStatus(configuration.authSettings().totp());
 
         moduleMaker = new SpigotModuleMaker();
         injector = new ClientInjector();
@@ -334,6 +351,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             }
         });
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "ll:test");
+        postStartup = Instant.now();
     }
 
     void installDriver() {
@@ -494,9 +512,19 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public KarmaPlugin plugin() throws SecurityException {
+    public SpigotPlugin plugin() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "plugin()");
         return plugin;
+    }
+
+    /**
+     * Get the plugin marketplace
+     *
+     * @return the plugin marketplace
+     */
+    @Override
+    public MarketPlace getMarketPlace() {
+        return marketPlace;
     }
 
     /**
@@ -784,32 +812,51 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @throws SecurityException if tried to be accessed from any
      *                           external source that's not the self plugin
      */
-    @Override @SuppressWarnings("deprecation")
+    @Override
     public ServerHash server() throws SecurityException {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginSpigot.class, "server()");
 
         Path data = plugin.workingDirectory().resolve("cache").resolve("server.kf");
         if (Files.exists(data)) {
-            KarmaMain persistent_hash = new KarmaMain(data);
+            Pattern hashPattern = Pattern.compile("'hash' -> [\"'].*[\"']");
+            Pattern timePattern = Pattern.compile("'time' -> [0-9]*");
 
-            Element<?> hash = persistent_hash.get("hash");
-            Element<?> creation = persistent_hash.get("time");
+            List<String> lines = PathUtilities.readAllLines(data);
 
-            if (hash.isElementNull() || creation.isElementNull() || !hash.getAsPrimitive().isString() || !creation.getAsPrimitive().isNumber()) {
+            String hash = null;
+            long time = Long.MIN_VALUE;
+            for (String line : lines) {
+                Matcher hashMatcher = hashPattern.matcher(line);
+                Matcher timeMatcher = timePattern.matcher(line);
+
+                int end = line.length() - 1;
+                if (hashMatcher.find()) {
+                    int being = hashMatcher.start() + "'hash' -> '".length();
+                    hash = line.substring(being, end);
+                    continue;
+                }
+
+                if (timeMatcher.find()) {
+                    int being = timeMatcher.start() + "'time' -> ".length();
+                    String value = line.substring(being);
+
+                    try {
+                        time = Long.parseLong(value);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            if (hash == null || time == Long.MIN_VALUE) {
                 SHA512Hash sha = new SHA512Hash();
                 String random = StringUtils.generateString(32);
 
                 HashResult result = sha.hash(random);
-                hash = new KarmaPrimitive(new String(result.product().product()));
-                creation = new KarmaPrimitive(Instant.now().toEpochMilli());
-
-                persistent_hash.set("hash", hash);
-                persistent_hash.set("time", creation);
-
-                persistent_hash.save();
+                hash = new String(result.product().product());
+                time = Instant.now().toEpochMilli();
             }
-            String hash_value = hash.getAsString();
-            long hash_creation = creation.getAsLong();
+
+            final String hash_value = hash;
+            final long hash_creation = time;
 
             JsonDatabase database = (JsonDatabase) DatabaseManager.getEngine("json").orElse(new JsonDatabase());
             JsonConnection connection = database.grabConnection("cache/info.json");

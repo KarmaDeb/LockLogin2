@@ -106,6 +106,16 @@ public class CPluginMessages implements Messages {
     /**
      * Get a plugin message
      *
+     * @return the plugin message
+     */
+    @Override
+    public String completeExtra() {
+        return parser.parse(yaml.getString("CompleteExtra", "&5&oPlease, complete the extra authentication steps"));
+    }
+
+    /**
+     * Get a plugin message
+     *
      * @return plugin message
      */
     @Override
@@ -1205,7 +1215,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthUsages() {
-        return parser.parse(yaml.getString("2FaUsages", "&5&oValid 2FA sub-arguments: &e<setup>&7, &e<remove>&7, &e<2fa code>"));
+        return parser.parse(yaml.getString("2FaUsages", "&5&oValid TOTP sub-arguments: &e<setup>&7, &e<remove>&7, &e<TOTP code>"));
     }
 
     /**
@@ -1215,7 +1225,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthSetupUsage() {
-        return parser.parse(yaml.getString("2FaSetupUsage", "&5&oPlease, use /2fa setup <password>"));
+        return parser.parse(yaml.getString("2FaSetupUsage", "&5&oPlease, use /totp setup <password>"));
     }
 
     /**
@@ -1225,7 +1235,17 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthRemoveUsage() {
-        return parser.parse(yaml.getString("2FaRemoveUsage", "&5&oPlease, use /2fa remove <password> <2fa code>"));
+        return parser.parse(yaml.getString("2FaRemoveUsage", "&5&oPlease, use /totp remove <password> <TOTP code>"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String gAuthDisableUsage() {
+        return parser.parse(yaml.getString("2FaDisableUsage", "&5&oPlease, use /totp disable <password> <TOTP code>"));
     }
 
     /**
@@ -1235,7 +1255,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthRequired() {
-        return parser.parse(yaml.getString("2FaAuthenticate", "&5&oPlease, use /2fa to start playing"));
+        return parser.parse(yaml.getString("2FaAuthenticate", "&5&oPlease, use /totp to start playing"));
     }
 
     /**
@@ -1245,7 +1265,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthCorrect() {
-        return parser.parse(yaml.getString("2FaLogged", "&d2FA code validated"));
+        return parser.parse(yaml.getString("2FaLogged", "&dTOTP code validated"));
     }
 
     /**
@@ -1255,7 +1275,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthAlready() {
-        return parser.parse(yaml.getString("2FaAlreadyLogged", "&5&oYou are already authenticated with 2FA!"));
+        return parser.parse(yaml.getString("2FaAlreadyLogged", "&5&oYou are already authenticated with TOTP!"));
     }
 
     /**
@@ -1265,7 +1285,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthIncorrect() {
-        return parser.parse(yaml.getString("2FaIncorrect", "&5&oIncorrect 2FA code"));
+        return parser.parse(yaml.getString("2FaIncorrect", "&5&oIncorrect TOTP code"));
     }
 
     /**
@@ -1275,7 +1295,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthSetupAlready() {
-        return parser.parse(yaml.getString("2FaAlready", "&5&oYou already have setup your 2FA!"));
+        return parser.parse(yaml.getString("2FaAlready", "&5&oYou already have setup your TOTP!"));
     }
 
     /**
@@ -1285,7 +1305,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthToggleError() {
-        return parser.parse(yaml.getString("ToggleFAError", "&5&oError while trying to toggle 2FA ( incorrect password/code )"));
+        return parser.parse(yaml.getString("ToggleFAError", "&5&oError while trying to toggle TOTP ( incorrect password/code )"));
     }
 
     /**
@@ -1295,7 +1315,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthDisabled() {
-        return parser.parse(yaml.getString("Disabled2FA", "&5&o2FA disabled, your account is now less secure"));
+        return parser.parse(yaml.getString("Disabled2FA", "&5&oTOTP disabled, your account is now less secure"));
     }
 
     /**
@@ -1305,7 +1325,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthEnabled() {
-        return parser.parse(yaml.getString("Enabled2FA", "&d2FA enabled, your account is secure again"));
+        return parser.parse(yaml.getString("Enabled2FA", "&dTOTP enabled, your account is secure again"));
     }
 
     /**
@@ -1315,7 +1335,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthNotEnabled() {
-        return parser.parse(yaml.getString("2FaAccountDisabled", "&5&o2FA is disabled in your account"));
+        return parser.parse(yaml.getString("2FaAccountDisabled", "&5&oTOTP is disabled in your account"));
     }
 
     /**
@@ -1325,7 +1345,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthServerDisabled() {
-        return parser.parse(yaml.getString("2FAServerDisabled", "&5&o2FA is currently disabled in this server"));
+        return parser.parse(yaml.getString("2FAServerDisabled", "&5&oTOTP is currently disabled in this server"));
     }
 
     /**
@@ -1335,7 +1355,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gauthLocked() {
-        return parser.parse(yaml.getString("2FaLocked", "&5&oThis server wants you to have 2FA enabled"));
+        return parser.parse(yaml.getString("2FaLocked", "&5&oThis server wants you to have TOTP enabled"));
     }
 
     /**
@@ -1345,7 +1365,7 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String gAuthScratchCodes(final List<Integer> codes) {
+    public String gAuthScratchCodes(final List<String> codes) {
         List<String> messages = yaml.getList("2FAScratchCodes");
         StringBuilder builder = new StringBuilder();
 
@@ -1355,7 +1375,7 @@ public class CPluginMessages implements Messages {
 
         int added = 0;
         for (int i = 0; i < codes.size(); i++) {
-            int code = codes.get(i);
+            String code = codes.get(i);
             builder.append("&e").append(code).append((added == 2 ? "\n" : (i != codes.size() - 1 ? "&7, " : "")));
             added++;
         }
@@ -1390,7 +1410,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String gAuthLink() {
-        return parser.parse(yaml.getString("2FaLink", "&bClick here to get your 2FA QR code"));
+        return parser.parse(yaml.getString("2FaLink", "&bClick here to get your TOTP QR code"));
     }
 
     /**

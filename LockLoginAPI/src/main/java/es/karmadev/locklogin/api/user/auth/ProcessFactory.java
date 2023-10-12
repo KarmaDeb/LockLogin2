@@ -34,4 +34,28 @@ public interface ProcessFactory {
      * static createFor({@link NetworkClient}) method
      */
     void register(final Class<? extends UserAuthProcess> process) throws IllegalStateException;
+
+    /**
+     * Get if the process is enabled
+     *
+     * @param process if the process is enabled
+     * @return the process status
+     */
+    boolean isEnabled(final Class<? extends UserAuthProcess> process);
+
+    /**
+     * Get the process name
+     *
+     * @param process the process
+     * @return the process name
+     */
+    String getName(final Class<? extends UserAuthProcess> process);
+
+    /**
+     * Get the process priority
+     *
+     * @param process the process
+     * @return the process priority
+     */
+    int getPriority(final Class<? extends UserAuthProcess> process);
 }

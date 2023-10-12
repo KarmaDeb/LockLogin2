@@ -1,21 +1,27 @@
 package es.karmadev.locklogin.common.api.dependency;
 
-import es.karmadev.api.shaded.google.gson.JsonArray;
-import es.karmadev.api.shaded.google.gson.JsonElement;
-import es.karmadev.api.shaded.google.gson.JsonObject;
-import es.karmadev.api.shaded.google.gson.JsonPrimitive;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyVersion;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.shade.Relocation;
+import es.karmadev.locklogin.api.plugin.runtime.dependency.shade.RelocationSet;
+import es.karmadev.locklogin.common.api.dependency.shade.CRelocation;
+import es.karmadev.locklogin.common.api.dependency.shade.CRelocationSet;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class JsonDependency implements LockLoginDependency {
@@ -23,8 +29,6 @@ public class JsonDependency implements LockLoginDependency {
     private final JsonObject object;
     private final Checksum checksum = new Checksum(this);
     private final Checksum generated_checksum = new Checksum(this);
-
-    private final static Set<String> ignored_hosts = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * Get the dependency type
@@ -64,7 +68,19 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public String testClass() {
-        return object.get("test").getAsString();
+        String test = object.get("test").getAsString();
+        RelocationSet set = getRelocations();
+        if (set.hasRelocation()) {
+            Relocation relocation;
+            while ((relocation = set.next()) != null) {
+                if (relocation.from().startsWith(test)) {
+                    test = test.replace(relocation.from(), relocation.to());
+                    break;
+                }
+            }
+        }
+
+        return test;
     }
 
     /**
@@ -97,7 +113,7 @@ public class JsonDependency implements LockLoginDependency {
      * @return the dependency checksum
      */
     @Override
-    public Checksum checksum() {
+    public DependencyChecksum checksum() {
         return checksum;
     }
 
@@ -107,8 +123,58 @@ public class JsonDependency implements LockLoginDependency {
      * @return the dependency checksum
      */
     @Override
-    public Checksum generateChecksum() {
+    public DependencyChecksum generateChecksum() {
         return generated_checksum;
+    }
+
+    /**
+     * Get the dependency relocations
+     *
+     * @return the dependency relocations
+     */
+    @Override
+    public @NotNull RelocationSet getRelocations() {
+        if (type().equals(DependencyType.PLUGIN) ||
+                type().equals(DependencyType.PACKAGE) ||
+                !object.has("relocations") ||
+                !object.get("relocations").isJsonArray()) return CRelocationSet.empty();
+
+        JsonArray relocations = object.get("relocations").getAsJsonArray();
+        if (relocations.isEmpty()) return CRelocationSet.empty();
+
+        List<CRelocation> relocationList = new ArrayList<>();
+        for (JsonElement element : relocations) {
+            if (element.isJsonObject()) {
+                JsonObject sub = element.getAsJsonObject();
+                if (sub.has("from") && sub.has("to")) {
+                    String from = sub.get("from").getAsString();
+                    String to = sub.get("to").getAsString();
+
+                    CRelocation relocation = CRelocation.of(from, to);
+                    relocationList.add(relocation);
+                }
+            }
+        }
+
+        return new CRelocationSet(Collections.unmodifiableList(relocationList));
+    }
+
+    /**
+     * Get the dependency dependencies
+     *
+     * @return the dependencies
+     */
+    @Override
+    public @NotNull List<String> getDependencies() {
+        List<String> dependencies = new ArrayList<>();
+        if (object.has("depends") && object.get("depends").isJsonArray()) {
+            JsonArray array = object.getAsJsonArray("depends");
+            for (JsonElement element : array) {
+                dependencies.add(element.getAsString());
+            }
+        }
+
+        return Collections.unmodifiableList(dependencies);
     }
 
     /**

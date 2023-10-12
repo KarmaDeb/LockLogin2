@@ -2,6 +2,8 @@ package es.karmadev.locklogin.spigot.util.ui;
 
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.spigot.reflection.skull.SkullBuilder;
+import es.karmadev.locklogin.api.plugin.CacheContainer;
+import es.karmadev.locklogin.common.api.plugin.CacheElement;
 import lombok.Getter;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -57,7 +59,7 @@ public enum PinButton {
     /**
      * Confirm
      */
-    CONFIRM(Integer.MAX_VALUE, 25);
+    CONFIRM(Integer.MAX_VALUE, 44);
 
     private final int number;
     @Getter
@@ -66,6 +68,7 @@ public enum PinButton {
     private final String value;
     @Getter
     private final String signature;
+    private final CacheContainer<ItemStack> itemCache = new CacheElement<>();
 
     /**
      * Initialize the pin button
@@ -80,6 +83,35 @@ public enum PinButton {
         this.slot = slot;
         this.value = ConstantUtils.getValue(number);
         this.signature = ConstantUtils.getSignature(number);
+    }
+
+    /**
+     * Get the button from the slot
+     * number
+     *
+     * @param slot the slot
+     * @return the number for the slot
+     */
+    public static PinButton fromSlot(final int slot) {
+        for (PinButton button : PinButton.values()) {
+            if (button.slot == slot) return button;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the button for the number
+     *
+     * @param number the number
+     * @return the number for the raw number
+     */
+    public static PinButton forNumber(final int number) {
+        for (PinButton button : PinButton.values()) {
+            if (button.number == number) return button;
+        }
+
+        return null;
     }
 
     /**
@@ -98,12 +130,20 @@ public enum PinButton {
      * @return the item stack
      */
     public ItemStack toItemStack() {
-        return SkullBuilder.createSkull(value, signature, (meta) -> {
+        return itemCache.getOrElse(() -> SkullBuilder.createSkull(value, signature, (meta) -> {
             if (meta == null) return null;
-            meta.setDisplayName(ColorComponent.parse("&e" + number));
-            meta.addItemFlags(ItemFlag.values());
+            if (number == Integer.MIN_VALUE) {
+                meta.setDisplayName(ColorComponent.parse("&cRemove"));
+            } else {
+                if (number == Integer.MAX_VALUE) {
+                    meta.setDisplayName(ColorComponent.parse("&aConfirm"));
+                } else {
+                    meta.setDisplayName(ColorComponent.parse("&e" + number));
+                }
+            }
 
+            meta.addItemFlags(ItemFlag.values());
             return meta;
-        });
+        }));
     }
 }

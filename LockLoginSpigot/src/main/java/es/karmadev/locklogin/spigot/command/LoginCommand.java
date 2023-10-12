@@ -14,6 +14,7 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
+import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import org.bukkit.Location;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-@PluginCommand(command = "login")
+@PluginCommand(command = "login", processAttachment = SpigotLoginProcess.class)
 public class LoginCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
@@ -65,7 +66,7 @@ public class LoginCommand extends Command {
                 UserAccount account = client.account();
                 UserSession session = client.session();
 
-                if (session.fetch("logged", false)) {
+                if (session.fetch("pass_logged", false)) {
                     client.sendMessage(messages.prefix() + messages.alreadyLogged());
                     return false;
                 }
@@ -122,11 +123,7 @@ public class LoginCommand extends Command {
                 account.setPassword(inputPassword); //Update the client password
             }
 
-            session.append(CSessionField.newField(Boolean.class, "logged", true));
-
-            /*session.login(true);
-            session._2faLogin(true);
-            session.pinLogin(true);*/
+            session.append(CSessionField.newField(Boolean.class, "pass_logged", true));
             client.sendMessage(messages.prefix() + messages.logged());
 
             if (player.hasMetadata("walkSpeed")) {

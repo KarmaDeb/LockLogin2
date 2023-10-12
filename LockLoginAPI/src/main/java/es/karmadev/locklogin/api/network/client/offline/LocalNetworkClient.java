@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.network.client.offline;
 
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -16,7 +17,7 @@ import java.util.UUID;
  * data is being loaded locally
  */
 @SuppressWarnings("unused")
-public interface LocalNetworkClient extends NetworkEntity {
+public interface LocalNetworkClient extends NetworkEntity, Cached {
 
     /**
      * Get the entity id
@@ -45,6 +46,14 @@ public interface LocalNetworkClient extends NetworkEntity {
      * @return the connection unique identifier
      */
     UUID uniqueId();
+
+    /**
+     * Get the connection online-mode unique identifier
+     *
+     * @return the connection online-mode unique
+     * identifier
+     */
+    UUID onlineId();
 
     /**
      * Update the client unique ID

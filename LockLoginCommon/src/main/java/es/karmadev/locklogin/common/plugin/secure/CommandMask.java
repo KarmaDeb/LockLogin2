@@ -4,14 +4,23 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.PatternSyntaxException;
 
+/**
+ * LockLogin CommandMask, this class's only objective
+ * is to hide sensitive information from the command
+ * and apply a "mask" over it, so plugins of type chat-spy
+ * cannot see the data from the command. In a normal environment,
+ * LockLogin is the only one able to read data from here, but
+ * some server owners may infringe those features in order to
+ * steal your passwords. Please always verify in which server you
+ * are playing
+ */
 public class CommandMask {
 
     private final static String[] filter = new String[]{
             "register",
-            "reg",
             "login",
-            "log",
             "account",
             "panic",
             "pin",
@@ -45,13 +54,35 @@ public class CommandMask {
         if (cmdName.startsWith("/")) cmdName = cmdName.substring(1);
 
         if (cmdName.contains(":")) {
-            String[] cmdData = cmd.split(":");
-            String pluginName = cmdData[0];
+            String pluginName;
 
-            cmdName = cmd.replaceFirst(pluginName + ":", "");
+            if (cmdName.contains(" ")) {
+                String[] preData = cmdName.split(" ");
+                String origin = preData[0];
+
+                if (origin.contains(":")) {
+                    String[] cmdData = cmd.split(":");
+                    pluginName = cmdData[0];
+
+                    cmdName = cmd.replaceFirst(pluginName + ":", "");
+                }
+            } else {
+                String[] cmdData = cmd.split(":");
+                pluginName = cmdData[0];
+
+                try {
+                    cmdName = cmd.replaceFirst(pluginName + ":", "");
+                } catch (PatternSyntaxException ignored) {}
+            }
         }
 
-        return Arrays.stream(filter).anyMatch(cmdName::startsWith);
+        String match = cmdName;
+        if (match.contains(" ")) {
+            String[] data = cmdName.split(" ");
+            match = data[0];
+        }
+
+        return Arrays.stream(filter).anyMatch(match::equalsIgnoreCase);
     }
 
     /**
@@ -72,6 +103,30 @@ public class CommandMask {
         args.put(id, arguments);
         commands.put(id, command);
         return id;
+    }
+
+    /**
+     * Mask a command silently, without storing
+     * any information about it
+     *
+     * @param cmd the command
+     * @param arguments the command arguments
+     * @return the masked command
+     */
+    public static String maksSilent(final String cmd, final String... arguments) {
+        StringBuilder builder = new StringBuilder(cmd).append(" ");
+        int index = 0;
+        for (String arg : arguments) {
+            if (Arrays.stream(subArguments).noneMatch(arg::equalsIgnoreCase)) {
+                String masked = hide(arg);
+                builder.append(masked);
+                if (index++ != arguments.length - 1) {
+                    builder.append(" ");
+                }
+            }
+        }
+
+        return builder.toString();
     }
 
     /**

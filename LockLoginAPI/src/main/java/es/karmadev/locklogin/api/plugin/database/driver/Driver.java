@@ -15,12 +15,16 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * LockLogin known drivers
+ * LockLogin known drivers, downloaded drivers
+ * are originally downloaded from:
+ * <a href="https://dbschema.com/">DB Schema</a>
  */
 @Getter
 public enum Driver {
@@ -31,9 +35,22 @@ public enum Driver {
     SQLite(
             true,
             "org.sqlite.JDBC",
-            "https://dbschema.com/jdbc-drivers/SqliteJdbcDriver.zip",
+            "https://karmadev.es/locklogin-repository/dependency/driver/v1/sqlite.zip",
             "jdbc:sqlite:{0}",
             "sqlite-jdbc"),
+
+    /**
+     * H2 driver (default)
+     */
+    H2(
+            false, //Even though h2 supports local storage, you can also have it on a remote host
+            "org.h2.Driver",
+            "https://karmadev.es/locklogin-repository/dependency/driver/v1/h2.zip",
+            new String[]{
+                    "jdbc:h2:file:{0};MODE=mysql",
+                    "jdbc:h2:tcp://{0}:{1}/~/{2};MODE=mysql"
+            },
+            "h2"),
 
     /**
      * MySQL driver
@@ -41,7 +58,7 @@ public enum Driver {
     MySQL(
             false,
             "com.mysql.cj.jdbc.Driver",
-            "https://dbschema.com/jdbc-drivers/MySqlJdbcDriver.zip",
+            "https://karmadev.es/locklogin-repository/dependency/driver/v1/mysql.zip",
             "jdbc:mysql://{0}:{1}/{2}?useSSL={3}?verifyServerCertificate={4}",
             "mysql-connector"),
 
@@ -51,39 +68,24 @@ public enum Driver {
     MariaDB(
             false,
             "org.mariadb.jdbc.Driver",
-            "https://dbschema.com/jdbc-drivers/MariaDbJdbcDriver.zip",
+            "https://karmadev.es/locklogin-repository/dependency/driver/v1/mariadb.zip",
             "jdbc:mysql://{0}:{1}/{2}?useSSL={3}?verifyServerCertificate={4}",
             "mariadb-java-client"),
 
     /**
-     * MongoDB driver
+     * PostgreSQL driver
      */
-    MongoDB(
+    PostgreSQL(
             false,
-            "com.wisecoders.dbschema.mongodb.JdbcDriver",
-            "https://dbschema.com/jdbc-drivers/MongoDbJdbcDriver.zip",
-            /*
-            That's actually a bad practice, we should host our own .zip file, so if
-            the version changes, that won't affect us as we will always be downloading
-            the defined dependency version
-             */
-            "mongodb://{0}:{1}",
-            "bson",
-            "bson-record",
-            "graal-sdk",
-            "icu4j",
-            "js",
-            "js-scriptengine",
-            "mongodb-driver-core",
-            "mongodb-driver-sync",
-            "mongodjdbc",
-            "regex",
-            "truffle-api");
+                    "org.postgresql.Driver",
+                    "https://karmadev.es/locklogin-repository/dependency/driver/v1/postgre.zip",
+                    "jdbc:postgresql://{0}:{1}/{2}?useSSL={3}?verifyServerCertificate={4}",
+                    "postgresql");
 
     private final String testClass;
     @Getter
     private final String downloadURL;
-    private final String connection;
+    private final String[] connections;
     @Getter
     private final boolean local;
 
@@ -92,17 +94,36 @@ public enum Driver {
     /**
      * Initialize the driver
      *
+     * @param local the driver works locally instead
+     *              of a server
+     * @param test the test class name
+     * @param url the download url
+     * @param connections the connection URLs
+     * @param inject the jar files to inject
+     */
+    Driver(final boolean local, final String test, final String url, final String[] connections, final String... inject) {
+        this.local = local;
+        this.testClass = test;
+        this.downloadURL = url;
+        this.connections = connections;
+        this.injectJars = inject;
+    }
+
+    /**
+     * Initialize the driver
+     *
      * @param local if the driver works locally instead
      *              of a server
      * @param test the test class name
      * @param url the download url
+     * @param connectionURL the connection URL
      * @param inject the jar files to inject
      */
     Driver(final boolean local, final String test, final String url, final String connectionURL, final String... inject) {
         this.local = local;
         testClass = test;
         downloadURL = url;
-        connection = connectionURL;
+        connections = new String[]{connectionURL};
         injectJars = inject;
     }
 
@@ -113,7 +134,31 @@ public enum Driver {
      * @return the connection URL
      */
     public String getConnection(final Object... arguments) {
-        return StringUtils.format(connection, arguments);
+        if (connections.length > 1) {
+            /*
+            If the driver supports different URL connections and we too,
+            we must iterate through all the supported connection URLs and
+            count how many arguments it supports and then return the first
+            match that has the same amount of arguments as we provide. If
+            we fail on this task, we will always return the first available
+            connection URL, which is never null or empty
+             */
+            for (String str : connections) {
+                Pattern argMatcher = Pattern.compile("\\{[0-9]*}");
+                Matcher matcher = argMatcher.matcher(str);
+
+                int count = 0;
+                while (matcher.find()) {
+                    count++;
+                }
+
+                if (count == arguments.length) {
+                    return StringUtils.format(str, arguments);
+                }
+            }
+        }
+
+        return StringUtils.format(connections[0], arguments);
     }
 
     /**

@@ -30,10 +30,12 @@ public class UserAuthProcessContainer implements Iterable<Class<? extends UserAu
             Method priorityMethod = process.getDeclaredMethod("getPriority");
             Method nameMethod = process.getDeclaredMethod("getName");
             Method createForMethod = process.getDeclaredMethod("createFor", NetworkClient.class);
+            Method createDummyMethod = process.getDeclaredMethod("createDummy");
 
             if (!priorityMethod.getReturnType().equals(int.class)) return false;
             if (!nameMethod.getReturnType().equals(String.class)) return false;
             if (!UserAuthProcess.class.isAssignableFrom(createForMethod.getReturnType())) return false;
+            if (!UserAuthProcess.class.isAssignableFrom(createDummyMethod.getReturnType())) return false;
 
             String name = (String) nameMethod.invoke(process);
             if (name == null) return false;

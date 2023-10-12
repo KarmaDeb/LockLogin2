@@ -99,9 +99,9 @@ public class CSQLDriver implements SQLDriver {
                         .withRow(Row.ID, RowType.INTEGER, QueryBuilder.NOT_NULL)
                         .withRow(Row.PASSWORD, RowType.LONGTEXT)
                         .withRow(Row.PIN, RowType.LONGTEXT)
-                        .withRow(Row.TOKEN_2FA, RowType.VARCHAR, QueryModifier.of("(128)"))
+                        .withRow(Row.TOKEN_TOTP, RowType.VARCHAR, QueryModifier.of("(128)"))
                         .withRow(Row.PANIC, RowType.LONGTEXT)
-                        .withRow(Row.STATUS_2FA, RowType.BOOLEAN)
+                        .withRow(Row.STATUS_TOTP, RowType.BOOLEAN)
                         .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))
                         .withPrimaryKey(Row.ID, true);
 
@@ -111,7 +111,7 @@ public class CSQLDriver implements SQLDriver {
                         .withRow(Row.LOGIN_CAPTCHA, RowType.BOOLEAN)
                         .withRow(Row.LOGIN_PASSWORD, RowType.BOOLEAN)
                         .withRow(Row.LOGIN_PIN, RowType.BOOLEAN)
-                        .withRow(Row.LOGIN_2FA, RowType.BOOLEAN)
+                        .withRow(Row.LOGIN_TOTP, RowType.BOOLEAN)
                         .withRow(Row.PERSISTENT, RowType.BOOLEAN)
                         .withRow(Row.CAPTCHA, RowType.VARCHAR, QueryModifier.of("(16)"))
                         .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))

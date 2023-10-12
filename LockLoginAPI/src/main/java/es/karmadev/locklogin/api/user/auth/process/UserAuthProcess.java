@@ -1,9 +1,7 @@
 package es.karmadev.locklogin.api.user.auth.process;
 
+import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * User authentication process
@@ -51,5 +49,5 @@ public interface UserAuthProcess {
      * @param previous the previous auth process
      * @return the auth process
      */
-    CompletableFuture<AuthProcess> process(final AuthProcess previous);
+    FutureTask<AuthProcess> process(final AuthProcess previous);
 }

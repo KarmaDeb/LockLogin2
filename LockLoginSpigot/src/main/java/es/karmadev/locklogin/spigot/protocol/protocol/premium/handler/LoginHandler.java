@@ -27,14 +27,17 @@ package es.karmadev.locklogin.spigot.protocol.protocol.premium.handler;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketEvent;
 import es.karmadev.api.logger.log.console.ConsoleColor;
-import es.karmadev.api.web.minecraft.MineAPI;
-import es.karmadev.api.web.minecraft.UUIDType;
-import es.karmadev.api.web.minecraft.response.data.OKARequest;
+import es.karmadev.api.minecraft.uuid.UUIDFetcher;
+import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
-import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
+import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.ProtocolListener;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.StartClient;
@@ -88,29 +91,56 @@ public final class LoginHandler implements Runnable {
 
         try {
             InetSocketAddress address = player.getAddress();
+            LockLogin plugin = CurrentPlugin.getPlugin();
+
             if (address != null) {
-                PremiumDataStore premium = CurrentPlugin.getPlugin().premiumStore();
+                PremiumDataStore premium = plugin.premiumStore();
 
                 UUID offline_id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes());
                 UUID online_uid = premium.onlineId(username);
                 if (online_uid == null) {
-                    /*OKAResponse response = UUIDUtil.fetchOKA(username);
-                    online_uid = response.getId(UUIDType.ONLINE);
+                    online_uid = UUIDFetcher.fetchUUID(username, UUIDType.ONLINE);
 
-                    premium.saveId(username, online_uid);*/
-                    OKARequest request = MineAPI.fetchAndWait(username);
-                    online_uid = request.getUUID(UUIDType.ONLINE);
-                    if (online_uid != null) {
+                    /*if (online_uid != null) {
                         premium.saveId(username, online_uid);
-                    }
+                    }*/
                 }
 
-                LocalNetworkClient offline = CurrentPlugin.getPlugin().network().getOfflinePlayer(offline_id);
+                CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(offline_id);
+                if (offline == null) {
+                    if (online_uid != null) {
+                        CLocalClient premiumClient = (CLocalClient) plugin.network().getOfflinePlayer(online_uid);
+                        if (premiumClient != null) {
+                            premiumClient.setUniqueId(offline_id);
+                            offline = premiumClient;
+                        }
+                    }
+
+                    if (offline == null) {
+                        offline = (CLocalClient) plugin.getUserFactory(false).create(username, offline_id);
+                        EntityCreatedEvent event = new EntityCreatedEvent(offline);
+                        plugin.moduleManager().fireEvent(event);
+                    }
+                }
+                /*
+                Note that with this, we might need to create an user because we are processing
+                this even before the AsyncPlayerPreLoginEvent gets processed (the official event
+                in where the account gets actually created)
+                 */
 
                 LoginSession session;
                 boolean cracked = true;
                 if (!offline_id.equals(online_uid)) {
-                    if (offline.connection().equals(ConnectionType.ONLINE) && start.toggleOnline()) {
+                    Configuration config = plugin.configuration();
+                    PremiumConfiguration premiumSettings = config.premium();
+
+                    boolean togglePremium = offline.connection().equals(ConnectionType.ONLINE);
+                    if (premiumSettings.auto() && !premium.exists(username)) {
+                        premium.saveId(username, online_uid);
+                        togglePremium = true;
+                    }
+
+                    if ((togglePremium || offline.connection().equals(ConnectionType.ONLINE)) && start.toggleOnline()) {
                         byte[] verify = start.token();
                         ClientKey key = start.key();
                         session = new LoginSession(username, verify, key);

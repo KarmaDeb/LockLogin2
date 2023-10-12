@@ -9,7 +9,7 @@
 #                                                         #
 ###########################################################
 
-#This is used by 2fa
+#This is used by TOTP
 #and some plugin messages
 ServerName: ""
 
@@ -323,23 +323,27 @@ BruteForce:
 #to log in
 AllowSameIp: true
 
-#Enable authentication feature (register/login)
-Authentication: true
+#Enable authentication features
+#
+# Register - Toggles if the plugin has /register enabled
+# Login    - Toggles if the plugin has /login enabled
+# Pin      - Toggles if the plugin has /pin enabled
+# Totp     - Toggles if the plugin has /totp enabled
+#
+#Here's a video tutorial on TOTP: https://www.youtube.com/watch?v=zcLxFQgCrnU
+Authentication:
+  Register: true
+  Login: true
+  Pin: true
+  Totp: true
 
-#Enable pin feature (This is not 2FA)
+#Enable pin feature (This is not TOTP)
 #LockLogin pin or LockLogin Pinner is
 #an extra pin feature that adds an extra
 #security layer to your players accounts
 Pin: true
 
-#Enable 2FA feature (using Google Authenticator)
-#This adds and extra security layer to your
-#players account, but since due Spigot API is
-#bypasseable, you should enable PIN feature
-#For help while using/scanning 2FA QR codes
-#check these video
-#
-#https://www.youtube.com/watch?v=zcLxFQgCrnU
+
 2FA: true
 
 #Updater options

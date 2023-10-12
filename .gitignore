@@ -47,3 +47,10 @@ deprecated.txt
 /v2.0.0/
 /LockLoginCommon/DisabledTests/
 /LockLoginCommon/junit/
+/LockLoginAPI/v2.0.0-SNAPSHOT/
+/LockLoginBungee/v2.0.0-SNAPSHOT/
+/LockLoginBungee/v2.0.0/
+/LockLoginCommon/v2.0.0-SNAPSHOT/
+/LockLoginSpigot/v2.0.0-SNAPSHOT/
+/v2.0.0-SNAPSHOT/
+/junit/

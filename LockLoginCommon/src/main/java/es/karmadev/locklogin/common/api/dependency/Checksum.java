@@ -21,11 +21,24 @@ class Checksum implements DependencyChecksum {
         dependency = owner;
     }
 
-    protected void define(final String name, final long value) {
+    /**
+     * Set the checksum value
+     *
+     * @param name the checksum type name
+     * @param value the checksum value
+     */
+    @Override
+    public void define(final String name, final long value) {
         values.put(name, value);
     }
 
-    protected void hash(final String hash) {
+    /**
+     * Set the checksum hash
+     *
+     * @param hash the new hash
+     */
+    @Override
+    public void hash(final String hash) {
         this.hash = hash;
     }
 

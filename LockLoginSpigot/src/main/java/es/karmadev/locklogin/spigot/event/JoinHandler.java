@@ -1,5 +1,9 @@
 package es.karmadev.locklogin.spigot.event;
 
+import es.karmadev.api.minecraft.text.Component;
+import es.karmadev.api.minecraft.text.component.TextComponent;
+import es.karmadev.api.minecraft.uuid.UUIDFetcher;
+import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.api.spigot.core.scheduler.SpigotTask;
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.minecraft.color.ColorComponent;
@@ -8,9 +12,6 @@ import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
 import es.karmadev.api.spigot.reflection.title.SpigotTitle;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
-import es.karmadev.api.web.minecraft.MineAPI;
-import es.karmadev.api.web.minecraft.UUIDType;
-import es.karmadev.api.web.minecraft.response.data.OKARequest;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.event.entity.client.EntityPreConnectEvent;
@@ -18,6 +19,7 @@ import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
+import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.CaptchaConfiguration;
@@ -33,16 +35,19 @@ import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
-import es.karmadev.locklogin.spigot.process.SpigotAccountProcess;
+import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
 import es.karmadev.locklogin.spigot.util.PlayerPool;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import es.karmadev.locklogin.spigot.util.process.ClientProcessor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -57,9 +62,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,8 +74,8 @@ public class JoinHandler implements Listener {
     private final Messages messages = plugin.messages();
 
     private final Set<UUID> passedProcess = ConcurrentHashMap.newKeySet();
-    private final ConcurrentMap<UUID, UUID> uuidTranslator = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, CLocalClient> networkClients = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NetworkClient, String> joinMessages = new ConcurrentHashMap<>();
 
     private static final String IPV4_REGEX =
             "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
@@ -82,9 +85,113 @@ public class JoinHandler implements Listener {
     private static final Pattern IPv4_PATTERN = Pattern.compile(IPV4_REGEX);
 
     private final PlayerPool playerKickPool = new PlayerPool((reason, player) -> player.kickPlayer(ConsoleColor.parse(reason)));
+    private final ClientProcessor playerLoginPool;
+    private final ClientProcessor playerJoinPool;
 
-    public JoinHandler() {
+    public JoinHandler(final LockLoginSpigot spigot) {
         playerKickPool.schedule();
+
+        playerJoinPool = new ClientProcessor(spigot, (player) -> {
+            NetworkClient online = plugin.network().getPlayer(UserDataHandler.getNetworkId(player));
+
+            startAuthProcess(online, null);
+            if (configuration.clearChat()) {
+                ProtocolAssistant.clearChat(player);
+            }
+
+            if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
+            String customMessage = messages.join(online);
+            if (!ObjectUtils.isNullOrEmpty(customMessage)) {
+                Bukkit.broadcastMessage(ColorComponent.parse(customMessage));
+            } else {
+                String joinMessage = this.joinMessages.remove(online);
+                if (!ObjectUtils.isNullOrEmpty(joinMessage)) {
+                    Bukkit.broadcastMessage(ColorComponent.parse(joinMessage));
+                }
+            }
+
+            //Bukkit.getScheduler().runTask(spigot.plugin(), online.getSessionChecker());
+        });
+
+        playerLoginPool = new ClientProcessor(spigot, (player) -> {
+            UUID id = player.getUniqueId();
+            CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
+
+            COnlineClient online = ((COnlineClient) offline.client())
+                    .onMessageRequest((msg) -> {
+                        if (!player.isOnline()) return;
+                        player.sendMessage(ColorComponent.parse(msg)
+                                .replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()));
+                    })
+                    .onActionBarRequest((msg) -> {
+                        if (!player.isOnline()) return;
+
+                        SpigotActionbar bar = new SpigotActionbar(msg.replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server()));
+                        bar.send(player);
+                    })
+                    .onTitleRequest((msg) -> {
+                        if (!player.isOnline()) return;
+
+                        TextComponent titleMsg = Component.simple().text(msg.title()
+                                .replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())).build();
+                        TextComponent subtitleMsg = Component.simple().text(msg.subtitle()
+                                .replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())).build();
+
+                        SpigotTitle title = new SpigotTitle(titleMsg, subtitleMsg);
+                        title.send(player, msg.fadeIn(), msg.show(), msg.fadeOut());
+                    })
+                    .onKickRequest((msg) -> {
+                        if (!player.isOnline()) return;
+
+                        List<String> reasons = Arrays.asList(msg);
+                        String reason = StringUtils.listToString(ColorComponent.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE).replace("{player}", player.getName())
+                                .replace("{server}", configuration.server())
+                                .replace("{ServerName}", configuration.server());
+
+                        SpigotTask task = plugin.plugin().scheduler("sync").schedule(() -> player.kickPlayer(reason));
+                        task.markSynchronous();
+                    })
+                    .onCommandRequest((command) -> {
+                        if (!player.isOnline()) return;
+
+                        if (!command.startsWith("/")) command = "/" + command;
+                        PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(player, command); //Completely emulate the command process
+                        Bukkit.getServer().getPluginManager().callEvent(event);
+
+                        if (!event.isCancelled()) {
+                            player.performCommand(event.getMessage());
+                        }
+                    })
+                    .onPermissionRequest((permission) -> {
+                        if (!player.isOnline()) return false;
+                        if (permission.equalsIgnoreCase("op")) return player.isOp();
+                        return player.hasPermission(permission);
+                    });
+
+            CPluginNetwork network = (CPluginNetwork) plugin.network();
+            network.appendClient(online);
+
+            online.session().append(CSessionField.newField(Boolean.class, "pass_logged", false));
+            online.session().append(CSessionField.newField(Boolean.class, "pin_logged", false));
+            online.session().append(CSessionField.newField(Boolean.class, "totp_logged", false));
+            player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
+
+            ClientInjector injector = plugin.getInjector();
+            injector.inject(player);
+
+            //System.out.println(injection.isInjected());
+
+            networkClients.remove(id);
+            passedProcess.remove(online.uniqueId());
+
+            playerJoinPool.appendProcessor(player.getUniqueId());
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -102,21 +209,28 @@ public class JoinHandler implements Listener {
             UUID offline_uid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
             UUID online_uid = premium.onlineId(name);
             if (online_uid == null) {
-                OKARequest request = MineAPI.fetchAndWait(name);
-                online_uid = request.getUUID(UUIDType.ONLINE);
-
-                if (online_uid != null) {
+                online_uid = UUIDFetcher.fetchUUID(name, UUIDType.ONLINE);
+                /*if (online_uid != null) {
                     premium.saveId(name, online_uid);
-                }
+                }*/
             }
 
             CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(offline_uid);
             if (offline == null) {
-                offline = (CLocalClient) plugin.getUserFactory(false).create(name, offline_uid);
-                EntityCreatedEvent event = new EntityCreatedEvent(offline);
-                plugin.moduleManager().fireEvent(event);
-            }
+                if (online_uid != null) {
+                    CLocalClient premiumClient = (CLocalClient) plugin.network().getOfflinePlayer(online_uid);
+                    if (premiumClient != null) {
+                        premiumClient.setUniqueId(offline_uid);
+                        offline = premiumClient;
+                    }
+                }
 
+                if (offline == null) {
+                    offline = (CLocalClient) plugin.getUserFactory(false).create(name, offline_uid);
+                    EntityCreatedEvent event = new EntityCreatedEvent(offline);
+                    plugin.moduleManager().fireEvent(event);
+                }
+            }
             networkClients.put(offline_uid, offline);
 
             UserSession session = offline.session();
@@ -126,7 +240,7 @@ public class JoinHandler implements Listener {
             }*/
 
             session.login(false);
-            session._2faLogin(false);
+            session.totpLogin(false);
             session.pinLogin(false);
 
             /*Path legacyAccountFile = plugin.workingDirectory().resolve("data").resolve("accounts").resolve(offline_uid.toString().replace("-", "") + ".lldb");
@@ -175,7 +289,7 @@ public class JoinHandler implements Listener {
                     if (plugin.onlineMode()) {
                         use_uid = online_uid;
                     } else {
-                        if (offline.connection().equals(ConnectionType.ONLINE) && !premiumConfig.forceOfflineId()) {
+                        if ((configuration.premium().auto() || offline.connection().equals(ConnectionType.ONLINE)) && !premiumConfig.forceOfflineId()) {
                             use_uid = online_uid;
                         }
                     }
@@ -305,8 +419,6 @@ public class JoinHandler implements Listener {
                     }
                 }
 
-                if (online_uid != null && !online_uid.equals(offline_uid)) uuidTranslator.put(online_uid, offline_uid);
-
                 EntityPreConnectEvent event = new EntityPreConnectEvent(offline);
                 plugin.moduleManager().fireEvent(event);
 
@@ -314,119 +426,24 @@ public class JoinHandler implements Listener {
                     playerKickPool.add(use_uid, event.cancelReason());
                 }
             }
+
+            playerLoginPool.appendProcessor(use_uid);
         });
+
         e.allow();
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onLogin(final PlayerLoginEvent e) {
         Player player = e.getPlayer();
-        UUID id = player.getUniqueId();
-        if (uuidTranslator.containsKey(id)) {
-            id = uuidTranslator.getOrDefault(id, null);
-            if (id == null) id = player.getUniqueId();
-        }
-
-        CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
-        if (offline == null) {
-            offline = networkClients.remove(id);
-        }
-
-        if (offline == null) {
-            UUID offline_uid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + player.getName()).getBytes());
-
-            offline = (CLocalClient) plugin.getUserFactory(false).create(player.getName(), offline_uid);
-            EntityCreatedEvent event = new EntityCreatedEvent(offline);
-            plugin.moduleManager().fireEvent(event);
-        }
-
-        COnlineClient online = ((COnlineClient) offline.client())
-                .onMessageRequest((msg) -> {
-                    if (!player.isOnline()) return;
-                    player.sendMessage(ColorComponent.parse(msg)
-                            .replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server()));
-                })
-                .onActionBarRequest((msg) -> {
-                    if (!player.isOnline()) return;
-
-                    SpigotActionbar bar = new SpigotActionbar(msg.replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server()));
-                    bar.send(player);
-                })
-                .onTitleRequest((msg) -> {
-                    if (!player.isOnline()) return;
-
-                    SpigotTitle title = new SpigotTitle(msg.title().replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server()), msg.subtitle().replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server()));
-                    title.send(player, msg.fadeIn(), msg.show(), msg.fadeOut());
-                })
-                .onKickRequest((msg) -> {
-                    if (!player.isOnline()) return;
-
-                    List<String> reasons = Arrays.asList(msg);
-                    String reason = StringUtils.listToString(ColorComponent.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE).replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server());
-
-                    SpigotTask task = plugin.plugin().scheduler("sync").schedule(() -> player.kickPlayer(reason));
-                    task.markSynchronous();
-                })
-                .onCommandRequest((command) -> {
-                    if (!player.isOnline()) return;
-
-                    if (!command.startsWith("/")) command = "/" + command;
-                    PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(player, command); //Completely emulate the command process
-                    Bukkit.getServer().getPluginManager().callEvent(event);
-
-                    if (!event.isCancelled()) {
-                        player.performCommand(event.getMessage());
-                    }
-                })
-                .onPermissionRequest((permission) -> {
-                    if (!player.isOnline()) return false;
-                    if (permission.equalsIgnoreCase("op")) return player.isOp();
-                    return player.hasPermission(permission);
-                });
-
-        online.session().append(CSessionField.newField(boolean.class, "logged", false));
-        player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
-
-        ClientInjector injector = plugin.getInjector();
-        injector.inject(player);
-
-        //System.out.println(injection.isInjected());
-
-        networkClients.remove(id);
-        passedProcess.remove(online.uniqueId());
+        UserDataHandler.setReady(player);
+        playerLoginPool.markForProcess(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPostJoin(final PlayerJoinEvent e) {
         Player player = e.getPlayer();
-
-        String message = e.getJoinMessage();
-        e.setJoinMessage("");
-
-        plugin.plugin().scheduler("async").schedule(() -> {
-            NetworkClient online = plugin.network().getPlayer(UserDataHandler.getNetworkId(player));
-
-            startAuthProcess(online, null);
-            if (configuration.clearChat()) {
-                ProtocolAssistant.clearChat(player);
-            }
-
-            if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
-            String customMessage = messages.join(online);
-            if (!ObjectUtils.isNullOrEmpty(customMessage)) {
-                Bukkit.broadcastMessage(ColorComponent.parse(message));
-            }
-        });
+        playerJoinPool.markForProcess(player.getUniqueId());
     }
 
     private boolean invalidIP(final InetAddress address) {
@@ -448,10 +465,8 @@ public class JoinHandler implements Listener {
         if (process == null && !passedProcess.contains(client.uniqueId())) {
             plugin.err("Your LockLogin instance is not using any auth process. This is a security risk!");
             client.session().login(true);
-            client.session()._2faLogin(true);
+            client.session().totpLogin(true);
             client.session().pinLogin(true);
-
-            System.out.println("Finishing login");
             return;
         }
 
@@ -462,7 +477,7 @@ public class JoinHandler implements Listener {
             //Final auth step
             if (log) {
                 client.session().login(true);
-                client.session()._2faLogin(true);
+                client.session().totpLogin(true);
                 client.session().pinLogin(true);
             } else {
                 client.kick("&cInvalid session status");
@@ -491,21 +506,24 @@ public class JoinHandler implements Listener {
         if (allow) {
             Bukkit.getServer().getScheduler().runTask(plugin.plugin(), () -> {
                 boolean work = true;
-                if (process.name().equals(SpigotAccountProcess.getName()) ||
-                        process.name().equals(SpigotPinProcess.getName())) {
+                if (process.name().equals(SpigotLoginProcess.getName()) ||
+                        process.name().equals(SpigotPinProcess.getName()) ||
+                            process.name().equals(SpigotRegisterProcess.getName())) {
                     work = process.isEnabled();
                 }
 
                 if (work) {
                     passedProcess.add(client.uniqueId());
-                    process.process(previous).whenComplete((authProcess, error) -> {
+
+                    FutureTask<AuthProcess> future = process.process(previous);
+                    future.whenComplete(((authProcess, error) -> {
                         if (error != null) {
                             client.kick("&cAn error occurred while processing your session");
                             return;
                         }
 
                         startAuthProcess(client, authProcess); //Go to the next auth process
-                    });
+                    }));
                 } else {
                     startAuthProcess(client, previous);
                 }

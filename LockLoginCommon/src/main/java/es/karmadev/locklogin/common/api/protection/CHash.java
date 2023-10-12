@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.protection;
 
-import es.karmadev.api.shaded.google.gson.Gson;
-import es.karmadev.api.shaded.google.gson.GsonBuilder;
-import es.karmadev.api.shaded.google.gson.JsonElement;
-import es.karmadev.api.shaded.google.gson.JsonObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.security.LockLoginHasher;

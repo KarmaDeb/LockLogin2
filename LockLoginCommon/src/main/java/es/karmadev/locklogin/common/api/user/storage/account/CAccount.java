@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.user.storage.account;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.NetworkEntity;
@@ -314,7 +315,9 @@ public class CAccount implements UserAccount {
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
                     String password = result.getString(1);
-                    return CHash.fromString(password, id);
+                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(password)) {
+                        return CHash.fromString(password, id);
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -374,7 +377,9 @@ public class CAccount implements UserAccount {
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
                     String pin = result.getString(1);
-                    return CHash.fromString(pin, id);
+                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(pin)) {
+                        return CHash.fromString(pin, id);
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -418,19 +423,19 @@ public class CAccount implements UserAccount {
     }
 
     /**
-     * Get the account 2fa token
+     * Get the account totp token
      *
-     * @return the account 2fa token
+     * @return the account totp token
      */
     @Override
-    public String _2FA() {
+    public String totp() {
         Connection connection = null;
         Statement statement = null;
         try {
             connection = engine.retrieve();
             statement = connection.createStatement();
             try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.TOKEN_2FA)
+                    .select(Table.ACCOUNT, Row.TOKEN_TOTP)
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
                     return result.getString(1);
@@ -446,12 +451,12 @@ public class CAccount implements UserAccount {
     }
 
     /**
-     * Set the client 2fa token
+     * Set the client totp token
      *
      * @param token the token
      */
     @Override
-    public void set2FA(final String token) {
+    public void setTotp(final String token) {
         Connection connection = null;
         Statement statement = null;
         try {
@@ -459,7 +464,7 @@ public class CAccount implements UserAccount {
             statement = connection.createStatement();
             statement.executeUpdate(QueryBuilder.createQuery()
                     .update(Table.ACCOUNT)
-                    .set(Row.TOKEN_2FA, token)
+                    .set(Row.TOKEN_TOTP, token)
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -480,13 +485,15 @@ public class CAccount implements UserAccount {
         try {
             connection = engine.retrieve();
             statement = connection.createStatement();
-            try (ResultSet rs = statement.executeQuery(QueryBuilder.createQuery()
+            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
                     .select(Table.ACCOUNT, Row.PANIC)
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
 
-                if (rs.next()) {
-                    String panic = rs.getString(1);
-                    return CHash.fromString(panic, id);
+                if (result.next()) {
+                    String panic = result.getString(1);
+                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(panic)) {
+                        return CHash.fromString(panic, id);
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -530,12 +537,12 @@ public class CAccount implements UserAccount {
     }
 
     /**
-     * Set the client 2fa status
+     * Set the client totp status
      *
-     * @param status the client 2fa status
+     * @param status the client totp status
      */
     @Override
-    public void set2FA(final boolean status) {
+    public void setTotp(final boolean status) {
         Connection connection = null;
         Statement statement = null;
         try {
@@ -543,7 +550,7 @@ public class CAccount implements UserAccount {
             statement = connection.createStatement();
             statement.executeUpdate(QueryBuilder.createQuery()
                     .update(Table.ACCOUNT)
-                    .set(Row.STATUS_2FA, status)
+                    .set(Row.STATUS_TOTP, status)
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build());
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -553,19 +560,19 @@ public class CAccount implements UserAccount {
     }
 
     /**
-     * Get if the account has 2fa enabled
+     * Get if the account has totp enabled
      *
-     * @return if the account has 2fa
+     * @return if the account has totp
      */
     @Override
-    public boolean has2FA() {
+    public boolean hasTotp() {
         Connection connection = null;
         Statement statement = null;
         try {
             connection = engine.retrieve();
             statement = connection.createStatement();
             try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.STATUS_2FA)
+                    .select(Table.ACCOUNT, Row.STATUS_TOTP)
                     .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
                 if (result.next()) {
                     return result.getBoolean(1);

@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 @Value(staticConstructor = "of")
 public class CPremiumSection implements PremiumConfiguration {
 
+    boolean auto;
     boolean enable;
     boolean forceOfflineId;
 }

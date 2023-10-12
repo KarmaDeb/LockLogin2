@@ -28,7 +28,7 @@ public class EntityConnectEvent extends EntityEvent implements Cancellable {
      * @param entity the entity
      * @param to the server the client has been connected to
      * @throws SecurityException as part of {@link es.karmadev.locklogin.api.event.LockLoginEvent#LockLoginEvent()}
-     * @throws IllegalArgumentException as part of {@link EntityConnectEvent(LocalNetworkClient, NetworkServer)}
+     * @throws IllegalArgumentException as part of {@link #EntityConnectEvent(Module, LocalNetworkClient, NetworkServer)}
      */
     public EntityConnectEvent(final LocalNetworkClient entity, final NetworkServer to) throws SecurityException, IllegalArgumentException {
         this(null, entity, to);

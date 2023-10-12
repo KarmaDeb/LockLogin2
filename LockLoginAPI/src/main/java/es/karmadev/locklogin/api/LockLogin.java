@@ -12,6 +12,7 @@ import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -39,6 +40,13 @@ public interface LockLogin extends ResourceLoader {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     Object plugin() throws SecurityException;
+
+    /**
+     * Get the plugin marketplace
+     *
+     * @return the plugin marketplace
+     */
+    MarketPlace getMarketPlace();
 
     /**
      * Get if the plugin is running in

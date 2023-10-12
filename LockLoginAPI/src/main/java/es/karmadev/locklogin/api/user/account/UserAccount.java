@@ -107,18 +107,18 @@ public interface UserAccount {
     void setPin(final String pin);
 
     /**
-     * Get the account 2fa token
+     * Get the account totp token
      *
-     * @return the account 2fa token
+     * @return the account totp token
      */
-    String _2FA();
+    String totp();
 
     /**
-     * Set the client 2fa token
+     * Set the client totp token
      *
      * @param token the token
      */
-    void set2FA(final String token);
+    void setTotp(final String token);
 
     /**
      * Get the account panic token
@@ -135,11 +135,11 @@ public interface UserAccount {
     void setPanic(final String token);
 
     /**
-     * Set the client 2fa status
+     * Set the client totp status
      *
-     * @param status the client 2fa status
+     * @param status the client totp status
      */
-    void set2FA(final boolean status);
+    void setTotp(final boolean status);
 
     /**
      * Get if the client is registered
@@ -162,20 +162,20 @@ public interface UserAccount {
     }
 
     /**
-     * Get if the account has 2fa enabled
+     * Get if the account has totp enabled
      *
-     * @return if the account has 2fa
+     * @return if the account has totp
      */
-    boolean has2FA();
+    boolean hasTotp();
 
     /**
-     * Get if the account has a valid 2fa token
+     * Get if the account has a valid totp token
      * set
      *
-     * @return if the account has a valid 2fa token set
+     * @return if the account has a valid totp token set
      */
-    default boolean _2faSet() {
-        String token = _2FA();
+    default boolean totpSet() {
+        String token = totp();
         return !ObjectUtils.isNullOrEmpty(token);
     }
 

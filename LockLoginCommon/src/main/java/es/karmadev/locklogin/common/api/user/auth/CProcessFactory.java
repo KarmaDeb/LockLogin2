@@ -78,8 +78,68 @@ public class CProcessFactory implements ProcessFactory {
         if (container.insert(process)) {
             CurrentPlugin.getPlugin().info("Successfully registered user auth process: {0}", container.getNameFor(process));
         } else {
-            CurrentPlugin.getPlugin().err("Couldn't register auth process {0}. Make sure it has a public static int getPriority(), public static String getName() and public static UserAuthProcess createFor(NetworkClient)", process);
+            CurrentPlugin.getPlugin().err("Couldn't register auth process {0}. Make sure it has a public static AuthProcess createDummy() public static int getPriority(), public static String getName() and public static UserAuthProcess createFor(NetworkClient)", process);
         }
+    }
+
+    /**
+     * Get if the process is enabled
+     *
+     * @param processClass if the process is enabled
+     * @return the process status
+     */
+    @Override
+    public boolean isEnabled(final Class<? extends UserAuthProcess> processClass) {
+        try {
+            Method createFor = processClass.getDeclaredMethod("createDummy");
+            UserAuthProcess process = (UserAuthProcess) createFor.invoke(processClass);
+
+            if (process != null) {
+                return process.isEnabled();
+            }
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {}
+
+        return false;
+    }
+
+    /**
+     * Get the process name
+     *
+     * @param processClass the process
+     * @return the process name
+     */
+    @Override
+    public String getName(final Class<? extends UserAuthProcess> processClass) {
+        try {
+            Method createFor = processClass.getDeclaredMethod("createDummy");
+            UserAuthProcess process = (UserAuthProcess) createFor.invoke(processClass);
+
+            if (process != null) {
+                return process.name();
+            }
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {}
+
+        return null;
+    }
+
+    /**
+     * Get the process priority
+     *
+     * @param processClass the process
+     * @return the process priority
+     */
+    @Override
+    public int getPriority(final Class<? extends UserAuthProcess> processClass) {
+        try {
+            Method createFor = processClass.getDeclaredMethod("createDummy");
+            UserAuthProcess process = (UserAuthProcess) createFor.invoke(processClass);
+
+            if (process != null) {
+                return process.priority();
+            }
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {}
+
+        return 0;
     }
 
     /**

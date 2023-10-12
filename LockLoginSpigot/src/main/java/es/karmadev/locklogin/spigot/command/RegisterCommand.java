@@ -17,11 +17,10 @@ import es.karmadev.locklogin.api.security.check.PasswordValidator;
 import es.karmadev.locklogin.api.user.account.AccountFactory;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
-import es.karmadev.locklogin.common.api.user.storage.session.CSession;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
+import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
 import org.bukkit.Location;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-@PluginCommand(command = "register")
+@PluginCommand(command = "register", processAttachment = SpigotRegisterProcess.class)
 public class RegisterCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
@@ -72,16 +71,19 @@ public class RegisterCommand extends Command {
                 NetworkClient client = plugin.network().getPlayer(id);
                 UserAccount account = client.account();
                 if (account.id() <= 0) {
+                    client.reset("account");
+
                     AccountFactory<? extends UserAccount> factory = plugin.getAccountFactory(false);
                     account = factory.create(client);
 
                     plugin.info("Created account with id {0} for user {1}", account.id(), client.name());
+                    client.account(); //Cache
                 }
 
                 UserSession session = client.session();
 
                 if (account.isRegistered()) {
-                    if (session.fetch("logged", false)) {
+                    if (session.fetch("pass_logged", false)) {
                         client.sendMessage(messages.prefix() + messages.alreadyRegistered());
                     } else {
                         client.sendMessage(messages.prefix() + messages.login(session.captcha()));
@@ -185,7 +187,7 @@ public class RegisterCommand extends Command {
             /*session.login(true);
             session._2faLogin(true);
             session.pinLogin(true);*/
-            session.append(CSessionField.newField(Boolean.class, "logged", true));
+            session.append(CSessionField.newField(Boolean.class, "pass_logged", true));
 
             if (player.hasMetadata("walkSpeed")) {
                 float walkSpeed = player.getMetadata("walkSpeed").get(0).asFloat();

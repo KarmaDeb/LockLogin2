@@ -2,7 +2,6 @@ package es.karmadev.locklogin.api.plugin.permission;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
@@ -31,6 +30,36 @@ public final class LockLoginPermission {
      * <p>locklogin.reload</p>
      */
     public final static PermissionObject PERMISSION_RELOAD = DummyPermission.of("locklogin.reload", false);
+
+    /**
+     * LockLogin version permission
+     * <p>locklogin.version</p>
+     */
+    public final static PermissionObject PERMISSION_VERSION = DummyPermission.of("locklogin.version", true);
+
+    /**
+     * LockLogin version view permission
+     * <p>locklogin.version.view</p>
+     */
+    public final static PermissionObject PERMISSION_VERSION_VIEW = DummyPermission.of("locklogin.version.view", false);
+
+    /**
+     * LockLogin version changelog permission
+     * <p>locklogin.version.changelog</p>
+     */
+    public final static PermissionObject PERMISSION_VERSION_CHANGELOG = DummyPermission.of("locklogin.version.changelog", false);
+
+    /**
+     * LockLogin version check permission
+     * <p>locklogin.version.history</p>
+     */
+    public final static PermissionObject PERMISSION_VERSION_HISTORY = DummyPermission.of("locklogin.version.history", false);
+
+    /**
+     * LockLogin version check permission
+     * <p>locklogin.version.check</p>
+     */
+    public final static PermissionObject PERMISSION_VERSION_CHECK = DummyPermission.of("locklogin.version.check", false);
 
     /**
      * LockLogin join in unauthorized server permission
@@ -125,10 +154,10 @@ public final class LockLoginPermission {
     public final static PermissionObject PERMISSION_ACCOUNT_PIN = DummyPermission.of("locklogin.account.pin", false);
 
     /**
-     * LockLogin client account 2fa management permission
-     * <p>locklogin.account.2fa</p>
+     * LockLogin client account totp management permission
+     * <p>locklogin.account.totp</p>
      */
-    public final static PermissionObject PERMISSION_ACCOUNT_2FA = DummyPermission.of("locklogin.account.2fa", false);
+    public final static PermissionObject PERMISSION_ACCOUNT_TOTP = DummyPermission.of("locklogin.account.totp", false);
 
     /**
      * LockLogin client account creation permission
@@ -137,10 +166,10 @@ public final class LockLoginPermission {
     public final static PermissionObject PERMISSION_ACCOUNT_CREATE = DummyPermission.of("locklogin.account.create", false);
 
     /**
-     * LockLogin force 2fa status permission
-     * <p>locklogin.force2fa</p>
+     * LockLogin force totp status permission
+     * <p>locklogin.forcetotp</p>
      */
-    public final static PermissionObject PERMISSION_FORCE_2FA = DummyPermission.of("locklogin.force2fa", false);
+    public final static PermissionObject PERMISSION_FORCE_TOTP = DummyPermission.of("locklogin.forcetotp", false);
 
     /**
      * LockLogin alias management permission
@@ -252,8 +281,14 @@ public final class LockLoginPermission {
                 PERMISSION_ACCOUNT_REMOVE.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_PASSWORD.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_PIN.addParent(PERMISSION_ACCOUNT),
-                PERMISSION_ACCOUNT_2FA.addParent(PERMISSION_ACCOUNT),
+                PERMISSION_ACCOUNT_TOTP.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_CREATE.addParent(PERMISSION_ACCOUNT)
+        );
+
+        PERMISSION_VERSION.addChildren(
+                PERMISSION_VERSION_CHANGELOG.addParent(PERMISSION_VERSION),
+                PERMISSION_VERSION_HISTORY.addParent(PERMISSION_VERSION),
+                PERMISSION_VERSION_CHECK.addParent(PERMISSION_VERSION)
         );
 
         PERMISSION_MODULE.addChildren(

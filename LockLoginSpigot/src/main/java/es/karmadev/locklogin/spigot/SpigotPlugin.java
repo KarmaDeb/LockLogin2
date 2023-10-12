@@ -1,15 +1,28 @@
 package es.karmadev.locklogin.spigot;
 
 import es.karmadev.api.logger.log.BoundedLogger;
+import es.karmadev.api.schedule.runner.TaskRunner;
+import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
+import es.karmadev.api.schedule.runner.event.TaskEvent;
 import es.karmadev.api.spigot.core.KarmaPlugin;
 import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.version.BuildStatus;
+import es.karmadev.api.version.Version;
+import es.karmadev.api.version.checker.VersionChecker;
+import es.karmadev.api.web.url.URLUtilities;
+import es.karmadev.api.web.url.domain.WebDomain;
+import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.ModuleLoader;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidModuleException;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
+import es.karmadev.locklogin.api.plugin.CacheAble;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.section.UpdaterSection;
+import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -22,36 +35,72 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.common.api.user.storage.account.transiction.CTransitional;
+import es.karmadev.locklogin.common.plugin.secure.logger.JavaLogger;
+import es.karmadev.locklogin.common.plugin.secure.logger.Log4Logger;
+import es.karmadev.locklogin.common.util.LockLoginJson;
 import es.karmadev.locklogin.spigot.command.helper.CommandHelper;
 import es.karmadev.locklogin.spigot.event.ChatHandler;
 import es.karmadev.locklogin.spigot.event.JoinHandler;
 import es.karmadev.locklogin.spigot.event.MovementHandler;
 import es.karmadev.locklogin.spigot.event.QuitHandler;
+import es.karmadev.locklogin.spigot.event.ui.InterfaceIOEvent;
+import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
+import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
 
 public class SpigotPlugin extends KarmaPlugin {
 
     LockLoginSpigot spigot;
+
+    @Getter
     private final CommandHelper commandHelper = new CommandHelper(getCommandMap());
+    @Getter
+    private VersionChecker checker;
+
+    @Getter
+    private ChatHandler chatHandler;
+    @Getter
+    private JoinHandler joinHandler;
+    @Getter
+    private MovementHandler movementHandler;
+    @Getter
+    private QuitHandler quitHandler;
+
+    @Getter
+    private InterfaceIOEvent UI_CloseOpenHandler; //Internal usage, we don't really care the name it has
 
     public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException, AlreadyRegisteredException {
         super(false);
@@ -69,7 +118,14 @@ public class SpigotPlugin extends KarmaPlugin {
      */
     @Override
     public void enable() {
+        long start = System.currentTimeMillis();
         if (spigot.boot) {
+            chatHandler = new ChatHandler(spigot);
+            joinHandler = new JoinHandler(spigot);
+            movementHandler = new MovementHandler(spigot);
+            quitHandler = new QuitHandler(spigot);
+            UI_CloseOpenHandler = new InterfaceIOEvent(spigot);
+
             PluginManager pluginManager = Bukkit.getPluginManager();
             spigot.installDriver();
 
@@ -85,19 +141,82 @@ public class SpigotPlugin extends KarmaPlugin {
             reorganizeDirectories();
 
             long end = System.currentTimeMillis();
-            long diff = end - spigot.getStartup().toEpochMilli();
-            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", diff, TimeUnit.MILLISECONDS.toSeconds(diff));
+            long diff = end - start;
+            long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
+
+            long rs = diff + diff2;
+            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
 
             spigot.getSessionFactory(false).getSessions().forEach((session) -> {
                 session.invalidate();
                 session.captchaLogin(false);
                 session.login(false);
                 session.pinLogin(false);
-                session._2faLogin(false);
+                session.totpLogin(false);
             });
 
             ProtocolAssistant.registerListener();
             spigot.getRuntime().booted = true;
+
+            Path pluginFile = spigot.getRuntime().file();
+            try(JarFile jar = new JarFile(pluginFile.toFile())) {
+                Enumeration<? extends ZipEntry> entries = jar.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    if (entry.isDirectory()) continue;
+
+                    String name = entry.getName();
+                    if (name.endsWith(".class")) {
+                        String className = name.replace("/", ".").substring(0, name.length() - 6);
+                        try {
+                            Class<?> clazz = Class.forName(className);
+                            if (clazz.isAnnotationPresent(CacheAble.class)) {
+                                CacheAble cacheAble = clazz.getDeclaredAnnotation(CacheAble.class);
+                                try {
+                                    Method precache = clazz.getDeclaredMethod("preCache");
+                                    precache.invoke(clazz);
+
+                                    spigot.info("Cached {0}", cacheAble.name());
+                                } catch (NoSuchMethodException | IllegalAccessException |
+                                         InvocationTargetException ex) {
+                                    spigot.log(ex, "Failed to cache {0}", cacheAble.name());
+                                    spigot.warn("Failed to cache {0}", cacheAble.name());
+                                }
+                            }
+                        } catch (NoClassDefFoundError | ClassNotFoundException ex) {
+                            spigot.warn("Couldn't find class: {0}", className);
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            MarketPlace marketPlace = spigot.getMarketPlace();
+            int version = marketPlace.getVersion();
+            int required = LockLoginJson.getMarketVersion();
+
+            if (version > required) {
+                /*
+                If the marketplace version is over the required one, it means we
+                haven't updated in a while, anyway, marketplace API should be backwards
+                compatible (in most cases), but might still break some old versions of
+                the plugin, so we blame the user about that
+                 */
+                spigot.warn("Plugin is using an out-dated marketplace version ({0}, we are on {1}), this could result in some things not working properly", version, required);
+            }
+            if (version < required) {
+                /*
+                If the marketplace version is under the required one, it means we
+                are on a test version which is about to introduce new features to the
+                marketplace API. So we advise the user that marketplace might not work
+                or even the plugin itself
+                 */
+                spigot.warn("Inconsistent plugin and marketplace versions ({0}, we are on {1})! This usually means you are on a pre-build version of the plugin and should not be used on production", version, required);
+            }
+            if (version == required) {
+                spigot.info("Using LockLogin marketplace version {0}", version);
+            }
 
             try {
                 commandHelper.mapCommand(spigot);
@@ -228,7 +347,36 @@ public class SpigotPlugin extends KarmaPlugin {
                 }
             }
 
-            logger().log(LogLevel.DEBUG, "LockLogin initialized with {0} services", spigot.service_provider.size());
+            Configuration configuration = spigot.configuration();
+            UpdaterSection updater = configuration.updater();
+
+            checker = new VersionChecker(this);
+
+            if (updater.check()) {
+                TaskRunner<Long> checkTask = new AsyncTaskExecutor(updater.interval(), TimeUnit.SECONDS);
+                checkTask.setRepeating(true);
+                checkTask.on(TaskEvent.RESTART, this::performVersionCheck);
+            }
+
+            performVersionCheck();
+            logger().log(LogLevel.DEBUG, "LockLogin {0} initialized with {1} services", sourceVersion(), spigot.service_provider.size());
+
+            try {
+                Logger logger = (Logger) LogManager.getRootLogger();
+                Log4Logger filter = new Log4Logger(this, commandHelper.getCommands());
+                logger.addFilter(filter);
+            } catch (ClassCastException ex) {
+                logger().send(LogLevel.ERROR, "Failed to bind into server's logger, user sensitive information might be exposed!");
+                java.util.logging.LogManager javaLM = java.util.logging.LogManager.getLogManager();
+                Enumeration<String> names = javaLM.getLoggerNames();
+
+                while (names.hasMoreElements()) {
+                    String name = names.nextElement();
+                    java.util.logging.Logger logger = javaLM.getLogger(name);
+
+                    logger.setFilter(new JavaLogger(commandHelper.getCommands()));
+                }
+            }
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
         }
@@ -236,7 +384,50 @@ public class SpigotPlugin extends KarmaPlugin {
 
     @Override
     public void disable() {
+        Bukkit.getScheduler().cancelTasks(this);
         commandHelper.unMap();
+
+        Logger coreLogger = (Logger) LogManager.getRootLogger();
+        Iterator<Filter> filters = coreLogger.getFilters();
+        if (filters != null) {
+            while (filters.hasNext()) {
+                Filter filter = filters.next();
+                if (filter.getClass().equals(Log4Logger.class))
+                    filter.stop();
+            }
+        }
+    }
+
+    public void performVersionCheck() {
+        checker.check().onComplete(() -> {
+            if (checker.getStatus().equals(BuildStatus.OUTDATED)) {
+                logger().send(LogLevel.INFO, "LockLogin has found a new version!");
+                logger().send("");
+                logger().send(LogLevel.INFO, "Current version is: {0}", sourceVersion());
+                logger().send(LogLevel.INFO, "Latest version is: {0}", checker.getVersion());
+                logger().send("");
+
+                logger().send(LogLevel.INFO, "Download latest version from:");
+                for (URL url : checker.getUpdateURLs()) {
+                    logger().send("&b- &7{0}", url);
+                }
+
+                logger().send("");
+                logger().send("&b------ &7Version history&b ------");
+                for (Version version : checker.getVersionHistory()) {
+                    String[] changelog = checker.getChangelog(version);
+                    if (sourceVersion().compareTo(version) == 0) {
+                        logger().send("&bVersion: &a(CURRENT) &3{0}&7:", version);
+                    } else {
+                        logger().send("&bVersion: &3{0}&7:", version);
+                    }
+
+                    for (String line : changelog) {
+                        logger().send(line);
+                    }
+                }
+            }
+        });
     }
 
     private void registerHash() {
@@ -314,10 +505,15 @@ public class SpigotPlugin extends KarmaPlugin {
     }
 
     private void registerEvents(final PluginManager manager) {
-        manager.registerEvents(new JoinHandler(), this);
-        manager.registerEvents(new ChatHandler(), this);
-        manager.registerEvents(new QuitHandler(), this);
-        manager.registerEvents(new MovementHandler(), this);
+        manager.registerEvents(chatHandler, this);
+        manager.registerEvents(joinHandler, this);
+        manager.registerEvents(movementHandler, this);
+        manager.registerEvents(quitHandler, this);
+
+        //PIN inventory events
+        if (SpigotPinProcess.createDummy().isEnabled()) {
+            manager.registerEvents(UI_CloseOpenHandler, this);
+        }
     }
 
     private void loadModules() {
@@ -348,6 +544,30 @@ public class SpigotPlugin extends KarmaPlugin {
             return (SimpleCommandMap) commandMapField.get(Bukkit.getServer());
         } catch (Exception e) {
             spigot.log(e, "An error occurred while obtaining the command map");
+        }
+
+        return null;
+    }
+
+    @Override
+    public @Nullable URI sourceUpdateURI() {
+        URI[] uris = LockLoginJson.getUpdateURIs();
+        for (URI uri : uris) {
+            try {
+                URL url = uri.toURL();
+                WebDomain domain = URLUtilities.getDomain(url);
+                if (domain == null) continue;
+
+                String host = String.format("%s://%s.%s/", domain.protocol(), domain.root(), domain.tld());
+                URL hostURL = URLUtilities.fromString(host);
+
+                if (hostURL == null) continue;
+
+                BuildType type = LockLoginJson.getChannel();
+                String flName = type.name().toLowerCase() + ".json";
+
+                return URLUtilities.append(url, flName).toURI();
+            } catch (MalformedURLException | URISyntaxException ignored) {}
         }
 
         return null;
