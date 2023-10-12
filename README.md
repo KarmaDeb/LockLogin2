@@ -27,17 +27,32 @@ it will be easier to determine which module (if any) caused that breach.
 You can learn on how to create a module for LockLogin in the [LockLogin wiki](https://reddo.es/karmadev/wiki) or<br>
 If you need more help when developing the module, you can have a look at the [LockLogin docs](https://reddo.es/karmadev/locklogin/docs/)
 
-You can also have a look on the [module examples](https://github.com/KarmaDeb/LockLogin2Examples/tree/master). (Spoiler) A plugin can extend to a module
+You can also have a look on the [module examples](https://github.com/KarmaDeb/LockLogin2Examples/tree/master).
+<details> 
+  <summary>Can I use my existing plugin as a module?</summary>
+    Yes, unlike in LockLoginReborn (LockLogin legacy v2), a plugin can be extended into a module, without<br>even the need
+of making your plugin have module-required files or implementing the LockLogin module class, instead, you simply need to call<br>
+a LockLogin method which asks your plugin as parameter in order to extend your plugin into a module virtually
+</details>
 
 # Migrating from LockLoginReborn (Legacy v2) (>1.1.0.9)
 [LockLoginReborn](https://github.com/KarmaDeb/LockLoginReborn) is the previous version to this version of LockLogin. Any version under LockLogin v2.0.0 will be<br>
 marked as legacy since this version releases officially. Which means that no more support will be provided for those<br>
 versions. No more dependency updates nor bug fixes, as the support will be moved to this version of LockLogin.<br>
 <br>
-This also includes accounts and any kind of data managed by the plugin in the legacy version. Affortunately, LockLogin2<br>
+This also includes accounts and any kind of data managed by the plugin in the legacy version. Fortunately, LockLogin2<br>
 is compatible with the legacy data systems, even thought it has been built from scratch, LockLogin2 will do its best<br>
 migrating the detected legacy data into the new systems. There's no manual work for you, the plugin will do everything<br>
 for you, so migrating should work just like a simple update.
+<br>
+Even though LockLogin will try to migrate all the legacy data, there's still some information that WON'T be migrated, those are:
+- Name tables
+- UUID tables
+- IP address tables
+- 2FA scratch codes (now renamed to TOTP Scratch codes)
+- Locations (last location and spawn)
+
+Work is in progress to add support for locations and 2fa scratch codes, but those might arrive later
 
 # Migrating from LockLogin (Legacy v1) (<1.12.16)
 Unfortunately, [LockLogin Legacy v1](https://github.com/KarmaDeb/LockLogin) won't be able to be migrated to LockLogin2<br>
