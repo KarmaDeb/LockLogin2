@@ -30,8 +30,8 @@ If you need more help when developing the module, you can have a look at the [Lo
 You can also have a look on the [module examples](https://github.com/KarmaDeb/LockLogin2Examples/tree/master).
 <details> 
   <summary>Can I use my existing plugin as a module?</summary>
-    Yes, unlike in LockLoginReborn (LockLogin legacy v2), a plugin can be extended into a module, without<br>even the need
-of making your plugin have module-required files or implementing the LockLogin module class, instead, you simply need to call<br>
+    Yes, unlike in LockLoginReborn (LockLogin legacy v2), a plugin can be extended into a module, without even the need
+of making your plugin have module-required files or implementing the LockLogin module class, instead, you simply need to call 
 a LockLogin method which asks your plugin as parameter in order to extend your plugin into a module virtually
 </details>
 
