@@ -8,7 +8,6 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.totp.TotpService;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.common.api.protection.totp.CTotpService;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
