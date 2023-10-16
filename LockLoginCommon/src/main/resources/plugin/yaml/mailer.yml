@@ -15,8 +15,14 @@
 # SendinBlue:   https://es.sendinblue.com/
 # ElasticEmail: https://elasticemail.com/
 # MooSend:      https://moosend.com/
-SMTP:
-  Host: 'smtp.myserver.net'
-  Port: 25
-  TTLS: true
-  TrustHost: 'smtp.myserver.net'
+#
+# Host: The host from where messages will be sent (leave empty to disable mail service)
+# Port: The host port used by your SMTP server
+# TLS: While true, the connection will be performed under TLS/SSL
+# User: The username for your SMTP host
+# Password: The user password for your SMTP host
+Host: ''
+Port: 25
+TLS: true
+User: 'myuser'
+Password: 'mypassword'

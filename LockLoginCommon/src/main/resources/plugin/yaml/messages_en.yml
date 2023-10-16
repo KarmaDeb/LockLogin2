@@ -1,28 +1,8 @@
-#LockLogin message file
-#----------------------------------
-#Translation: English (Official)
-#Editor: KarmaDev
-#Last edited: 18 - February - 2023 0:55
-#----------------------------------
-# What is an official language?
-# - This language is made by the developer of LockLogin
-# - This language will receive language updates ( this means
-#   this language will be translated by the author when a new
-#   message is added )
-#
-# What is a community language?
-# - This language is made by a LockLogin community member
-# - This language must receive a community language update ( this
-#   means the author of the language pack must update the
-#   language with the new messages, LockLogin developer won't do it )
-#
-# What is a community based but official language?
-# - This language is not made by the developer of LockLogin
-# - This language will receive updates (this means this language will be
-#   translated by its author or by LockLogin developers when a new message
-#   is added)
-# - This language can be modified by any user of LockLogin and request a pull
-#   request on github
+#############################
+#                           #
+#  Locklogin messages file  #
+#                           #
+#############################
 
 #Plugin prefix
 Prefix: "&eLockLogin &7>> "
@@ -87,6 +67,9 @@ LoginInsecure: "&5&oYour password has been classified as not secure and you must
 LoginOut: "&5&oYou took too much time to log-in"
 LoginTitle: "&7You have"
 LoginSubtitle: "&b{time} &7to login"
+LoginForgot: "&5&oIt seems that you've forgot your password, do you want us to send a recovery email for you?"
+LoginForgotYes: "&dYes please"
+LoginForgotNo: "&5No, thanks"
 
 #Session messages - Premium
 PremiumEnabled:
@@ -127,6 +110,7 @@ PremiumWarning:
   - "&b  you won't be able to join until the server goes back online"
   - ""
   - "&dIf you still want to proceed, run &e/premium&d again"
+
 #Those are only on spigot, paper, etc...
 #Yes, there are too many, but considering were are "simulating" minecraft
 #authentication, it's not actually that bad (it could be worse)
@@ -214,10 +198,7 @@ PanicNowUnsafe:
   - ""
   - "&dYou've disabled your panic token, this will"
   - "&dmake your account vulnerable to distributed"
-  - "&dbrute force attacks. Panic token will require a token"
-  - "&donce an specified amount of failed login attempts are done"
-  - "&din your account instead of asking the password, please"
-  - "&dtoggle it now using /account protect!"
+  - "&dbrute force attacks."
 PanicRequested:
   - "&eLockLogin"
   - ""
@@ -264,8 +245,18 @@ ForcedAccountRemoval:
   - "&5report this action at: &7https://discordexample.gg"
 ForcedAccountRemovalAdmin: "&dAccount of {player} removed, don't forget to run /account unlock {player}!"
 
-#Spawn utilities ( includes take back )
-SpawnSet: "&dThe login spawn location have been set"
+#Spawn utilities
+SpawnUsage: "&5&oValid spawn sub-arguments: &e<set>&7, &e<unset>&7, &e<teleport>&7, &e<back>"
+SpawnSet: "&dThe login spawn location have been set at&7 {position}"
+SpawnUnset: "&dThe login spawn location has been unset"
+SpawnTeleportTime: "&dYou will be teleported to spawn in&7 {time}&d seconds"
+SpawnTeleport: "&dYou've been teleported to spawn"
+SpawnTeleportAdmin: "&dYou've been teleported to spawn, run &7/spawn back&d to go to your previous location"
+SpawnTeleportNear: "&5&oYou are too nearby to spawn!"
+SpawnBack: "&dYou've been teleported to your previous location"
+SpawnNoBack: "&5&oYou don't have a previous location to go at"
+
+#Location utilities
 LocationsReset: "&dAll last locations have been reset"
 LocationReset: "&dLast location of {player} has been reset"
 LocationsFixed: "&dAll last locations have been fixed"

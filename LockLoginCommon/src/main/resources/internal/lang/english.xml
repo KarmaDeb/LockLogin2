@@ -31,6 +31,10 @@
                 <success>§dSuccessfully reloaded messages</success>
                 <fail>§5Failed to reload messages</fail>
             </response>
+            <response command="locklogin" argument="reload mailer">
+                <success>§dSuccessfully reloaded mailer setting</success>
+                <fail>§5Failed to reload mailer settings</fail>
+            </response>
 
             <response command="locklogin" argument="modules info">
                 <success/>
