@@ -13,7 +13,7 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.security.totp.TotpService;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
 import es.karmadev.totp.*;

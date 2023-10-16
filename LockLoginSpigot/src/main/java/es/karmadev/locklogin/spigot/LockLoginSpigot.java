@@ -39,7 +39,8 @@ import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
@@ -62,10 +63,10 @@ import es.karmadev.locklogin.common.api.extension.CModuleManager;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
-import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.plugin.service.brute.CBruteForce;
 import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
+import es.karmadev.locklogin.common.api.plugin.service.mail.CMailService;
 import es.karmadev.locklogin.common.api.plugin.service.name.CNameProvider;
 import es.karmadev.locklogin.common.api.plugin.service.password.CPasswordProvider;
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
@@ -215,9 +216,9 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                                 plugin.logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
                             } else {
                                 plugin.logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
-                                if (name.equalsIgnoreCase("Spartan")) {
+                                /*if (name.equalsIgnoreCase("Spartan")) {
                                     registerService("spartan", new SpartanService());
-                                }
+                                }*/
                             }
                         }
                     }
@@ -228,9 +229,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             }
         }
 
-        registerService("totp", new CTotpService());
-
-        configuration = new CPluginConfiguration();
+        configuration = new CPluginConfiguration(this);
 
         KeyPair pair = null;
         try {
@@ -306,6 +305,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         messages = new InternalPack();
         hasher = new CPluginHasher();
 
+        messages.setLang(configuration.language());
+
         CLocalBackup backup_service = new CLocalBackup();
         CNameProvider name_service = new CNameProvider();
         CPasswordProvider password_service = new CPasswordProvider();
@@ -322,6 +323,9 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             plugin.logger().log(LogLevel.INFO, "Ignoring FloodGate service compatibility");
             plugin.logger().send(LogLevel.WARNING, "Failed to detect FloodGate API. FloodGate service will be disabled");
         }
+
+        registerService("totp", new CTotpService());
+        registerService("mailer", new CMailService());
 
         driver = new CSQLDriver(configuration.database().driver());
         CurrentPlugin.updateState();
@@ -661,14 +665,15 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     }
 
     /**
-     * Get the plugin messages
+     * Get the plugin language pack manager
      *
-     * @return the plugin messages
+     * @return the plugin language pack
+     * manager
      */
     @Override
-    public Messages messages() {
+    public LanguagePackManager languagePackManager() {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginSpigot.class, "messages()");
-        return messages.getMessenger();
+        return messages;
     }
 
     /**

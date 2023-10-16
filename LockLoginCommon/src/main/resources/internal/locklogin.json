@@ -1,6 +1,7 @@
 {
   "id": "${locklogin.update.id}",
   "update": "${locklogin.version.type}",
+  "lang": "${locklogin.lang}",
   "dependencies": [
     {
       "type": "single",
@@ -96,30 +97,6 @@
       },
       "depends": [
         "jakarta_api"
-      ],
-      "download": [
-        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
-      ]
-    },
-    {
-      "type": "single",
-      "id": "angus_mail",
-      "name": "Angus Mail",
-      "file": "AngusMail.jar",
-      "test": "${angus.mail.test}",
-      "version": {
-        "project": "${angus.mail.version}",
-        "required": "${angus.mail.version}"
-      },
-      "relocations": [
-        {
-          "from": "org.eclipse.angus.mail",
-          "to": "es.karmadev.locklogin.shaded.mail"
-        }
-      ],
-      "depends": [
-        "jakarta_api",
-        "jakarta_activation"
       ],
       "download": [
         "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"

@@ -34,7 +34,7 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;

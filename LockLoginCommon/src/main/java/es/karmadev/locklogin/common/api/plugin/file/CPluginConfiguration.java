@@ -13,11 +13,13 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
+import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -33,14 +35,14 @@ public class CPluginConfiguration implements Configuration {
     private final YamlFileHandler yaml;
 
     private final CProxyConfiguration proxy_config;
+    private final CMailConfiguration mail_config;
     private final CDatabaseConfiguration database_config;
 
     /**
      * Initialize the plugin configuration
      */
-    public CPluginConfiguration() {
-        Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("config.yml");
-        LockLogin plugin = CurrentPlugin.getPlugin();
+    public CPluginConfiguration(final @NotNull LockLogin plugin) {
+        Path file = plugin.workingDirectory().resolve("config.yml");
         if (!Files.exists(file)) {
             PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
         }
@@ -52,6 +54,8 @@ public class CPluginConfiguration implements Configuration {
             throw new RuntimeException(ex);
         }
         proxy_config = new CProxyConfiguration();
+        mail_config = new CMailConfiguration(plugin);
+
         Driver driver;
         String rawDriver = yaml.getString("DataDriver", "SQLITE").toLowerCase();
         switch (rawDriver) {
@@ -90,6 +94,16 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public ProxyConfiguration proxy() {
         return proxy_config;
+    }
+
+    /**
+     * Get the plugin mailer configuration
+     *
+     * @return the plugin mailer configuration
+     */
+    @Override
+    public MailConfiguration mailer() {
+        return mail_config;
     }
 
     /**
@@ -613,6 +627,25 @@ public class CPluginConfiguration implements Configuration {
         }
 
         return lang.substring(0, 1).toUpperCase() + lang.substring(1).toLowerCase();
+    }
+
+    /**
+     * Tries to define the plugin language
+     *
+     * @param newLanguage the new language
+     */
+    @Override
+    public void setLanguage(final String newLanguage) {
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        if (plugin == null) return;
+
+        yaml.set("Language.Name", newLanguage);
+        try {
+            yaml.save();
+        } catch (IOException ex) {
+            plugin.log(ex, "Failed to save configuration file");
+        }
+        yaml.validate();
     }
 
     /**

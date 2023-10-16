@@ -14,7 +14,7 @@ import es.karmadev.locklogin.api.extension.module.PluginModule;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.common.plugin.InternalMessage;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
@@ -81,6 +81,7 @@ public class LockLoginCommand extends Command {
 
                             boolean cfgReloaded = configuration.reload();
                             boolean msgReloaded = messages.reload();
+                            boolean mailReload = configuration.mailer().reload();
 
                             String postLanguage = configuration.language();
                             if (!preLanguage.equals(postLanguage)) {
@@ -90,13 +91,6 @@ public class LockLoginCommand extends Command {
                                 InternalMessage.update();
                             }
 
-                            if (msgReloaded) {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
-                                        InternalMessage.RESPONSE_SUCCESS("locklogin", "reload messages", null)));
-                            } else {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
-                                        InternalMessage.RESPONSE_FAIL("locklogin", "reload messages", null)));
-                            }
                             if (cfgReloaded) {
                                 sender.sendMessage(ColorComponent.parse(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload configuration", null)));
@@ -126,9 +120,26 @@ public class LockLoginCommand extends Command {
                                 } else {
                                     InventoryOpenEvent.getHandlerList().unregister(spigot.plugin().getUI_CloseOpenHandler());
                                 }
+
+                                spigot.languagePackManager().setLang(configuration.language());
+                            } else {
+                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                        InternalMessage.RESPONSE_FAIL("locklogin", "reload configuration", null)));
+                            }
+
+                            if (msgReloaded) {
+                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                        InternalMessage.RESPONSE_SUCCESS("locklogin", "reload messages", null)));
                             } else {
                                 sender.sendMessage(ColorComponent.parse(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload messages", null)));
+                            }
+                            if (mailReload) {
+                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                        InternalMessage.RESPONSE_SUCCESS("locklogin", "reload mailer", null)));
+                            } else {
+                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                        InternalMessage.RESPONSE_FAIL("locklogin", "reload mailer", null)));
                             }
                         } else{
                             sender.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_RELOAD));

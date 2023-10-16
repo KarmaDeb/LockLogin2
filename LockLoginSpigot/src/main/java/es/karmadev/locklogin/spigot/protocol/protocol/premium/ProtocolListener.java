@@ -37,7 +37,7 @@ import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.spigot.server.SpigotServer;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.EncryptionHandler;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.handler.LoginHandler;

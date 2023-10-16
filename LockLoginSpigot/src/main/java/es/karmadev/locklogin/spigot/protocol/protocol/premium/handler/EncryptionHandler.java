@@ -50,7 +50,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.mojang.MojangEncryption;

@@ -1,7 +1,9 @@
 package es.karmadev.locklogin.api.plugin.marketplace;
 
+import es.karmadev.api.schedule.task.completable.late.LateTask;
 import es.karmadev.locklogin.api.plugin.marketplace.resource.MarketResource;
 import es.karmadev.locklogin.api.plugin.marketplace.storage.ResourceManager;
+import es.karmadev.locklogin.api.task.FutureTask;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -27,7 +29,7 @@ public interface MarketPlace {
      * @param category the category
      * @return the amount of pages for the category
      */
-    int getPages(final Category category);
+    FutureTask<Integer> getPages(final Category category);
 
     /**
      * Get the amount of resources on
@@ -36,7 +38,19 @@ public interface MarketPlace {
      * @param category the category
      * @return the resources under the category
      */
-    int getResources(final Category category);
+    FutureTask<Integer> getResourcesAmount(final Category category);
+
+    /**
+     * Get the amount of resources on
+     * that category and the specified
+     * page
+     *
+     * @param category the category
+     * @param page the page
+     * @return the resources under the category and
+     * the page
+     */
+    FutureTask<Integer> getResourcesAmount(final Category category, final int page);
 
     /**
      * Get all the resources for
@@ -46,7 +60,7 @@ public interface MarketPlace {
      * @param category the category
      * @return the resources on the page
      */
-    Collection<? extends MarketResource> getResources(final Category category, final int page);
+    FutureTask<Collection<? extends MarketResource>> getResources(final Category category, final int page);
 
     /**
      * Get a resource
@@ -54,7 +68,7 @@ public interface MarketPlace {
      * @param id the resource id
      * @return the resource
      */
-    MarketResource getResource(final int id);
+    FutureTask<MarketResource> getResource(final int id);
 
     /**
      * Get the resource manager

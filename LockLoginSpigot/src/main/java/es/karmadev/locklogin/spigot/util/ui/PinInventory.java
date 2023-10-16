@@ -5,7 +5,7 @@ import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.spigot.core.scheduler.SpigotTask;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;

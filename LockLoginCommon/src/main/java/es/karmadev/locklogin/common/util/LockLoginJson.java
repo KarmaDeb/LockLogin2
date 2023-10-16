@@ -8,7 +8,6 @@ import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.network.communication.data.Channel;
 import es.karmadev.locklogin.api.plugin.CacheAble;
 import lombok.Getter;
 
@@ -28,9 +27,11 @@ import java.util.List;
 public class LockLoginJson {
 
     @Getter
-    public static String versionId;
+    private static String versionId;
     @Getter
-    public static BuildType channel;
+    private static BuildType channel;
+    @Getter
+    private static int langVersion;
     @Getter
     private static String version;
     @Getter
@@ -53,6 +54,7 @@ public class LockLoginJson {
                     versionId = json.get("id").getAsString();
                     version = json.getAsJsonObject("version").get("name").getAsString();
                     channel = BuildType.valueOf(json.get("update").getAsString().toUpperCase()).map(versionId, version);
+                    langVersion = json.get("lang").getAsInt();
 
                     updateName = json.getAsJsonObject("version").get("type").getAsString();
                     marketVersion = json.getAsJsonObject("version").get("marketplace").getAsInt();

@@ -1,6 +1,10 @@
 package es.karmadev.locklogin.spigot;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import es.karmadev.api.logger.log.BoundedLogger;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.schedule.runner.TaskRunner;
 import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.api.schedule.runner.event.TaskEvent;
@@ -22,7 +26,7 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.CacheAble;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.UpdaterSection;
-import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
+import es.karmadev.locklogin.api.plugin.marketplace.Category;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.user.UserFactory;
@@ -37,6 +41,9 @@ import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.common.api.user.storage.account.transiction.CTransitional;
 import es.karmadev.locklogin.common.plugin.secure.logger.JavaLogger;
 import es.karmadev.locklogin.common.plugin.secure.logger.Log4Logger;
+import es.karmadev.locklogin.common.plugin.web.CMarketPlace;
+import es.karmadev.locklogin.common.plugin.web.local.CStoredResource;
+import es.karmadev.locklogin.common.plugin.web.manifest.ResourceManifest;
 import es.karmadev.locklogin.common.util.LockLoginJson;
 import es.karmadev.locklogin.spigot.command.helper.CommandHelper;
 import es.karmadev.locklogin.spigot.event.ChatHandler;
@@ -70,6 +77,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -179,6 +187,7 @@ public class SpigotPlugin extends KarmaPlugin {
                                     spigot.info("Cached {0}", cacheAble.name());
                                 } catch (NoSuchMethodException | IllegalAccessException |
                                          InvocationTargetException ex) {
+                                    ex.printStackTrace();
                                     spigot.log(ex, "Failed to cache {0}", cacheAble.name());
                                     spigot.warn("Failed to cache {0}", cacheAble.name());
                                 }
@@ -192,7 +201,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 throw new RuntimeException(ex);
             }
 
-            MarketPlace marketPlace = spigot.getMarketPlace();
+            CMarketPlace marketPlace = (CMarketPlace) spigot.getMarketPlace();
             int version = marketPlace.getVersion();
             int required = LockLoginJson.getMarketVersion();
 
@@ -377,6 +386,79 @@ public class SpigotPlugin extends KarmaPlugin {
                     logger.setFilter(new JavaLogger(commandHelper.getCommands()));
                 }
             }
+
+            Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
+            try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
+                logger().send(LogLevel.INFO, "Preparing to load marketplace resources");
+                Gson gson = new GsonBuilder().create();
+
+                Pattern idPattern = Pattern.compile("id=[0-9]*");
+                Pattern categoryPattern = Pattern.compile("category=[A-Z]*");
+                Pattern namePattern = Pattern.compile("name=.*");
+                Pattern descriptionPattern = Pattern.compile("description=.*");
+                Pattern publisherPattern = Pattern.compile("publisher=[a-zA-Z0-9_-]{3,16}");
+                Pattern versionPattern = Pattern.compile("version=.*");
+                Pattern downloadPattern = Pattern.compile("download=[0-9]*");
+
+                files.forEach((directory) -> {
+                    Path resourceMeta = directory.resolve("resource.meta");
+                    Path manifest = directory.resolve("manifest.json");
+
+                    if (!Files.exists(resourceMeta) || !Files.exists(manifest)) return;
+                    if (Files.isDirectory(resourceMeta) || Files.isDirectory(manifest)) return;
+
+                    JsonElement element = gson.fromJson(PathUtilities.read(manifest), JsonElement.class);
+
+                    ResourceManifest rm = new ResourceManifest();
+                    if (rm.read(spigot, element)) {
+                        List<String> rawData = PathUtilities.readAllLines(resourceMeta);
+                        int id = -1;
+                        Category category = null;
+                        String name = null;
+                        String description = null;
+                        String publisher = null;
+                        String rsVersion = null;
+                        Instant download = null;
+
+                        for (String line : rawData) {
+                            Matcher matcher = idPattern.matcher(line);
+                            if (matcher.matches()) {
+                                id = Integer.parseInt(matcher.group().split("=")[1]);
+                            } else if (categoryPattern.matcher(line).matches()) {
+                                try {
+                                    category = Category.valueOf(line.split("=")[1]);
+                                } catch (IllegalArgumentException ignored) {}
+                            } else if (namePattern.matcher(line).matches()) {
+                                name = line.split("=")[1];
+                            } else if (descriptionPattern.matcher(line).matches()) {
+                                description = line.split("=")[1];
+                            } else if (publisherPattern.matcher(line).matches()) {
+                                publisher = line.split("=")[1];
+                            } else if (versionPattern.matcher(line).matches()) {
+                                rsVersion = line.split("=")[1];
+                            } else if (downloadPattern.matcher(line).matches()) {
+                                download = Instant.ofEpochMilli(Long.parseLong(line.split("=")[1]));
+                            }
+                        }
+
+                        if (id > 0 && !ObjectUtils.areNullOrEmpty(false, category, name, description,
+                                publisher, rsVersion, download)) {
+                            CStoredResource resource = CStoredResource.of(
+                                id, false, category, name, description, publisher, rsVersion, download, rm
+                            );
+                            resource.load();
+                            marketPlace.getManager().getResourceSet().add(resource);
+                        }
+                    }
+                });
+
+                spigot.configuration().reload(); //Perform a silent reload in order to apply changes from resources
+                spigot.languagePackManager().setLang(spigot.configuration().language());
+
+                spigot.messages().reload();
+            } catch (IOException ex) {
+                logger().log(ex, "Failed to load resources");
+            }
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
         }
@@ -474,7 +556,6 @@ public class SpigotPlugin extends KarmaPlugin {
                             return player != null && player.hasPermission(permissionObject);
                         }
                     }
-
 
                     return false;
                 };

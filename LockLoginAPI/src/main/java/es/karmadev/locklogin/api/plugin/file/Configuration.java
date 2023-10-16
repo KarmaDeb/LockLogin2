@@ -24,6 +24,13 @@ public interface Configuration {
     ProxyConfiguration proxy();
 
     /**
+     * Get the plugin mailer configuration
+     *
+     * @return the plugin mailer configuration
+     */
+    MailConfiguration mailer();
+
+    /**
      * Get the server name at the
      * eyes of the plugin
      *
@@ -276,6 +283,13 @@ public interface Configuration {
      * @return the plugin language
      */
     String language();
+
+    /**
+     * Tries to define the plugin language
+     *
+     * @param newLanguage the new language
+     */
+    void setLanguage(final String newLanguage);
 
     /**
      * Get the plugin database

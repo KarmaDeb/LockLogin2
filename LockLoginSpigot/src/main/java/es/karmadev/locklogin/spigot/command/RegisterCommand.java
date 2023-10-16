@@ -6,7 +6,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;

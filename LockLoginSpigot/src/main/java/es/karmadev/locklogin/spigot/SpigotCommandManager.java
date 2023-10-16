@@ -8,7 +8,7 @@ import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor
 import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.spigot.command.module.CommandHandler;
 import es.karmadev.locklogin.spigot.command.module.ExecutorHelper;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;

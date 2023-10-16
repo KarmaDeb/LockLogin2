@@ -38,7 +38,8 @@ import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
@@ -63,7 +64,6 @@ import es.karmadev.locklogin.common.api.packet.COutPacket;
 import es.karmadev.locklogin.common.api.plugin.CPluginHash;
 import es.karmadev.locklogin.common.api.plugin.file.CPluginConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.lang.InternalPack;
-import es.karmadev.locklogin.common.api.plugin.service.SpartanService;
 import es.karmadev.locklogin.common.api.plugin.service.backup.CLocalBackup;
 import es.karmadev.locklogin.common.api.plugin.service.brute.CBruteForce;
 import es.karmadev.locklogin.common.api.plugin.service.floodgate.CFloodGate;
@@ -84,7 +84,6 @@ import lombok.Getter;
 import net.md_5.bungee.BungeeTitle;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -92,7 +91,6 @@ import net.md_5.bungee.api.plugin.PluginManager;
 
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -201,17 +199,12 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                     Plugin tmpPlugin = pluginManager.getPlugin(name);
                     
                     if (tmpPlugin != null) {
-                        if (tmpPlugin != null) {
-                            Version pluginVersion = Version.parse(tmpPlugin.getDescription().getVersion());
+                        Version pluginVersion = Version.parse(tmpPlugin.getDescription().getVersion());
 
-                            if (pluginVersion.compareTo(version) < 0) {
-                                plugin.logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
-                            } else {
-                                plugin.logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
-                                if (name.equalsIgnoreCase("Spartan")) {
-                                    registerService("spartan", new SpartanService());
-                                }
-                            }
+                        if (pluginVersion.compareTo(version) < 0) {
+                            plugin.logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
+                        } else {
+                            plugin.logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
                         }
                     }
                 }
@@ -223,7 +216,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
         registerService("totp", new CTotpService());
 
-        configuration = new CPluginConfiguration();
+        configuration = new CPluginConfiguration(this);
 
         KeyPair pair = null;
         try {
@@ -298,6 +291,8 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
         runtime.becomeCRuntime();
         messages = new InternalPack();
         hasher = new CPluginHasher();
+
+        messages.setLang(configuration.language());
 
         CLocalBackup backup_service = new CLocalBackup();
         CNameProvider name_service = new CNameProvider();
@@ -654,14 +649,15 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     }
 
     /**
-     * Get the plugin messages
+     * Get the plugin language pack manager
      *
-     * @return the plugin messages
+     * @return the plugin langauge pack
+     * manager
      */
     @Override
-    public Messages messages() {
+    public LanguagePackManager languagePackManager() {
         runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "messages()");
-        return messages.getMessenger();
+        return messages;
     }
 
     /**

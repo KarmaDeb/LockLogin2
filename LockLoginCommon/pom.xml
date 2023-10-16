@@ -67,10 +67,12 @@
             <artifactId>annotations</artifactId>
         </dependency>
 
+        <!--
         <dependency>
             <groupId>org.eclipse.angus</groupId>
             <artifactId>angus-mail</artifactId>
         </dependency>
+        -->
 
         <dependency>
             <groupId>com.warrenstrange</groupId>
@@ -101,6 +103,11 @@
         <dependency>
             <groupId>me.lucko</groupId>
             <artifactId>jar-relocator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
         </dependency>
 
         <dependency>

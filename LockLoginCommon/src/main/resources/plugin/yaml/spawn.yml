@@ -1,0 +1,49 @@
+##########################################
+# LockLogin spawn settings               #
+#                                        #
+# If you are trying to manually          #
+# modify the spawn position (which       #
+# is not recommended), then you          #
+# are not looking in the correct file.   #
+#                                        #
+# Spawn location is stored at:           #
+# /data/position/spawn.json              #
+##########################################
+
+#Enables or disables the spawn management, if true, the client
+#will be sent to spawn when he joins the server
+Enabled: false
+
+#Manages the spawn teleport settings
+#
+# Enabled -> If true, the plugin will allow players to
+#            execute /spawn to go into spawn
+# Delay   -> The time in seconds to take before sending
+#            the player to the spawn
+# Cancel  -> The cancel rule set for which the spawn
+#            should be cancelled
+#
+# Rule sets:
+# PVP = When the client gets hit or hits someone
+# MOVEMENT = When the client moves
+Teleport:
+  Enabled: true
+  Delay: 10
+  Cancel:
+    - "PVP"
+    - "MOVEMENT"
+
+#Manages the spawn "take me back" function
+#
+# This will work regardless of main "Enabled" setting, as
+# this is actually if the player should be sent to his last
+# logout location after a successful login
+#
+# Enabled -> Enables or disables the "take me back" function
+# Distance -> The minimum distance the client must be from spawn
+#             in order to actually save his last location. This prevents
+#             a player from joining, being teleported to spawn and leaving to
+#             store his latest location at spawn location
+TakeBack:
+  Enabled: true
+  Distance: 30

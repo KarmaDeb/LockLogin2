@@ -57,6 +57,8 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <locklogin.lang>1</locklogin.lang>
+
         <locklogin.version.type>snapshot</locklogin.version.type>
         <locklogin.version.letter>a</locklogin.version.letter>
 
@@ -582,6 +584,7 @@
             </dependency>
 
             <!-- Mailing service -->
+            <!--
             <dependency>
                 <groupId>org.eclipse.angus</groupId>
                 <artifactId>angus-mail</artifactId>
@@ -594,6 +597,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            -->
 
             <dependency>
                 <groupId>io.netty</groupId>
@@ -626,6 +630,13 @@
                         <artifactId>asm-commons</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>2.0.1</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

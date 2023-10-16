@@ -239,7 +239,9 @@ public final class ModuleLoader {
         if (module instanceof PluginModule) {
             if (enabledModules.contains(module)) {
                 enabledModules.remove(module);
-                module.onDisable();
+
+                if (module.isEnabled())
+                    module.onDisable();
             }
 
             loadedModules.remove(module);

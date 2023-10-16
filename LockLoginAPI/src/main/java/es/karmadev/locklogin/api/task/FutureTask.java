@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Represents a task that has been
@@ -39,6 +40,22 @@ public class FutureTask<T> implements Future<T> {
      */
     public final void complete(final Throwable error) {
         complete(null, error);
+    }
+
+    /**
+     * Complete the task asynchronously
+     *
+     * @param supplier the task result supplier
+     */
+    public void completeAsynchronously(final Supplier<T> supplier) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                T value = supplier.get();
+                complete(value);
+            } catch (Throwable ex) {
+                complete(null, ex);
+            }
+        });
     }
 
     /**

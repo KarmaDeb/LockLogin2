@@ -3,7 +3,7 @@ package es.karmadev.locklogin.spigot.command;
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.totp.TotpService;
 import es.karmadev.locklogin.api.user.account.UserAccount;

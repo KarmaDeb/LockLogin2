@@ -2,14 +2,20 @@ package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
+import es.karmadev.locklogin.api.plugin.file.section.BruteForceConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.secure.CommandMask;
@@ -17,6 +23,10 @@ import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -24,12 +34,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 @PluginCommand(command = "login", processAttachment = SpigotLoginProcess.class)
 public class LoginCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
+    private final ConcurrentMap<UUID, Integer> localFailCount = new ConcurrentHashMap<>();
 
     public LoginCommand(final String cmd) {
         super(cmd);
@@ -79,6 +94,29 @@ public class LoginCommand extends Command {
                     switch (args.length) {
                         case 1:
                             if (captcha.isEmpty()) {
+                                SessionField<String> recoveryCode = session.fetch("recovery_code");
+                                if (recoveryCode != null) {
+                                    if (recoveryCode.get().equals(args[0])) {
+                                        client.sendMessage(messages.prefix() + messages.logged());
+                                        account.setPassword(null);
+
+                                        client.sendMessage(messages.prefix() + messages.register(""));
+                                    } else {
+                                        int count = localFailCount.compute(client.uniqueId(), (key, value) -> {
+                                            if (value == null) {
+                                                return 1;
+                                            }
+
+                                            return value + 1;
+                                        });
+
+                                        int triesLeft = 5 - count;
+                                        client.sendMessage(messages.prefix() + "&5&oInvalid recovery code; " + triesLeft + " tries left");
+                                    }
+
+                                    return false;
+                                }
+
                                 validate(player, client, account, session, args[0]);
                             } else {
                                 client.sendMessage(messages.prefix() + messages.login(captcha));
@@ -118,6 +156,18 @@ public class LoginCommand extends Command {
         Configuration configuration = plugin.configuration();
 
         if (hash.verify(inputPassword)) {
+            InetSocketAddress address = player.getAddress();
+            if (address == null) {
+                client.kick(messages.ipProxyError());
+                return;
+            }
+
+            PluginService service = plugin.getService("bruteforce");
+            if (service instanceof BruteForceService) {
+                BruteForceService bruteForce = (BruteForceService) service;
+                bruteForce.success(address.getAddress());
+            }
+
             if (hash.hasher().isLegacy()) {
                 plugin.info("Migrated password from legacy client {0}", client.name());
                 account.setPassword(inputPassword); //Update the client password
@@ -149,7 +199,76 @@ public class LoginCommand extends Command {
                 }
             }
         } else {
+            InetSocketAddress address = player.getAddress();
+            if (address == null) {
+                client.kick(messages.ipProxyError());
+                return;
+            }
+
             client.sendMessage(messages.prefix() + messages.incorrectPassword());
+
+            PluginService service = plugin.getService("bruteforce");
+            if (service instanceof BruteForceService) {
+                BruteForceConfiguration config = configuration.bruteForce();
+                BruteForceService bruteForce = (BruteForceService) service;
+
+
+                int count = localFailCount.compute(client.uniqueId(), (key, value) -> {
+                    if (value == null) {
+                        return 1;
+                    }
+
+                    return value + 1;
+                });
+
+                if (count >= config.attempts()) {
+                    if (!ObjectUtils.isNullOrEmpty(client.account().email()) && configuration.mailer().isEnabled()) {
+                        client.getSessionChecker().pause();
+
+                        client.sendMessage(messages.prefix() + messages.loginForgot());
+                        TextComponent yes = new TextComponent(ColorComponent.parse(messages.loginForgotYes()));
+                        TextComponent no = new TextComponent(ColorComponent.parse(messages.loginForgotNo()));
+                        TextComponent appender = new TextComponent();
+                        appender.addExtra(yes);
+                        appender.addExtra(ColorComponent.parse(" &8&l| "));
+                        appender.addExtra(no);
+
+                        yes.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(ColorComponent.parse("&bWe will mail you a recovery code"))));
+                        no.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(ColorComponent.parse("&cWe won't send you any recovery mail"))));
+
+                        String mailCode = StringUtils.generateString(16);
+                        String kickCode = StringUtils.generateString(16);
+
+                        yes.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mailme " + mailCode));
+                        no.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/kickme " + kickCode));
+
+                        client.session().append(CSessionField.newField(String.class, "mail_code", mailCode));
+                        client.session().append(CSessionField.newField(String.class, "kick_code", kickCode));
+
+                        player.spigot().sendMessage(appender);
+                        localFailCount.remove(client.uniqueId());
+                        return;
+                    }
+
+                    int tries = bruteForce.tries(address.getAddress());
+                    if (tries + 1 >= config.tries()) {
+                        client.kick(messages.ipBlocked(TimeUnit.MINUTES.toSeconds(config.blockTime())));
+                        bruteForce.success(address.getAddress()); //We use this to "clear" tries count
+                        bruteForce.block(address.getAddress(), config.blockTime());
+                        return;
+                    }
+
+                    if (account.isProtected()) {
+                        bruteForce.success(address.getAddress()); //We use this to "clear" tries count and allow the "final panic try"
+                        client.kick(messages.panicLogin());
+                        bruteForce.togglePanic(client, true); //We are now panicking
+                        return;
+                    }
+
+                    client.kick(messages.incorrectPassword());
+                    bruteForce.fail(address.getAddress());
+                }
+            }
         }
     }
 }

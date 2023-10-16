@@ -21,7 +21,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.CaptchaConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;

@@ -11,7 +11,8 @@ import es.karmadev.locklogin.api.network.server.ServerFactory;
 import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
@@ -129,7 +130,17 @@ public interface LockLogin extends ResourceLoader {
      *
      * @return the plugin messages
      */
-    Messages messages();
+    default Messages messages() {
+        return languagePackManager().getMessenger();
+    }
+
+    /**
+     * Get the plugin language pack manager
+     *
+     * @return the plugin language pack
+     * manager
+     */
+    LanguagePackManager languagePackManager();
 
     /**
      * Get the plugin auth process factory

@@ -4,7 +4,7 @@ import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@PluginCommand(command = "setloginspawn", useInBungeecord = true)
+@PluginCommand(command = "spawn", useInBungeecord = true)
 public class SpawnCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
@@ -49,38 +49,26 @@ public class SpawnCommand extends Command {
             if (id > 0) {
                 NetworkClient client = plugin.network().getPlayer(id);
                 if (client.hasPermission(LockLoginPermission.PERMISSION_LOCATION_SPAWN)) {
-                    if (args.length == 1) {
-                        String arg = args[0];
-                        if (arg.equalsIgnoreCase("--teleport")) {
-                            Location spawnLocation = SpawnLocationStorage.load();
-                            if (spawnLocation != null) {
-                                Location current = player.getLocation();
-                                previousLocations.put(player.getUniqueId(), current);
-
-                                player.teleport(spawnLocation);
-                                client.sendMessage(messages.prefix() + "&dRun /setloginspawn --back to go to your previous location");
-                            } else {
-                                client.sendMessage(messages.prefix() + "&5&oInvalid spawn location or spawn location not set");
-                            }
-
-                            return false;
-                        }
-                        if (arg.equalsIgnoreCase("--back")) {
-                            if (previousLocations.containsKey(player.getUniqueId())) {
-                                Location previous = previousLocations.remove(player.getUniqueId());
-                                player.teleport(previous);
-                            } else {
-                                client.sendMessage(messages.prefix() + "&5&oInvalid previous location");
-                            }
-
-                            return false;
-                        }
+                    if (args.length == 0) {
+                        client.sendMessage(messages.prefix() + messages.spawnUsage());
+                        return false;
                     }
 
-                    Location currentLocation = player.getLocation();
-                    SpawnLocationStorage.assign(currentLocation);
+                    String argument = args[0].toLowerCase();
+                    switch (argument) {
+                        case "set":
 
-                    client.sendMessage(messages.prefix() + messages.spawnSet());
+                            break;
+                        case "unset":
+
+                            break;
+                        case "teleport":
+
+                            break;
+                        case "back":
+
+                            break;
+                    }
                 } else {
                     client.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_LOCATION_SPAWN));
                 }

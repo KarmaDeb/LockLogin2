@@ -2,6 +2,8 @@ package es.karmadev.locklogin.api.plugin.marketplace.storage;
 
 import es.karmadev.locklogin.api.plugin.marketplace.Category;
 
+import java.time.Instant;
+
 /**
  * Represents a stored resource, unlike
  * {@link es.karmadev.locklogin.api.plugin.marketplace.resource.MarketResource}, this object
@@ -23,6 +25,14 @@ public interface StoredResource {
      * @return if the resource is loaded
      */
     boolean isLoaded();
+
+    /**
+     * Loads the resource, for translations, this
+     * will make the plugin to switch to the translation,
+     * meanwhile for modules, will make the module
+     * to load
+     */
+    void load();
 
     /**
      * Unloads the resource, for translations, this
@@ -54,14 +64,6 @@ public interface StoredResource {
     String getDescription();
 
     /**
-     * Get the amount of downloads the
-     * resource has
-     *
-     * @return the resource download amount
-     */
-    int getDownloads();
-
-    /**
      * Get the name of the publisher
      * for the specified resource
      *
@@ -75,4 +77,12 @@ public interface StoredResource {
      * @return the resource version
      */
     String getVersion();
+
+    /**
+     * Get when the resource was
+     * downloaded
+     *
+     * @return the resource download date
+     */
+    Instant getDownloadDate();
 }

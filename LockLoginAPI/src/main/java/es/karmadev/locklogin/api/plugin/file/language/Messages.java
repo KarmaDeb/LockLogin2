@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.api.plugin.file;
+package es.karmadev.locklogin.api.plugin.file.language;
 
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -354,6 +354,27 @@ public interface Messages {
      * @return plugin message
      */
     String loginSubtitle(final String code, final long time);
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String loginForgot();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String loginForgotYes();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String loginForgotNo();
 
     /**
      * Get a plugin message
@@ -851,7 +872,49 @@ public interface Messages {
      *
      * @return plugin message
      */
+    String spawnUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
     String spawnSet();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnUnset();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnTeleport();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnTeleportNear();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnBack();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnNoBack();
 
     /**
      * Get a plugin message

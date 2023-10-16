@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,8 +57,10 @@ public class CDependencyManager implements DependencyManager {
                     WebDownloader downloader = new WebDownloader(url);
                     try {
                         downloader.download(dependency.file());
-                    } catch (Throwable ex2) {
-                        ex2.printStackTrace();
+                    } catch (IOException | NoSuchAlgorithmException | KeyManagementException ex2) {
+                        plugin.log(ex2, "An error occurred while downloading {0}", dependency.name());
+                        plugin.err("Cannot download dependency {0}", dependency.name());
+                        return;
                     }
                 }
 

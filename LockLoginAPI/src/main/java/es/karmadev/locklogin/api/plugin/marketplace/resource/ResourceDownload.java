@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.plugin.marketplace.resource;
 
-import es.karmadev.api.schedule.task.completable.late.LateTask;
+import es.karmadev.locklogin.api.task.FutureTask;
 
 /**
  * Represents a {@link MarketResource resource} download
@@ -27,5 +27,5 @@ public interface ResourceDownload {
      *
      * @return if the file was able to be downloaded
      */
-    LateTask<Boolean> download();
+    FutureTask<Boolean> download();
 }

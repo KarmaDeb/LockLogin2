@@ -11,7 +11,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.Alias;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
 import es.karmadev.locklogin.api.security.check.CheckResult;
 import es.karmadev.locklogin.api.security.check.CheckType;
@@ -31,10 +31,19 @@ public class CPluginMessages implements Messages {
     private final YamlFileHandler yaml;
     private final InternalPack parser;
 
-
     public CPluginMessages(final Path file, final InternalPack parser) {
         YamlFileHandler tmpYaml;
-        InputStream stream = CurrentPlugin.getPlugin().loadResource("plugin/yaml/" + parser.packFileName());
+        String template = "";
+        switch (parser.getName().toLowerCase()) {
+            case "en_en":
+            case "english":
+                template = "messages_en.yml";
+                break;
+            default:
+                template = "messages_template.yml";
+        }
+
+        InputStream stream = CurrentPlugin.getPlugin().loadResource("plugin/yaml/" + template);
         try {
             YamlReader reader = new YamlReader(stream);
             tmpYaml = YamlHandler.load(file, reader);
@@ -911,6 +920,36 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
+    public String loginForgot() {
+        return yaml.getString("LoginForgot", "&5&oIt seems that you've forgot your password, do you want us to send a recovery email for you?");
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String loginForgotYes() {
+        return yaml.getString("LoginForgotYes", "&dYes please");
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String loginForgotNo() {
+        return yaml.getString("LoginForgotNo", "&5&oNo, thanks");
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
     public String premiumEnabled() {
         List<String> messages = yaml.getList("PremiumEnabled");
         StringBuilder builder = new StringBuilder();
@@ -1701,8 +1740,68 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
+    public String spawnUsage() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
     public String spawnSet() {
         return parser.parse(yaml.getString("SpawnSet", "&dThe login spawn location have been set"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnUnset() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnTeleport() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnTeleportNear() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnBack() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnNoBack() {
+        return null;
     }
 
     /**

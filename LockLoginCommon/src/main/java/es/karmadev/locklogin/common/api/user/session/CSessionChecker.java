@@ -7,7 +7,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Messages;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.user.account.UserAccount;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
@@ -16,6 +16,7 @@ import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class CSessionChecker implements SessionChecker {
@@ -27,6 +28,7 @@ public class CSessionChecker implements SessionChecker {
     private TaskRunner<Long> runner;
     private boolean running = false;
     private boolean cancelled = false;
+    private boolean paused = false;
 
     private boolean resultSet = false;
     private boolean result = false;
@@ -49,6 +51,17 @@ public class CSessionChecker implements SessionChecker {
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    /**
+     * Get if the session checker is
+     * paused
+     *
+     * @return if the checker is paused
+     */
+    @Override
+    public boolean isPaused() {
+        return paused;
     }
 
     /**
@@ -79,6 +92,24 @@ public class CSessionChecker implements SessionChecker {
             runner.stop();
             running = false;
         }
+    }
+
+    /**
+     * Pause the session check
+     */
+    @Override
+    public void pause() {
+        if (paused) return;
+        paused = true;
+    }
+
+    /**
+     * Resume the session check
+     */
+    @Override
+    public void resume() {
+        if (!paused) return;
+        paused = false;
     }
 
     /**
@@ -116,8 +147,8 @@ public class CSessionChecker implements SessionChecker {
             Messages messages = plugin.messages();
             UserAccount account = client.account();
             UserSession session = client.session();
-            boolean registered = account.isRegistered();
-            int authTime = (registered ? configuration.login().timeout() : configuration.register().timeout());
+            AtomicBoolean registered = new AtomicBoolean(account.isRegistered());
+            int authTime = (registered.get() ? configuration.login().timeout() : configuration.register().timeout());
 
             runner = new AsyncTaskExecutor(authTime, TimeUnit.SECONDS);
             runner.on(TaskEvent.TICK, (time) -> {
@@ -130,13 +161,19 @@ public class CSessionChecker implements SessionChecker {
                 }
 
                 boolean updatedRegistered = account.isRegistered();
-                if (updatedRegistered != registered) {
-                    int updatedAuthTime = (updatedRegistered ? configuration.login().timeout() : configuration.register().timeout());
+                if (!paused) {
+                    if (updatedRegistered != registered.get()) {
+                        registered.set(updatedRegistered);
+                        int updatedAuthTime = (updatedRegistered ? configuration.login().timeout() : configuration.register().timeout());
 
-                    runner.forceMaxTime((long) updatedAuthTime);
-                    if (updatedAuthTime > authTime) {
-                        runner.forceTimeLeft((long) updatedAuthTime);
+                        runner.forceMaxTime((long) updatedAuthTime);
+                        if (updatedAuthTime > authTime) {
+                            runner.forceTimeLeft((long) updatedAuthTime);
+                        }
                     }
+                } else {
+                    timeLeft += 1;
+                    runner.forceTimeLeft(timeLeft); //Do not update
                 }
 
                 String captcha = session.captcha();

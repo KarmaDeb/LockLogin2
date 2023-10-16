@@ -30,6 +30,10 @@
                 <success>§dMensajes actualizados correctamente</success>
                 <fail>§5Error al actualizar configuración</fail>
             </response>
+            <response command="locklogin" argument="reload mailer">
+                <success>§dAjustes del correo actualizados</success>
+                <fail>§5Error al actualizar los ajustes del correo</fail>
+            </response>
 
             <response command="locklogin" argument="modules info">
                 <success/>

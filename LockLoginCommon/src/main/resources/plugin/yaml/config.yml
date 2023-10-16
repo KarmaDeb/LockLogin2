@@ -370,18 +370,7 @@ Updater:
   CheckTime: 10
 
 #Spawn options
-# Manage -> Allow LockLogin to manage
-#           on-join spawn. To set the
-#           spawn you must use /setloginspawn
-# TakeBack -> Teleport the player back to his
-#             latest location after logging in
-# SpawnDistance -> The minimum distance required
-#                  from spawn to store the last
-#                  player location
-Spawn:
-  Manage: false
-  TakeBack: false
-  SpawnDistance: 30
+Spawn: "Moved to spawn.yml"
 
 #Enable clear chat feature, this
 #option will clear ONLY CONNECTED
@@ -395,20 +384,32 @@ ClearChat: false
 #4 chars min, 16 max, only "_" allowed
 CheckNames: true
 
-#Define the name check mode
+#Define the name check regex
 #
-# 1:
-#   - The name contains letters and numbers
-#   - The name is over 3 and under 16 characters
-#   - Only _ as special character
-#   - UTF-8 characters allowed
+# DANGER ZONE, DO NOT TOUCH THIS
+# IF YOU DON'T KNOW WHAT YOU ARE
+# DOING.
 #
-# 2:
-#   - The name contains letters and numbers
-#   - The name is over 3 and under 16 characters
-#   - Only _ as special character
-#   - UTF-8 characters not allowed ( only ASCII )
-NameCheckProtocol: 2
+# If you have Geyser, then you might
+# want to modify this regex to allow
+# geyser prefixed names to join the server.
+# If your geyser prefix is (for instance) ".",
+# then the default regex would look like
+# this: ^[\\.]{0,1}[A-Za-z-0-9_-]{3,16}$
+# ^ = Start of the name
+# [ = Start of set of allowed characters
+# \\. = Escape the character ".", because in regex, "." is a modifier, not a character
+# ] = End of set of allowed characters
+# {x,z} = Must contain from x to z times
+# A-Z = May contain from letter A to letter Z
+# a-z = May contain from letter a to letter z
+# 0-9 = May contain numbers
+# _ = May contain _
+# - = May contain -
+# $ = End of name
+# Basically, the name may start with "." or not, and may only contain letters from a to Z, numbers, "_" and "-", and
+# must be lower than 17 characters and higher than 2
+NameCheckRegex: "^[A-Za-z-0-9_-]{3,16}$"
 
 #Plugin language
 #
@@ -417,7 +418,7 @@ NameCheckProtocol: 2
 # Spanish ( es_ES | Spanish )
 # being english by default. You can install
 # more languages remotely by using
-# lpm command (LockLogin's language-pack-manager)
+# lrm command (LockLogin's resource manager)
 Language:
   Name: en_EN
 

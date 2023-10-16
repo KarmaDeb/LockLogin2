@@ -16,6 +16,14 @@ public interface SessionChecker extends Runnable {
     boolean isRunning();
 
     /**
+     * Get if the session checker is
+     * paused
+     *
+     * @return if the checker is paused
+     */
+    boolean isPaused();
+
+    /**
      * Restart the session check
      */
     void restart();
@@ -24,6 +32,16 @@ public interface SessionChecker extends Runnable {
      * Cancel the session check
      */
     void cancel();
+
+    /**
+     * Pause the session check
+     */
+    void pause();
+
+    /**
+     * Resume the session check
+     */
+    void resume();
 
     /**
      * Add an end listener
