@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.dependency;
 
+import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.kson.JsonArray;
 import es.karmadev.api.kson.JsonInstance;

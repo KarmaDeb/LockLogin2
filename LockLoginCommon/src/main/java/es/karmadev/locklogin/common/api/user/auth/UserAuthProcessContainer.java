@@ -2,7 +2,6 @@ package es.karmadev.locklogin.common.api.user.auth;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.user.auth.process.ProcessPriority;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import org.jetbrains.annotations.NotNull;
 
