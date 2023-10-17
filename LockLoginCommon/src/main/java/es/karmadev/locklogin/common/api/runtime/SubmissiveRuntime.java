@@ -1,29 +1,18 @@
 package es.karmadev.locklogin.common.api.runtime;
 
-import es.karmadev.api.core.source.APISource;
-import es.karmadev.api.core.source.SourceManager;
-import es.karmadev.api.core.source.exception.UnknownProviderException;
-import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.plugin.runtime.DependencyManager;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
 
+@Deprecated
 public class SubmissiveRuntime extends LockLoginRuntime {
 
     private final DependencyManager manager = new CDependencyManager();
-    private final ModuleManager modManager;
     private CRuntime runtime;
 
     public boolean booted = false;
-
-    public SubmissiveRuntime(final ModuleManager manager) {
-        modManager = manager;
-    }
 
     /**
      * Get the plugin runtime dependency manager
@@ -39,10 +28,9 @@ public class SubmissiveRuntime extends LockLoginRuntime {
      * Get the plugin file path
      *
      * @return the plugin file path
-     * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public Path file() throws SecurityException {
+    public Path file()  {
         if (runtime != null) return runtime.file();
 
         String path = LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
@@ -60,7 +48,7 @@ public class SubmissiveRuntime extends LockLoginRuntime {
      */
     @Override
     public Path caller() {
-        if (runtime != null) return runtime.caller();
+        /*if (runtime != null) return runtime.caller();
         Path plugin = file();
 
         try {
@@ -107,7 +95,8 @@ public class SubmissiveRuntime extends LockLoginRuntime {
             }
         } catch (UnknownProviderException ignored) {}
 
-        return plugin;
+        return plugin;*/
+        return file();
     }
 
     /**
@@ -120,8 +109,8 @@ public class SubmissiveRuntime extends LockLoginRuntime {
      */
     @Override
     public void verifyIntegrity(final int permission, final Class<?> clazz, final String method) throws SecurityException {
-        if (runtime == null) return;
-        runtime.verifyIntegrity(permission, clazz, method);
+        /*if (runtime == null) return;
+        runtime.verifyIntegrity(permission, clazz, method);*/
     }
 
     /**
@@ -140,7 +129,7 @@ public class SubmissiveRuntime extends LockLoginRuntime {
      */
     public void becomeCRuntime() {
         if (runtime == null) {
-            runtime = new CRuntime(modManager);
+            runtime = new CRuntime();
             runtime.manager = manager;
         }
     }

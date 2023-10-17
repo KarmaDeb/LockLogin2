@@ -12,6 +12,7 @@ import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
+import es.karmadev.locklogin.common.api.runtime.CDependencyManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
