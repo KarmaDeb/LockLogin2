@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.bungee;
+package es.karmadev.locklogin.bungee.command;
 
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 

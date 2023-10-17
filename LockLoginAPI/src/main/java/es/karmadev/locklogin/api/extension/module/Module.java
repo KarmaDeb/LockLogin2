@@ -32,6 +32,14 @@ public interface Module {
     }
 
     /**
+     * Get if the module is from the
+     * marketplace
+     *
+     * @return if the module is from the marketplace
+     */
+    boolean isFromMarketplace();
+
+    /**
      * Get the module file
      *
      * @return the module file
@@ -94,7 +102,7 @@ public interface Module {
      * @return the loader
      */
     @NotNull
-    ModuleLoader getLoader();
+    ModuleManager getManager();
 
     /**
      * Returns whether this module is

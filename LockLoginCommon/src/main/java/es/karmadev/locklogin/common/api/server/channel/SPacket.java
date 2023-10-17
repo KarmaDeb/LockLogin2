@@ -3,14 +3,10 @@ package es.karmadev.locklogin.common.api.server.channel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.server.packet.NetworkPacket;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Base64;
 
 /**
@@ -23,33 +19,18 @@ public class SPacket implements NetworkPacket {
     private final Module sender;
     private final byte[] raw_data;
 
-    public SPacket(final byte[] message) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(byte[])");
-
-        Path caller = plugin.getRuntime().caller();
-
-        sender = plugin.moduleManager().loader().getModule(caller);
+    public SPacket(final Module sender, final byte[] message) {
+        this.sender = sender;
         raw_data = Base64.getEncoder().encode(message);
     }
 
-    public SPacket(final String raw) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(String)");
-
-        Path caller = plugin.getRuntime().caller();
-
-        sender = plugin.moduleManager().loader().getModule(caller);
+    public SPacket(final Module sender, final String raw) {
+        this.sender = sender;
         raw_data = Base64.getEncoder().encode(raw.getBytes(StandardCharsets.UTF_8));
     }
 
-    public SPacket(final JsonElement element) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, SPacket.class, "SPacket(JsonElement)");
-
-        Path caller = plugin.getRuntime().caller();
-
-        sender = plugin.moduleManager().loader().getModule(caller);
+    public SPacket(final Module sender, final JsonElement element) {
+        this.sender = sender;
         Gson gson = new GsonBuilder().create();
         raw_data = gson.toJson(element).getBytes(StandardCharsets.UTF_8);
     }

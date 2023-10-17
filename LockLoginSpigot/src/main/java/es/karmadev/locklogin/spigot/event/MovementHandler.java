@@ -26,33 +26,10 @@ public class MovementHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent e) {
+        //TODO: Optimize logic
         Player player = e.getPlayer();
-        int networkId = UserDataHandler.getNetworkId(player);
-
-        if (networkId <= 0) {
-            if (UserDataHandler.isReady(player)) {
-                e.setCancelled(true);
-                /*
-                If the user is ready to be handled, but has not been
-                handled yet (#isReady returns true but the user network id
-                is not a valid user id), we will just assume the client
-                is still being connected and for so, deny all kind of
-                iteration regardless of configuration
-                 */
-            }
-
-            return;
-        }
-
-        NetworkClient client = spigot.network().getPlayer(networkId);
-        if (client == null) {
-            /*
-            It might happen that the network id is set, but the account
-            has not been marked as "connected"
-             */
-            e.setCancelled(true);
-            return;
-        }
+        NetworkClient client = UserDataHandler.fromEvent(e);
+        if (client == null) return;
 
         UserSession session = client.session();
         if (session.isLogged() && session.isTotpLogged() && session.isPinLogged()) return;
@@ -61,16 +38,6 @@ public class MovementHandler implements Listener {
         Location to = e.getTo();
 
         Block source = from.getBlock();
-        if (player.hasMetadata("flySpeed") || player.hasMetadata("walkSpeed")) {
-            if (to == null) return;
-            Block target = to.getBlock();
-
-            if (!source.equals(target)) {
-                e.setCancelled(source.getX() != target.getX() || source.getZ() != target.getZ() || source.getY() < target.getY());
-            }
-
-            return;
-        }
 
         Configuration configuration = spigot.configuration();
         MovementConfiguration movement = configuration.movement();
@@ -99,10 +66,11 @@ public class MovementHandler implements Listener {
                     return;
                 }
             }
-        }
+        } else {
+            if (to == null) return;
+            Block target = to.getBlock();
 
-        if (to == null) {
-            e.setCancelled(true);
+            e.setCancelled(source.getX() != target.getX() || source.getZ() != target.getZ() || source.getY() < target.getY());
             return;
         }
 

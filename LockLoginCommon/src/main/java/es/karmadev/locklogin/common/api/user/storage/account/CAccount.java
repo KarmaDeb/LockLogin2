@@ -9,7 +9,6 @@ import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
@@ -140,7 +139,6 @@ public class CAccount implements UserAccount {
      */
     @Override
     public boolean destroy(final NetworkEntity issuer) throws SecurityException {
-        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CAccount.class, "destroy(NetworkEntity)");
 
         return true;
     }

@@ -40,6 +40,19 @@
                 <success/>
                 <fail argument="$module">§5Unknown module: §7$module</fail>
             </response>
+            <response command="locklogin" argument="modules load">
+                <success argument="$module">§dSuccessfully loaded module: §7$module</success>
+                <fail argument="$module">§5Failed to load module: §7$module</fail>
+            </response>
+            <response command="locklogin" argument="modules unload">
+                <success argument="$module">§dSuccessfully unloaded module: §7$module</success>
+                <fail argument="$module">§5Failed to unload module: §7$module</fail>
+            </response>
+            <response command="locklogin" argument="modules reload">
+                <success argument="$module">§dSuccessfully reloaded module: §7$module</success>
+                <fail argument="$module">§5Failed to reload module: §7$module</fail>
+            </response>
+
 
             <response command="locklogin" argument="version current">
                 <success argument="$current">§dCurrent version is:§e $current</success>

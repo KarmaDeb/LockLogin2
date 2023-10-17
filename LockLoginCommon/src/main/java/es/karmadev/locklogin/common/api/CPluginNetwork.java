@@ -1,6 +1,5 @@
 package es.karmadev.locklogin.common.api;
 
-import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -10,7 +9,6 @@ import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 
 import java.sql.Connection;
@@ -32,7 +30,7 @@ public class CPluginNetwork implements PluginNetwork {
 
         CurrentPlugin.whenAvailable((plugin) -> {
             Collection<LocalNetworkClient> offline_clients = getPlayers();
-            plugin.info("There're {0} accounts in this server (not all of them may be registered)", offline_clients.size());
+            plugin.logInfo("There're {0} accounts in this server (not all of them may be registered)", offline_clients.size());
         });
     }
 

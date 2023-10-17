@@ -3,8 +3,6 @@ package es.karmadev.locklogin.api.extension.module;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
-import es.karmadev.locklogin.api.extension.module.command.worker.CommandCompletor;
-import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidModuleException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +17,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 /**
  * Module class loader, allowing different modules
@@ -33,18 +29,16 @@ final class ModuleClassLoader extends URLClassLoader {
         ClassLoader.registerAsParallelCapable();
     }
 
-    private final Map<String, Class<?>> classes = new ConcurrentHashMap<>();
+    //private final Map<String, Class<?>> classes = new ConcurrentHashMap<>();
 
-    private final ModuleLoader loader;
+    private final ModuleManager loader;
     private final ModuleDescription description;
     private final Path file;
     private final Path dataFolder;
     private final JarFile jar;
-    private final Manifest manifest;
-    private final URL url;
     AbstractModule module;
 
-    ModuleClassLoader(@NotNull final ModuleLoader loader,
+    ModuleClassLoader(@NotNull final ModuleManager loader,
                       @Nullable final ClassLoader parent,
                       @NotNull final ModuleDescription description,
                       @NotNull final Path dataFolder,
@@ -56,8 +50,8 @@ final class ModuleClassLoader extends URLClassLoader {
         this.file = file;
         this.dataFolder = dataFolder;
         this.jar = new JarFile(file.toFile());
-        this.manifest = jar.getManifest();
-        this.url = file.toUri().toURL();
+        /*this.manifest = jar.getManifest();
+        this.url = file.toUri().toURL();*/
 
         try {
             Class<?> jarClass;
@@ -153,7 +147,7 @@ final class ModuleClassLoader extends URLClassLoader {
 
         if (checkGlobal) {
             // This ignores the libraries of other plugins, unless they are transitive dependencies.
-            Class<?> result = loader.getClassByName(name, resolve, description);
+            Class<?> result = loader.loader().getClassByName(name, resolve, description);
 
             if (result != null) {
                 return result;

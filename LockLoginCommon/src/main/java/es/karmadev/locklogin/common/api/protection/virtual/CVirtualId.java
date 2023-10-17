@@ -8,7 +8,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.SecretStore;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 
@@ -23,14 +22,9 @@ import java.util.stream.Stream;
 public class CVirtualId implements VirtualID {
 
     private final String virtualID;
-    static {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "static {}");
-    }
 
     public CVirtualId() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "CVirtualId()");
 
         Configuration configuration = plugin.configuration();
         SecretStore store = configuration.secretKey();

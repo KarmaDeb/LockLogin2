@@ -2,7 +2,6 @@ package es.karmadev.locklogin.common.api.dependency.shade;
 
 import es.karmadev.locklogin.api.plugin.runtime.dependency.shade.Relocation;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.shade.RelocationSet;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 

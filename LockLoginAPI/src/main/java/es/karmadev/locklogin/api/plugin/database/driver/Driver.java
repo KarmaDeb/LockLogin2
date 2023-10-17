@@ -178,11 +178,11 @@ public enum Driver {
         LockLogin plugin = CurrentPlugin.getPlugin();
         LockLoginRuntime runtime = plugin.getRuntime();
 
-        plugin.info("Validating the existence of a suitable driver for {0}", this.name());
+        plugin.logInfo("Validating the existence of a suitable driver for {0}", this.name());
 
         try {
             Class.forName(this.getTestClass());
-            plugin.info("Suitable driver for {0} found!", this.name());
+            plugin.logInfo("Suitable driver for {0} found!", this.name());
 
             return;
         } catch (ClassNotFoundException ignored) {}
@@ -193,7 +193,7 @@ public enum Driver {
         long start = System.currentTimeMillis();
 
         if (!Files.exists(driver_directory)) {
-            plugin.warn("{0} driver not found. It will be downloaded", this.name());
+            plugin.logWarn("{0} driver not found. It will be downloaded", this.name());
 
             try {
                 WebDownloader downloader = new WebDownloader(this.getDownloadURL());
@@ -210,7 +210,7 @@ public enum Driver {
                         String name = element.getName();
 
                         if (this.includes(name)) {
-                            plugin.info("Loading driver {0} dependency {1}", this.name(), name.replace(".jar", ""));
+                            //plugin.info("Loading driver {0} dependency {1}", this.name(), name.replace(".jar", ""));
                             plugin.logInfo("Loaded driver {0} file {1}", this.name(), name);
 
                             InputStream stream = zip.getInputStream(element);
@@ -231,9 +231,9 @@ public enum Driver {
                     long elapsed = end - start;
 
                     if (status) {
-                        plugin.info("Finished driver testing after {0}ms", elapsed);
+                        plugin.logInfo("Finished driver testing after {0}ms", elapsed);
                     } else {
-                        plugin.err("Failed driver testing after {0}ms", elapsed);
+                        plugin.logErr("Failed driver testing after {0}ms", elapsed);
                     }
                 }
             } catch (Throwable ex2) {
@@ -252,9 +252,9 @@ public enum Driver {
                 long elapsed = end - start;
 
                 if (status) {
-                    plugin.info("Finished driver testing after {0}ms", elapsed);
+                    plugin.logInfo("Finished driver testing after {0}ms", elapsed);
                 } else {
-                    plugin.err("Failed driver testing after {0}ms", elapsed);
+                    plugin.logErr("Failed driver testing after {0}ms", elapsed);
                 }
             }
         }

@@ -20,7 +20,6 @@ import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.ModuleConverter;
-import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -39,9 +38,7 @@ import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
-import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.LockLoginDependency;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
@@ -72,7 +69,7 @@ import es.karmadev.locklogin.common.api.plugin.service.password.CPasswordProvide
 import es.karmadev.locklogin.common.api.protection.CPluginHasher;
 import es.karmadev.locklogin.common.api.protection.totp.CTotpService;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
-import es.karmadev.locklogin.common.api.runtime.SubmissiveRuntime;
+import es.karmadev.locklogin.common.api.runtime.CRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
@@ -101,7 +98,10 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.*;
 import java.time.Instant;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -117,7 +117,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
     private final CMarketPlace marketPlace = new CMarketPlace();
     private final CModuleManager moduleManager = new CModuleManager();
-    private final SubmissiveRuntime runtime = new SubmissiveRuntime();
+    private final CRuntime runtime = new CRuntime();
     private CPluginNetwork network;
     private CPremiumDataStore premiumDataStore;
     private final CPluginHasher hasher;
@@ -197,8 +197,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                     }
                 } else {
                     Plugin tmpPlugin = pluginManager.getPlugin(name);
-                    
-                    if (tmpPlugin != null) {
+                                 if (tmpPlugin != null) {
                         Version pluginVersion = Version.parse(tmpPlugin.getDescription().getVersion());
 
                         if (pluginVersion.compareTo(version) < 0) {
@@ -269,14 +268,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             boot = false;
         }
 
-        /*if (boot && bungeeMode()) {
-            Driver dr = configuration.database().driver();
-            if (dr.isLocal()) {
-                err("LockLogin won't start, as BungeeCord mode is enabled, LockLogin needs a SQL server to work properly");
-                boot = false;
-            }
-        }*/
-
         this.pair = pair;
         if (!boot) {
             driver = null;
@@ -288,7 +279,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             return; //We won't boot
         }
 
-        runtime.becomeCRuntime();
         messages = new InternalPack();
         hasher = new CPluginHasher();
 
@@ -314,36 +304,11 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
         driver = new CSQLDriver(configuration.database().driver());
         CurrentPlugin.updateState();
 
-        /*SpigotCommandManager manager = new SpigotCommandManager(this, map);
-        moduleManager.onCommandRegistered = manager;
-        moduleManager.onCommandUnregistered = manager;*/
-
         process_factory = new CProcessFactory();
-        /*process_factory.register(SpigotRegisterProcess.class);
-        process_factory.register(SpigotLoginProcess.class);
-        process_factory.register(SpigotPinProcess.class);
-        process_factory.register(SpigotTotpProcess.class);
-
-        SpigotRegisterProcess.setStatus(configuration.authSettings().register());
-        SpigotLoginProcess.setStatus(configuration.authSettings().login());
-        SpigotPinProcess.setStatus(configuration.authSettings().pin());
-        SpigotTotpProcess.setStatus(configuration.authSettings().totp());
-
-        moduleMaker = new SpigotModuleMaker();
-        injector = new ClientInjector();
-
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "ll:test", new PluginMessageListener() {
-            @Override
-            public void onPluginMessageReceived(@NotNull final String s, @NotNull final Player player, final byte[] bytes) {
-                info("Received: {0}", Arrays.toString(bytes));
-            }
-        });
-        plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "ll:test");*/
         postStartup = Instant.now();
     }
 
     void installDriver() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginBungee.class, "installDriver()");
         driver.connect();
 
         if (network == null) network = new CPluginNetwork(driver);
@@ -479,7 +444,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      * @return the plugin keys
      */
     public KeyPair getCommunicationKeys() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginBungee.class, "getCommunicationKeys");
         return pair;
     }
 
@@ -489,7 +453,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      * @return the plugin data driver
      */
     public CSQLDriver driver() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "driver()");
         return driver;
     }
 
@@ -501,7 +464,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public BungeePlugin plugin() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "plugin()");
         return plugin;
     }
 
@@ -523,7 +485,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public boolean bungeeMode() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "bungeeMode()");
+       
 
         File server_folder = plugin.getProxy().getPluginsFolder().getAbsoluteFile().getParentFile();
         File spigot_yml = new File(server_folder, "spigot.yml");
@@ -546,7 +508,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public boolean onlineMode() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "onlineMode()");
         return plugin.getProxy().getConfig().isOnlineMode();
     }
 
@@ -570,8 +531,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public InputStream load(final String name) throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginBungee.class, "load(String)");
-
         File pluginFile = plugin.runtime().getFile().toFile();
         try(JarFile jarFile = new JarFile(pluginFile)) {
             JarEntry entry = jarFile.getJarEntry(name);
@@ -599,7 +558,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public Path workingDirectory() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "workingDirectory()");
         return plugin.workingDirectory();
     }
 
@@ -610,8 +568,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      * @throws SecurityException if tried to access from an unauthorized source
      */
     @Override
-    public SubmissiveRuntime getRuntime() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getRuntime()");
+    public CRuntime getRuntime() throws SecurityException {
         return runtime;
     }
 
@@ -622,7 +579,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public PluginNetwork network() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "network()");
         return network;
     }
 
@@ -633,7 +589,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public LockLoginHasher hasher() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "hasher()");
         return hasher;
     }
 
@@ -644,7 +599,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public Configuration configuration() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "configuration()");
         return configuration;
     }
 
@@ -656,7 +610,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public LanguagePackManager languagePackManager() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "messages()");
         return messages;
     }
 
@@ -667,7 +620,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public ProcessFactory getProcessFactory() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getProcessFactory()");
         return process_factory;
     }
 
@@ -676,7 +628,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      *
      * @return the module converter
      */
-    @Override @SuppressWarnings("unchecked")
+    @Override
     public <T> ModuleConverter<T> getConverter() {
         /*return (ModuleConverter<T>) moduleMaker;*/ return null;
     }
@@ -690,7 +642,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public AccountFactory<? extends UserAccount> getAccountFactory(final boolean original) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getAccountFactory(boolean)");
         if (original || provider_account_factory == null) {
             return default_account_factory;
         }
@@ -707,7 +658,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public SessionFactory<? extends UserSession> getSessionFactory(final boolean original) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getSessionFactory(boolean)");
         if (original || provider_session_factory == null) {
             return default_session_factory;
         }
@@ -724,7 +674,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public UserFactory<? extends LocalNetworkClient> getUserFactory(final boolean original) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getUserFactory(boolean)");
         if (original || provider_user_factory == null) {
             return default_user_factory;
         }
@@ -741,7 +690,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override @SuppressWarnings("unchecked")
     public ServerFactory<? extends NetworkServer> getServerFactory(final boolean original) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getServerFactory(boolean)");
         if (original || provider_server_factory == null) {
             return default_server_factory;
         }
@@ -756,7 +704,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public MultiAccountManager accountManager() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "accountManager()");
         return null;
     }
 
@@ -768,7 +715,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public PluginService getService(final String name) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "getService(String)");
         return service_provider.getOrDefault(name, null);
     }
 
@@ -779,7 +725,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public ModuleManager moduleManager() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "moduleManager()");
         return moduleManager;
     }
 
@@ -790,7 +735,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public PremiumDataStore premiumStore() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "premiumStore()");
         return premiumDataStore;
     }
 
@@ -803,7 +747,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public ServerHash server() throws SecurityException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, LockLoginBungee.class, "server()");
+       
 
         Path data = plugin.workingDirectory().resolve("cache").resolve("server.kf");
         if (Files.exists(data)) {
@@ -892,7 +836,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void registerService(final String name, final PluginService service) throws UnsupportedOperationException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "registerService(String, PluginService)");
+       
 
         if (service_provider.containsKey(name)) {
             plugin.logger().log(LogLevel.WARNING, "Tried to register duplicated service name {0}", name);
@@ -924,7 +868,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void unregisterService(final String name) throws UnsupportedOperationException, NullPointerException {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "unregisterService(String)");
+       
 
         PluginService service = service_provider.getOrDefault(name, null);
         if (service == null) throw new NullPointerException("Cannot unregister service " + name + " because it does not exist");
@@ -941,7 +885,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void setAccountFactory(final AccountFactory<UserAccount> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "setAccountFactory(AccountFactory)");
         provider_account_factory = factory;
     }
 
@@ -952,7 +895,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void setSessionFactory(final SessionFactory<UserSession> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "setSessionFactory(SessionFactory)");
         provider_session_factory = factory;
     }
 
@@ -963,7 +905,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void setUserFactory(final UserFactory<LocalNetworkClient> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "setUserFactory(UserFactory)");
         provider_user_factory = factory;
     }
 
@@ -974,7 +915,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void setServerFactory(final ServerFactory<NetworkServer> factory) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "setServerFactory(ServerFactory)");
         provider_server_factory = factory;
     }
 
@@ -986,15 +926,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void info(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "info(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().send(LogLevel.INFO, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().send(LogLevel.INFO, message, replaces);
-        }
+        plugin.logger().send(LogLevel.INFO, message, replaces);
     }
 
     /**
@@ -1005,15 +937,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void warn(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "warn(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().send(LogLevel.WARNING, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().send(LogLevel.WARNING, message, replaces);
-        }
+        plugin.logger().send(LogLevel.WARNING, message, replaces);
     }
 
     /**
@@ -1024,15 +948,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void err(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "err(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().send(LogLevel.ERROR, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().send(LogLevel.ERROR, message, replaces);
-        }
+        plugin.logger().send(LogLevel.ERROR, message, replaces);
     }
 
     /**
@@ -1043,15 +959,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void logInfo(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "logInfo(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().log(LogLevel.INFO, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().log(LogLevel.INFO, message, replaces);
-        }
+        plugin.logger().log(LogLevel.INFO, message, replaces);
     }
 
     /**
@@ -1062,15 +970,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void logWarn(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "logWarn(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().log(LogLevel.WARNING, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().log(LogLevel.WARNING, message, replaces);
-        }
+        plugin.logger().log(LogLevel.WARNING, message, replaces);
     }
 
     /**
@@ -1081,15 +981,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void logErr(final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "logErr(String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().log(LogLevel.ERROR, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().log(LogLevel.ERROR, message, replaces);
-        }
+        plugin.logger().log(LogLevel.ERROR, message, replaces);
     }
 
     /**
@@ -1101,15 +993,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void log(final Throwable error, final String message, final Object... replaces) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "log(Throwable, String, Object[])");
-        Path caller = runtime.caller();
-        Module module = moduleManager.loader().getModule(caller);
-
-        if (module != null) {
-            plugin.logger().log(error, "({0}): {1}", module.getName(), StringUtils.format(message, replaces));
-        } else {
-            plugin.logger().log(error, message, replaces);
-        }
+        plugin.logger().log(error, message, replaces);
     }
 
     /**
@@ -1129,7 +1013,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public InetSocketAddress address() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "address()");
         return InetSocketAddress.createUnresolved("127.0.0.1", 25565);
     }
 
@@ -1140,7 +1023,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public Instant creation() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "creation()");
         return startup;
     }
 
@@ -1193,7 +1075,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public Collection<NetworkClient> connected() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "connected()");
         return network.getOnlinePlayers();
     }
 
@@ -1205,7 +1086,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public Collection<LocalNetworkClient> offlineClients() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "offlineClients()");
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
@@ -1216,7 +1096,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public NetworkChannel channel() {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "channel()");
         return null;
     }
 
@@ -1227,7 +1106,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void onReceive(final IncomingPacket packet) {
-        final String identifier = packet.getSequence("identifier");
+        //final String identifier = packet.getSequence("identifier");
 
         final COutPacket out = new COutPacket(packet.getType());
         out.addProperty("replying", packet.id());
@@ -1302,7 +1181,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void sendMessage(final String message) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "sendMessage(String)");
         plugin.logger().send(message);
     }
 
@@ -1313,7 +1191,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void sendActionBar(final String actionbar) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "sendActionBar(String)");
+       
 
         for (ProxiedPlayer online : ProxyServer.getInstance().getPlayers()) {
             online.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ColorComponent.parse(actionbar)));
@@ -1331,7 +1209,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void sendTitle(final String title, final String subtitle, final int fadeIn, final int showTime, final int fadeOut) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "sendTitle(String, String, int, int, int)");
+       
 
         for (ProxiedPlayer online : ProxyServer.getInstance().getPlayers()) {
             BungeeTitle bungeeTitle = new BungeeTitle();
@@ -1346,7 +1224,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
     @Override
     public InputStream loadResource(final String s) {
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginBungee.class, "loadResource(String)");
         return LockLoginBungee.class.getResourceAsStream("/" + s);
     }
 }

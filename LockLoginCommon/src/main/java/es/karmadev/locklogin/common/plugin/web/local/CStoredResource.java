@@ -63,12 +63,12 @@ public class CStoredResource implements StoredResource {
         boolean success = false;
         if (category.equals(Category.TRANSLATION)) {
             if (manifest.getVersion() < LockLoginJson.getLangVersion()) {
-                plugin.warn("Couldn't load translation {0} because the manifest lang version {1} is less than the current language version {2}",
+                plugin.logWarn("Couldn't load translation {0} because the manifest lang version {1} is less than the current language version {2}",
                         name, manifest.getVersion(), LockLoginJson.getLangVersion());
                 return;
             }
 
-            plugin.info("Preparing to load translations of {0}", manifest.getTitle());
+            plugin.logInfo("Preparing to load translations of {0}", manifest.getTitle());
             for (ManifestFile file : manifest.getFiles()) {
                 String flName = file.getFile();
                 Path fileEntry = resourceDirectory.resolve(file.getFile());
@@ -90,17 +90,17 @@ public class CStoredResource implements StoredResource {
 
                     for (String name : file.getLocaleNames()) {
                         if (plugin.languagePackManager().load(name, targetDirectory)) {
-                            plugin.info("Added translation {0}", name);
+                            plugin.logInfo("Added translation {0}", name);
                             success = true;
                         } else {
-                            plugin.warn("Failed to add translation {0}, because it's probably already added by another translation", name);
+                            plugin.logWarn("Failed to add translation {0}, because it's probably already added by another translation", name);
                         }
                     }
                 }
             }
         } else {
             ModuleLoader loader = plugin.moduleManager().loader();
-            plugin.info("Preparing to load modules of {0}", manifest.getTitle());
+            plugin.logInfo("Preparing to load modules of {0}", manifest.getTitle());
 
             Map<String, Path> locales = new HashMap<>();
             for (ManifestFile file : manifest.getFiles()) {
@@ -147,7 +147,7 @@ public class CStoredResource implements StoredResource {
 
                         if (moduleYML != null) {
                             Path targetModule = plugin.workingDirectory().resolve("marketplace").resolve("modules")
-                                    .resolve("addon").resolve(file.getDirectoryName());
+                                    .resolve(file.getDirectoryName());
 
                             PathUtilities.createDirectory(targetModule.getParent());
 
@@ -156,7 +156,7 @@ public class CStoredResource implements StoredResource {
                                     Files.copy(fileEntry, targetModule);
                                 } catch (Exception ex) {
                                     plugin.log(ex, "Failed to prepare resource load {0}", PathUtilities.pathString(targetModule));
-                                    plugin.warn("Failed to prepare resource load {0}", PathUtilities.pathString(targetModule));
+                                    //plugin.warn("Failed to prepare resource load {0}", PathUtilities.pathString(targetModule));
                                     continue;
                                 }
                             }
@@ -168,6 +168,8 @@ public class CStoredResource implements StoredResource {
                                 }
 
                                 if (loader.enable(module)) {
+                                    success = true;
+
                                     plugin.info("Successfully enabled module {0}", module.getName());
                                     for (String name : locales.keySet()) {
                                         String lang = plugin.languagePackManager().getName(module);
@@ -175,21 +177,26 @@ public class CStoredResource implements StoredResource {
                                         ModulePhrases phrases = plugin.languagePackManager().getMessenger(module);
 
                                         if (phrases == null) {
-                                            plugin.warn("Module {0} provided a language pack {1} but the module does not initialize it", module.getName(), name);
+                                            plugin.logWarn("Module {0} provided a language pack {1} but the module does not initialize it", module.getName(), name);
                                         }
 
                                         plugin.languagePackManager().setLang(module, lang);
                                     }
                                 } else {
-                                    plugin.warn("Failed to enable module {0}", module.getName());
+                                    if (module.isEnabled()) {
+                                        success = true;
+                                        plugin.warn("Ignoring load of module {0} because its already loaded and enabled", module.getName());
+                                    } else {
+                                        plugin.warn("Failed to enable module {0}", module.getName());
+                                    }
                                 }
                             } catch (InvalidModuleException ex) {
                                 plugin.log(ex, "Failed to load module from resource {0}", manifest.getTitle());
-                                plugin.warn("Couldn't load module {0} from resource {1}", PathUtilities.pathString(targetModule), name);
+                                //plugin.warn("Couldn't load module {0} from resource {1}", PathUtilities.pathString(targetModule), name);
                             }
                         } else {
                             KarmaAPI.inject(fileEntry, plugin.plugin().getClass().getClassLoader());
-                            plugin.info("Successfully injected resource {0} from resource {1}", PathUtilities.pathString(fileEntry), name);
+                            plugin.logInfo("Successfully injected resource {0} from resource {1}", PathUtilities.pathString(fileEntry), name);
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -257,7 +264,7 @@ public class CStoredResource implements StoredResource {
 
                 if (extension.equals("jar")) {
                     Path targetModule = plugin.workingDirectory().resolve("marketplace").resolve("modules")
-                            .resolve("addon").resolve(file.getDirectoryName());
+                            .resolve(file.getDirectoryName());
 
                     Module module = loader.getModule(targetModule);
                     if (module != null) {

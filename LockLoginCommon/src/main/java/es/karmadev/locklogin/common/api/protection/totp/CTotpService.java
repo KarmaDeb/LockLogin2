@@ -16,7 +16,8 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.security.totp.TotpService;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
-import es.karmadev.totp.*;
+import es.karmadev.totp.TOTP;
+import es.karmadev.totp.TOTPKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -25,7 +26,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Totp service

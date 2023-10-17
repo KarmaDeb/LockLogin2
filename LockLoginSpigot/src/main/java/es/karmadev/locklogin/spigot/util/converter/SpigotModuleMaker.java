@@ -28,7 +28,7 @@ public class SpigotModuleMaker implements ModuleConverter<JavaPlugin> {
     public PluginModule<JavaPlugin> implement(final JavaPlugin plugin) {
         if (!modules.containsKey(plugin)) {
             Path caller = pluginFile(plugin);
-            SpigotModule sm = modules.computeIfAbsent(plugin, (existing) -> new SpigotModule(plugin, caller, this, spigot.network(), loader));
+            SpigotModule sm = modules.computeIfAbsent(plugin, (existing) -> new SpigotModule(plugin, caller, this, spigot.network(), spigot.moduleManager()));
             if (loader.enable(sm)) {
                 spigot.info("Implemented plugin {0} as a module (it can now access LockLogin API)", plugin.getName());
                 modules.put(plugin, sm);

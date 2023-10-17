@@ -2,7 +2,6 @@ package es.karmadev.locklogin.spigot.vault;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.PermissionConfiguration;
 import es.karmadev.locklogin.spigot.SpigotPlugin;

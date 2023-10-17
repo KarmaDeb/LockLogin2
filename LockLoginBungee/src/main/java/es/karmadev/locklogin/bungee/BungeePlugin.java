@@ -4,7 +4,6 @@ import es.karmadev.api.bungee.core.KarmaPlugin;
 import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.locklogin.bungee.command.TestCommand;
-import es.karmadev.locklogin.bungee.listener.JoinHandler;
 import es.karmadev.locklogin.bungee.packet.CustomPacket;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;

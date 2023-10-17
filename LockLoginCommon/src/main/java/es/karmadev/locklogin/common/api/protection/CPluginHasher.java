@@ -4,7 +4,6 @@ import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
 import es.karmadev.locklogin.api.security.exception.UnnamedHashException;
 import es.karmadev.locklogin.api.security.hash.HashResult;
@@ -13,7 +12,6 @@ import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
-import es.karmadev.locklogin.common.api.runtime.CDependencyManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -156,9 +154,6 @@ public class CPluginHasher implements LockLoginHasher {
      */
     @Override
     public VirtualID virtualID() throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CPluginHasher.class, "virtualID()");
-
         return virtualID;
     }
 }

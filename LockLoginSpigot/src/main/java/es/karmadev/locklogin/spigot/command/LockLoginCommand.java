@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
@@ -7,10 +8,9 @@ import es.karmadev.api.version.BuildStatus;
 import es.karmadev.api.version.Version;
 import es.karmadev.api.version.checker.VersionChecker;
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.extension.module.Module;
-import es.karmadev.locklogin.api.extension.module.ModuleLoader;
-import es.karmadev.locklogin.api.extension.module.ModuleManager;
-import es.karmadev.locklogin.api.extension.module.PluginModule;
+import es.karmadev.locklogin.api.extension.module.*;
+import es.karmadev.locklogin.api.extension.module.exception.InvalidDescriptionException;
+import es.karmadev.locklogin.api.extension.module.exception.InvalidModuleException;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -35,6 +35,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @PluginCommand(command = "locklogin", useInBungeecord = true)
 public class LockLoginCommand extends Command {
@@ -278,6 +282,9 @@ public class LockLoginCommand extends Command {
                                 break;
                             case 3:
                             default:
+                                for (String str : usage) {
+                                    sender.sendMessage(str);
+                                }
                                 break;
                         }
 
@@ -326,24 +333,117 @@ public class LockLoginCommand extends Command {
                                                 sender.sendMessage(ColorComponent.parse("&7Module: &d{0}", module.getName()));
                                                 sender.sendMessage(ColorComponent.parse("&7Version: &d{0}", module.getVersion()));
                                                 sender.sendMessage(ColorComponent.parse("&7Author(s): &d{0}", module.getDescription().getAuthor()));
+                                                if (module.isFromMarketplace()) {
+                                                    sender.sendMessage("");
+                                                    sender.sendMessage(ColorComponent.parse("&8(&eThis resource has been installed through the marketplace manager&8)"));
+                                                }
                                             } else {
-                                                sender.sendMessage(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules info", modName));
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules info", modName)));
                                             }
                                         }
                                     } else {
-                                        sender.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST));
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
                                     }
                                     break;
                                 case "list":
                                     if (hasPermission(sender, LockLoginPermission.PERMISSION_MODULE_LIST)) {
                                         listModules(sender);
                                     } else {
-                                        sender.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST));
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
                                     }
                                     break;
                                 case "load":
+                                    if (hasPermission(sender, LockLoginPermission.PERMISSION_MODULE_LOAD)) {
+                                        if (args.length >= 3) {
+                                            String modName = args[2];
+                                            Module module = findModule(modName, loader);
+
+                                            if (module == null || module.isEnabled()) {
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
+                                                return;
+                                            }
+
+                                            if (loader.enable(module)) {
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules load", modName)));
+                                            } else {
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
+                                            }
+                                        } else {
+                                            for (String str : usage) {
+                                                sender.sendMessage(str);
+                                            }
+                                        }
+                                    } else {
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LOAD)));
+                                    }
                                     break;
                                 case "unload":
+                                    if (hasPermission(sender, LockLoginPermission.PERMISSION_MODULE_UNLOAD)) {
+                                        if (args.length >= 3) {
+                                            String action = "";
+                                            String modName = args[2];
+                                            Module module = loader.getModule(modName);
+
+                                            if (module == null || !module.isEnabled()) {
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
+                                                return;
+                                            }
+
+                                            if (args.length >= 4) {
+                                                action = args[3];
+                                            }
+
+                                            if (action.equalsIgnoreCase("--hard") || action.equalsIgnoreCase("-h")) {
+                                                if (module.isFromMarketplace()) {
+                                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
+                                                    return;
+                                                }
+
+                                                loader.unload(module);
+                                            } else {
+                                                loader.disable(module);
+                                            }
+
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules unload", modName)));
+                                        } else {
+                                            for (String str : usage) {
+                                                sender.sendMessage(str);
+                                            }
+                                        }
+                                    } else {
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_UNLOAD)));
+                                    }
+                                    break;
+                                case "reload":
+                                    if (hasPermission(sender, LockLoginPermission.PERMISSION_MODULE_RELOAD)) {
+                                        if (args.length >= 3) {
+                                            String modName = args[2];
+                                            Module module = loader.getModule(modName);
+
+                                            if (module == null || !module.isEnabled()) {
+                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
+                                                return;
+                                            }
+
+                                            Path file = module.getFile();
+                                            loader.unload(module);
+                                            try {
+                                                Module newModule = loader.load(file);
+                                                if (loader.enable(newModule)) {
+                                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules reload", modName)));
+                                                    return;
+                                                }
+                                            } catch (InvalidModuleException ignored) {}
+
+                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
+                                        } else {
+                                            for (String str : usage) {
+                                                sender.sendMessage(str);
+                                            }
+                                        }
+                                    } else {
+                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_RELOAD)));
+                                    }
                                     break;
                                 default:
                                     for (String str : usage) {
@@ -384,6 +484,7 @@ public class LockLoginCommand extends Command {
 
         StringBuilder modList = new StringBuilder();
         Module[] modules = loader.getModules().toArray(new Module[0]);
+        boolean first = true;
         for (int i = 0; i < modules.length; i++) {
             Module module = modules[i];
             String color = "&c";
@@ -391,16 +492,73 @@ public class LockLoginCommand extends Command {
                 color = "&a";
             }
             if (module instanceof PluginModule) {
-                modList.append("&8[&ePlugin&8]").append(color).append(" ").append(module.getDescription().getName());
+                if (first) {
+                    modList.append(" ");
+                }
+                modList.append("&8[&ePlugin&8]");
             } else {
-                modList.append(color).append(" ").append(module.getDescription().getName());
+                if (module.isFromMarketplace()) {
+                    if (first) {
+                        modList.append(" ");
+                    }
+
+                    modList.append("&8[&eMarketplace&8]");
+                }
             }
+
+            first = false;
+            modList.append(color).append(" ").append(module.getDescription().getName());
 
             if (i < modules.length - 1) {
                 modList.append("&7,");
             }
         }
 
-        sender.sendMessage(ColorComponent.parse("&dModules &8&l(&e" + modules.length + "&8&l)&7: " + modList));
+        sender.sendMessage(ColorComponent.parse("&dModules &8&l(&e" + modules.length + "&8&l)&7:" + modList));
+    }
+
+    private Module findModule(final String name, final ModuleLoader loader) {
+        Module module = loader.getModule(name);
+        if (module != null) return module;
+
+        Path modulesDirectory = spigot.workingDirectory().resolve("mods");
+        /*
+        Path alternateModulesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("modules");
+        This should be actually handled entirely by the lrm
+         */
+
+        return getFromPath(loader, name, modulesDirectory);
+    }
+
+    private Module getFromPath(final ModuleLoader loader, final String name, final Path directory) {
+        Module module = null;
+
+        if (Files.exists(directory)) {
+            try (Stream<Path> files = Files.list(directory)
+                    .filter((path) -> PathUtilities.getExtension(path).equals("jar"))) {
+                module = loadFromStream(loader, name, files);
+            } catch (Exception ignored) {}
+        }
+
+        return module;
+    }
+
+    private Module loadFromStream(final ModuleLoader loader, final String name, final Stream<Path> files) {
+        AtomicReference<Module> reference = new AtomicReference<>();
+
+        files.forEachOrdered((path) -> {
+            try {
+                ModuleDescription desc = loader.loadDescription(path);
+                if (desc.getName().equalsIgnoreCase(name) ||
+                        PathUtilities.getName(path).equalsIgnoreCase(name)) {
+                    try {
+                        Module module = loader.load(path);
+                        reference.set(module);
+                    } catch (InvalidModuleException ignored) {}
+                }
+            } catch (InvalidDescriptionException ignored) {}
+        });
+
+        return reference.get();
     }
 }

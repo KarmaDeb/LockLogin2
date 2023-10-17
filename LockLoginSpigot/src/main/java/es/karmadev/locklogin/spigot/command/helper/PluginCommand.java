@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.spigot.command.helper;
 
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
-import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

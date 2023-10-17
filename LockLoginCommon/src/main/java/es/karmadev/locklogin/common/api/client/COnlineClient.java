@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.common.api.client;
 
 import com.google.gson.JsonElement;
-import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
@@ -10,7 +10,6 @@ import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.permission.DummyPermission;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.user.session.check.SessionChecker;
 import es.karmadev.locklogin.common.api.server.channel.SPacket;
 import es.karmadev.locklogin.common.api.user.session.CSessionChecker;
@@ -137,37 +136,40 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     /**
      * Send a packet to the current client server
      *
+     * @param sender the packet sender
      * @param priority the packet priority
      * @param data     the packet data
      * @throws SecurityException if there's no module trying to send the packet
      */
     @Override
-    public void appendPacket(final int priority, final byte... data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(data).priority(priority));
+    public void appendPacket(final Module sender, final int priority, final byte... data) throws SecurityException {
+        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**
      * Send a packet to the current client server
      *
+     * @param sender the packet sender
      * @param priority the packet priority
      * @param data     the packet data
      * @throws SecurityException if there's no module or plugin trying to send the packet
      */
     @Override
-    public void appendPacket(final int priority, final String data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(data).priority(priority));
+    public void appendPacket(final Module sender, final int priority, final String data) throws SecurityException {
+        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**
      * Send a packet to the current client server
      *
+     * @param sender the packet sender
      * @param priority the packet priority
      * @param data     the packet data
      * @throws SecurityException if there's no module or plugin trying to send the packet
      */
     @Override
-    public void appendPacket(final int priority, final JsonElement data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(data).priority(priority));
+    public void appendPacket(final Module sender, final int priority, final JsonElement data) throws SecurityException {
+        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**
@@ -177,7 +179,6 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void performCommand(final String cmd) {
-        CurrentPlugin.getPlugin().getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, COnlineClient.class, "performCommand(String)");
         if (performCommand != null) performCommand.accept(cmd);
     }
 

@@ -1,8 +1,8 @@
 package es.karmadev.locklogin.common.api.dependency;
 
+import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.object.ObjectUtils;
-import com.google.gson.*;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;

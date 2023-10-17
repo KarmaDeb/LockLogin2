@@ -3,15 +3,15 @@ package es.karmadev.locklogin.spigot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.logger.log.BoundedLogger;
+import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.schedule.runner.TaskRunner;
 import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.api.schedule.runner.event.TaskEvent;
 import es.karmadev.api.spigot.core.KarmaPlugin;
-import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
-import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.version.BuildStatus;
 import es.karmadev.api.version.Version;
 import es.karmadev.api.version.checker.VersionChecker;
@@ -153,7 +153,7 @@ public class SpigotPlugin extends KarmaPlugin {
             long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
 
             long rs = diff + diff2;
-            logger().log(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
+            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
 
             spigot.getSessionFactory(false).getSessions().forEach((session) -> {
                 session.invalidate();
@@ -389,7 +389,7 @@ public class SpigotPlugin extends KarmaPlugin {
 
             Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
             try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
-                logger().send(LogLevel.INFO, "Preparing to load marketplace resources");
+                logger().log(LogLevel.INFO, "Preparing to load marketplace resources");
                 Gson gson = new GsonBuilder().create();
 
                 Pattern idPattern = Pattern.compile("id=[0-9]*");
@@ -607,9 +607,12 @@ public class SpigotPlugin extends KarmaPlugin {
             mods.forEach((modFile) -> {
                 try {
                     Module module = loader.load(modFile);
-                    spigot.info("Loaded module {0}", module.getName());
 
-                    loader.enable(module);
+                    if (loader.enable(module)) {
+                        spigot.info("Loaded module {0}", module.getName());
+                    } else {
+                        spigot.warn("Failed to load module {0}", module.getName());
+                    }
                 } catch (InvalidModuleException ex) {
                     spigot.log(ex, "Failed to load file {0} as module", PathUtilities.getName(modFile));
                     //spigot.err("Failed to load file {0} as a module file. Does it contains a module.yml?", PathUtilities.pathString(modFile));

@@ -8,7 +8,9 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.service.mail.EmailService;
 import es.karmadev.locklogin.api.plugin.service.mail.MailMessage;
-import jakarta.activation.*;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.FileDataSource;
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
@@ -17,7 +19,10 @@ import jakarta.mail.internet.MimeMultipart;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 public class CMailService implements EmailService {

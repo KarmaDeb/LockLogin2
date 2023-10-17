@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.api.plugin.marketplace.resource;
 
-import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.marketplace.Category;
+import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 
 /**
  * {@link MarketPlace Marketplace} resource

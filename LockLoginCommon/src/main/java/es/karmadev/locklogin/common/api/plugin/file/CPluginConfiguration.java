@@ -16,7 +16,6 @@ import es.karmadev.locklogin.api.plugin.file.Database;
 import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -164,9 +163,6 @@ public class CPluginConfiguration implements Configuration {
     @Override
     public SecretStore secretKey() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-        runtime.verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, Configuration.class, "secretKey()");
-
         String raw = yaml.getString("SecretKey", "");
 
         if (ObjectUtils.isNullOrEmpty(raw) || !raw.contains("$")) {

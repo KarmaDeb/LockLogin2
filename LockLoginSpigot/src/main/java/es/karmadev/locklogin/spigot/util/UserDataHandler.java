@@ -6,12 +6,16 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * LockLogin user data handler
@@ -30,6 +34,33 @@ public class UserDataHandler {
 
     public static void handleDisconnect(final Player player) {
         readyToHandle.remove(player.getUniqueId());
+    }
+
+    public static NetworkClient fromEvent(final PlayerEvent event) {
+        Player player = event.getPlayer();
+        LockLoginSpigot spigot = (LockLoginSpigot) CurrentPlugin.getPlugin();
+
+        int networkId = getNetworkId(player);
+        if (networkId <= 0) {
+            if (UserDataHandler.isReady(player)) {
+                if (event instanceof Cancellable) {
+                    Cancellable cancellable = (Cancellable) event;
+                    cancellable.setCancelled(true);
+                }
+            }
+
+            return null;
+        }
+
+        NetworkClient client = spigot.network().getPlayer(networkId);
+        if (client == null) {
+            if (event instanceof Cancellable) {
+                Cancellable cancellable = (Cancellable) event;
+                cancellable.setCancelled(true);
+            }
+        }
+
+        return client;
     }
 
     public static int getNetworkId(final Player player) {

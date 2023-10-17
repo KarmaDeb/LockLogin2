@@ -7,7 +7,6 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.packet.ComPacket;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.bungee.LockLoginBungee;
 import es.karmadev.locklogin.common.util.Task;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -38,7 +37,6 @@ public class PacketDataHandler {
      * @param packet the packet
      */
     public static Task<IncomingPacket> emitPacket(final Server server, final OutgoingPacket packet) {
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, PacketDataHandler.class, "emitPacket(Server, OutgoingPacket)");
         String packetId = StringUtils.generateString(16, StringOptions.LOWERCASE);
         Map<String, ComPacket> ids = packetData.computeIfAbsent(server, (data) -> new ConcurrentHashMap<>());
 
@@ -149,7 +147,6 @@ public class PacketDataHandler {
     }
 
     public static void assignKey(final ServerInfo server, final PublicKey key) {
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, PacketDataHandler.class, "assignKey(Server, PublicKey)");
         keys.put(server.getName(), key);
     }
 }

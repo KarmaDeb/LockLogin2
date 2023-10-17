@@ -7,21 +7,20 @@ import es.karmadev.locklogin.api.event.LockLoginEvent;
 import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.event.handler.EventHandler;
 import es.karmadev.locklogin.api.event.handler.EventHandlerList;
+import es.karmadev.locklogin.api.event.handler.Listener;
 import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.command.error.CommandRuntimeException;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.module.ModuleLoader;
-import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.TextContainer;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.command.CCommandMap;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -29,7 +28,7 @@ import java.util.function.Function;
 
 public class CModuleManager implements ModuleManager {
 
-    private final ModuleLoader loader = new ModuleLoader();
+    private final ModuleLoader loader = new ModuleLoader(this);
     private final CCommandMap commands = new CCommandMap(this);
     private final Map<Module, Set<Class<? extends LockLoginEvent>>> module_events = new ConcurrentHashMap<>();
 
@@ -58,6 +57,7 @@ public class CModuleManager implements ModuleManager {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         for (Module module : loader.getModules()) {
+            if (!module.isEnabled()) continue;
             EventHandler[] handlers = list.getHandlers(module);
 
             for (EventHandler handler : handlers) {
@@ -86,18 +86,17 @@ public class CModuleManager implements ModuleManager {
     /**
      * Add an event handler
      *
+     * @param module the module owning the event handler
      * @param handler the event handler
      */
     @Override
-    public void addEventHandler(final EventHandler handler) {
+    public void addEventHandler(final Module module, final EventHandler handler) {
         Method[] methods = handler.getClass().getDeclaredMethods();
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-        Path caller = runtime.caller();
 
-        Module module = loader.getModule(caller);
-        if (module != null) {
+        if (module != null && module.isEnabled()) {
             for (Method method : methods) {
+                if (!method.isAnnotationPresent(Listener.class)) continue;
+
                 Parameter[] parameters = method.getParameters();
                 if (parameters.length == 1) {
                     Parameter parameter = parameters[0];
@@ -122,36 +121,31 @@ public class CModuleManager implements ModuleManager {
     /**
      * Add an event listener
      *
+     * @param module the module owning the handler
      * @param event    the event
      * @param listener the event handler
+     * @param <T> the event type
+     * @return the event handler
      */
     @Override
-    public <T extends LockLoginEvent> EventHandler addEventHandler(final T event, final Consumer<T> listener) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-        Path caller = runtime.caller();
+    public <T extends LockLoginEvent> EventHandler addEventHandler(final Module module, final T event, final Consumer<T> listener) {
 
-        Module module = loader.getModule(caller);
-        if (module != null) {
-            EventHandler handler = new EventHandler() {
+        EventHandler handler = new EventHandler() {
 
-                @SuppressWarnings("unused")
-                public void onUnknown(final T event) {
-                    listener.accept(event);
-                }
-            };
-            EventHandlerList handlerList = getHandlerList(event.getClass());
-            handlerList.addHandler(handler, module);
+            @SuppressWarnings("unused")
+            public void onUnknown(final T event) {
+                listener.accept(event);
+            }
+        };
+        EventHandlerList handlerList = getHandlerList(event.getClass());
+        handlerList.addHandler(handler, module);
 
-            Set<Class<? extends LockLoginEvent>> hooked = module_events.getOrDefault(module, Collections.newSetFromMap(new ConcurrentHashMap<>()));
-            hooked.add(event.getClass());
+        Set<Class<? extends LockLoginEvent>> hooked = module_events.getOrDefault(module, Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        hooked.add(event.getClass());
 
-            module_events.put(module, hooked);
+        module_events.put(module, hooked);
 
-            return handler;
-        }
-
-        return null;
+        return handler;
     }
 
     /**
@@ -166,65 +160,59 @@ public class CModuleManager implements ModuleManager {
      */
     @Override
     public boolean executeCommand(final NetworkEntity issuer, final String command, final String... arguments) throws CommandRuntimeException {
-        Map<String, ModuleCommand> registeredCommands = commands.commands;
+        Map<Module, Map<ModuleCommand, Set<String>>> registeredCommands = commands.commands;
         String targetCommand = command;
         if (targetCommand.startsWith("/")) {
             targetCommand = command.substring(1);
         }
-        if (targetCommand.contains(":")) {
-            String[] data = targetCommand.split(":");
-            String module = data[0];
 
-            targetCommand = targetCommand.replaceFirst(module + ":", "");
-        }
+        for (Module module : registeredCommands.keySet()) {
+            if (!module.isEnabled()) continue;
 
-        for (String commandSpace : registeredCommands.keySet()) {
-            ModuleCommand modCommand = registeredCommands.get(commandSpace);
+            Map<ModuleCommand, Set<String>> commandMap = registeredCommands.get(module);
+            if (commandMap == null || commandMap.isEmpty()) continue;
 
-            String[] data = commandSpace.split(":");
-            String module = data[0];
-            String realCommand = commandSpace.replaceFirst(module + ":", "");
+            for (ModuleCommand cmd : commandMap.keySet()) {
+                Set<String> keys = commandMap.get(cmd);
 
-            if (realCommand.equalsIgnoreCase(targetCommand)) {
-                CommandExecutor executor = modCommand.getExecutor();
-                Module owner = modCommand.getModule();
+                for (String cmdName : keys) {
+                    if (cmdName.equalsIgnoreCase(targetCommand)) {
+                        CommandExecutor executor = cmd.getExecutor();
+                        Module owner = cmd.getModule();
 
-                List<String> stringArguments = new ArrayList<>();
-                for (String argument : arguments)
-                    if (argument != null && !ObjectUtils.isNullOrEmpty(argument))
-                        stringArguments.add(argument);
+                        List<String> stringArguments = new ArrayList<>();
+                        for (String argument : arguments)
+                            if (argument != null && !ObjectUtils.isNullOrEmpty(argument))
+                                stringArguments.add(argument);
 
-                try {
-                    if (executor != null) {
-                        LockLogin plugin = CurrentPlugin.getPlugin();
-                        LockLoginRuntime runtime = plugin.getRuntime();
-                        Path caller = runtime.caller();
+                        try {
+                            if (executor != null) {
+                                StringBuilder commandBuilder = new StringBuilder("/").append(command);
+                                for (int i = 0; i < arguments.length; i++) {
+                                    commandBuilder.append(arguments[i]);
+                                    if (i != arguments.length - 1) commandBuilder.append(" ");
+                                }
 
-                        Module moduleCaller = loader.getModule(caller);
-                        StringBuilder commandBuilder = new StringBuilder("/").append(command);
-                        for (int i = 0; i < arguments.length; i++) {
-                            commandBuilder.append(arguments[i]);
-                            if (i != arguments.length - 1) commandBuilder.append(" ");
-                        }
+                                CommandProcessEvent event = new CommandProcessEvent(issuer, commandBuilder.toString(), command, stringArguments.toArray(new String[0]));
+                                fireEvent(event);
 
-                        CommandProcessEvent event = new CommandProcessEvent(moduleCaller, issuer, commandBuilder.toString(), command, stringArguments.toArray(new String[0]));
-                        fireEvent(event);
+                                if (!event.isCancelled()) {
+                                    String finalCommand = event.getCommand();
+                                    String[] finalArguments = event.getArguments();
 
-                        if (!event.isCancelled()) {
-                            String finalCommand = event.getCommand();
-                            String[] finalArguments = event.getArguments();
-
-                            executor.execute(issuer, finalCommand, finalArguments);
-                            return true;
-                        } else {
-                            if (issuer instanceof TextContainer) {
-                                TextContainer container = (TextContainer) issuer;
-                                container.sendMessage("&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
+                                    executor.execute(issuer, finalCommand, finalArguments);
+                                    return true;
+                                } else {
+                                    if (issuer instanceof TextContainer) {
+                                        TextContainer container = (TextContainer) issuer;
+                                        container.sendMessage("&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
+                                    }
+                                }
                             }
+                        } catch (Throwable ex) {
+                            throw new CommandRuntimeException(ex, "Blame author(s) of module " + owner.getDescription().getName() + " (" + owner.getDescription().getAuthor() + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
                         }
                     }
-                } catch (Throwable ex) {
-                    throw new CommandRuntimeException(ex, "Blame author(s) of module " + owner.getDescription().getName() + " (" + owner.getDescription().getAuthor() + ") for this exception. THIS IS NOT CAUSED BY LOCKLOGIN BUT ONE OF ITS MODULES");
                 }
             }
         }
@@ -248,6 +236,7 @@ public class CModuleManager implements ModuleManager {
      * @param module the module handlers
      * @return the module handlers
      */
+    @Override
     public EventHandlerList[] getHandlers(final Module module) {
         List<EventHandlerList> list = new ArrayList<>();
         Set<Class<? extends LockLoginEvent>> hooked = module_events.getOrDefault(module, Collections.newSetFromMap(new ConcurrentHashMap<>()));

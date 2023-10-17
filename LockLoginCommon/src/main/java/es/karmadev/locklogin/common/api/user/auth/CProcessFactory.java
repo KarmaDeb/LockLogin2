@@ -7,7 +7,10 @@ import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 public class CProcessFactory implements ProcessFactory {
 
@@ -76,9 +79,9 @@ public class CProcessFactory implements ProcessFactory {
     @Override
     public void register(final Class<? extends UserAuthProcess> process) throws IllegalStateException {
         if (container.insert(process)) {
-            CurrentPlugin.getPlugin().info("Successfully registered user auth process: {0}", container.getNameFor(process));
+            CurrentPlugin.getPlugin().logInfo("Successfully registered user auth process: {0}", container.getNameFor(process));
         } else {
-            CurrentPlugin.getPlugin().err("Couldn't register auth process {0}. Make sure it has a public static AuthProcess createDummy() public static int getPriority(), public static String getName() and public static UserAuthProcess createFor(NetworkClient)", process);
+            CurrentPlugin.getPlugin().logErr("Couldn't register auth process {0}. Make sure it has a public static AuthProcess createDummy() public static int getPriority(), public static String getName() and public static UserAuthProcess createFor(NetworkClient)", process);
         }
     }
 

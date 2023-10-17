@@ -1,21 +1,25 @@
-package es.karmadev.locklogin.spigot;
+package es.karmadev.locklogin.spigot.command.module;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
 import es.karmadev.locklogin.api.event.extension.CommandProcessEvent;
 import es.karmadev.locklogin.api.extension.module.Module;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
-import es.karmadev.locklogin.spigot.command.module.CommandHandler;
-import es.karmadev.locklogin.spigot.command.module.ExecutorHelper;
+import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -44,6 +48,16 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
             CommandHandler handler = handlers.remove(command);
             handler.unregister(map);
 
+            Map<String, Command> knownCommands = getMap();
+            List<String> toRemove = new ArrayList<>();
+            for (String knownCmd : knownCommands.keySet()) {
+                Command cmd = knownCommands.get(knownCmd);
+                if (cmd.equals(handler)) {
+                    toRemove.add(knownCmd);
+                }
+            }
+
+            toRemove.forEach(knownCommands::remove);
             plugin.info("Unregistered command {0} from module {1}", command.getName(), command.getModule().getName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
@@ -72,10 +86,11 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
                 .description(command.getDescription())
                 .aliases(command.getAliases())
                 .executor(ExecutorHelper.createExecutor((pluginCommand) -> {
+                    Module owner = command.getModule();
+                    if (owner == null || !owner.isEnabled()) return;
+
                     CommandExecutor executor = command.getExecutor();
                     if (executor != null) {
-                        plugin.info("Executing command: {0}", command.getName());
-
                         CommandSender sender = pluginCommand.getSender();
                         String label = pluginCommand.getLabel();
                         String[] args = pluginCommand.getArgs();
@@ -118,8 +133,6 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
                                 plugin.sendMessage(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
                             }
                         }
-                    } else {
-                        plugin.err("Cannot execute command {0} from module {1} (missing executor)", command.getName(), module.getName());
                     }
                 })).build();
 
@@ -138,5 +151,17 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
         }
 
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Command> getMap() {
+        try {
+            Field map = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            map.setAccessible(true);
+
+            return (Map<String, Command>) map.get(this.map);
+        } catch (NoSuchFieldException | IllegalAccessException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

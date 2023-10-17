@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.api.network.communication.packet.frame;
 
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
-import es.karmadev.locklogin.api.network.communication.packet.ComPacket;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 
 /**

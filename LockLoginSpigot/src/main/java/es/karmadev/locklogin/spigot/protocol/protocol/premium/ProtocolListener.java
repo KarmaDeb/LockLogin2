@@ -84,7 +84,7 @@ public class ProtocolListener extends PacketAdapter {
     }
 
     public static void register() {
-        plugin.info("Registering ProtocolLib handler");
+        plugin.logInfo("Registering ProtocolLib handler");
         ProtocolLibrary.getProtocolManager().getAsynchronousManager()
                 .registerAsyncHandler(new ProtocolListener()).start();
     }

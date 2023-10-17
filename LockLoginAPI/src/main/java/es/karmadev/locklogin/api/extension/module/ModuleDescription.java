@@ -1,7 +1,5 @@
 package es.karmadev.locklogin.api.extension.module;
 
-import es.karmadev.api.security.PermissionManager;
-import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidDescriptionException;
 import lombok.AccessLevel;
 import lombok.Getter;

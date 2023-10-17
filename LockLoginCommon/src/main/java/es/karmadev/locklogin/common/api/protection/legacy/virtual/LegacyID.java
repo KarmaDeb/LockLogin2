@@ -3,10 +3,8 @@ package es.karmadev.locklogin.common.api.protection.legacy.virtual;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
-import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualInput;
 
 import java.nio.charset.StandardCharsets;
@@ -22,14 +20,9 @@ import java.util.regex.Pattern;
 public class LegacyID implements VirtualID {
 
     private final String virtualID;
-    static {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "static {}");
-    }
 
     public LegacyID() {
         LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, CVirtualId.class, "CVirtualId()");
 
         Path legacy_id = plugin.workingDirectory().resolve("cache").resolve("virtual_id.kf");
         String tmpKey = "";

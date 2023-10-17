@@ -1,6 +1,5 @@
 package es.karmadev.locklogin.common.api.plugin.service.password;
 
-import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
 import es.karmadev.locklogin.api.security.check.CheckResult;
 import es.karmadev.locklogin.api.security.check.CheckType;

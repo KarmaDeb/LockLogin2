@@ -1,14 +1,9 @@
 package es.karmadev.locklogin.common.api.extension.command;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandCompletor;
 import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
-
-import java.nio.file.Path;
 
 public class CModCommand extends ModuleCommand {
 
@@ -38,16 +33,6 @@ public class CModCommand extends ModuleCommand {
      * executor is not the command owner
      */
     public ModuleCommand setExecutor(final CommandExecutor executor) throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-
-        Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().getModule(caller);
-
-        if (callerModule == null || !callerModule.equals(module)) {
-            throw new SecurityException("Cannot set module executor from an unverified source");
-        }
-
         this.executor = executor;
         return this;
     }
@@ -60,16 +45,6 @@ public class CModCommand extends ModuleCommand {
      * executor is not the command owner
      */
     public ModuleCommand setTabCompletor(final CommandCompletor completor) throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-
-        Path caller = runtime.caller();
-        Module callerModule = plugin.moduleManager().loader().getModule(caller);
-
-        if (callerModule == null || !callerModule.equals(module)) {
-            throw new SecurityException("Cannot set module tab completor from an unverified source");
-        }
-
         this.tabCompletor = completor;
         return this;
     }

@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.extension.module;
 
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
@@ -18,7 +19,7 @@ import java.util.Optional;
 public abstract class AbstractModule implements Module {
 
     private boolean enabled = false;
-    private ModuleLoader loader = null;
+    private ModuleManager loader = null;
     private ModuleDescription description = null;
     private Path file = null;
     private Path dataFolder = null;
@@ -50,12 +51,12 @@ public abstract class AbstractModule implements Module {
      * @param file the module file
      * @param dataFolder the module data folder
      */
-    protected AbstractModule(final @NotNull ModuleLoader loader, final @NotNull ModuleDescription description, final @NotNull Path file, final @NotNull Path dataFolder) {
+    protected AbstractModule(final @NotNull ModuleManager loader, final @NotNull ModuleDescription description, final @NotNull Path file, final @NotNull Path dataFolder) {
         final ClassLoader classLoader = this.getClass().getClassLoader();
         init(loader, description, file, dataFolder, classLoader);
     }
 
-    final void init(final @NotNull ModuleLoader loader, final @NotNull ModuleDescription description, final @NotNull Path file, final @NotNull Path dataFolder, final @NotNull ClassLoader classLoader) {
+    final void init(final @NotNull ModuleManager loader, final @NotNull ModuleDescription description, final @NotNull Path file, final @NotNull Path dataFolder, final @NotNull ClassLoader classLoader) {
         this.loader = loader;
         this.description = description;
         this.file = file;
@@ -82,6 +83,23 @@ public abstract class AbstractModule implements Module {
     @Override
     public final String getName() {
         return Module.super.getName();
+    }
+
+    /**
+     * Get if the module is from the
+     * marketplace
+     *
+     * @return if the module is from the marketplace
+     */
+    @Override
+    public final boolean isFromMarketplace() {
+        Path directory = getDataFolder();
+        Path marketplace = getPlugin().workingDirectory().resolve("marketplace");
+
+        String directoryStr = PathUtilities.pathString(directory);
+        String marketStr = PathUtilities.pathString(marketplace);
+
+        return directoryStr.startsWith(marketStr);
     }
 
     /**
@@ -160,7 +178,7 @@ public abstract class AbstractModule implements Module {
      * @return the loader
      */
     @Override
-    public @NotNull ModuleLoader getLoader() {
+    public @NotNull ModuleManager getManager() {
         return loader;
     }
 

@@ -17,8 +17,8 @@ public class ProtocolAssistant {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         if (isProtocolSupported() && !plugin.bungeeMode()) {
+            plugin.logInfo("Detected ProtocolLib, hooking into it");
             ProtocolListener.register();
-            plugin.info("Detected ProtocolLib, hooking into it");
         }
     }
 

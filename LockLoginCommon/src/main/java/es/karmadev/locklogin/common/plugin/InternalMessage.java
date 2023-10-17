@@ -29,8 +29,7 @@ public class InternalMessage {
         LockLogin lockLogin = CurrentPlugin.getPlugin();
         APISource source = (APISource) lockLogin.plugin();
 
-        String name = lockLogin.configuration().language();
-        try (NamedStream stream = source.findResource("internal/lang/" + name.toLowerCase() + ".xml")) {
+        try (NamedStream stream = source.findResource("internal/lang/messages.xml")) {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = dbFactory.newDocumentBuilder();
 
@@ -139,7 +138,7 @@ public class InternalMessage {
     }
 
     public static String RESPONSE_FAIL(final String command, final String argument, final String replacement) {
-        NodeList node = properties.getElementsByTagName("usage");
+        NodeList node = properties.getElementsByTagName("response");
         Node item;
         NamedNodeMap attribute;
 

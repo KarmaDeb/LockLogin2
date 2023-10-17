@@ -2,7 +2,7 @@ package es.karmadev.locklogin.spigot.util.converter;
 
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.ModuleDescription;
-import es.karmadev.locklogin.api.extension.module.ModuleLoader;
+import es.karmadev.locklogin.api.extension.module.ModuleManager;
 import es.karmadev.locklogin.api.extension.module.PluginModule;
 import es.karmadev.locklogin.api.extension.module.resource.ResourceHandle;
 import es.karmadev.locklogin.api.network.PluginNetwork;
@@ -23,12 +23,12 @@ public class SpigotModule implements PluginModule<JavaPlugin> {
     private final SPDescription description;
     private final SpigotModuleMaker maker;
     private final PluginNetwork network;
-    private final ModuleLoader loader;
+    private final ModuleManager loader;
 
     private final MethodHandle onModDisable;
     private final MethodHandle onModEnable;
 
-    public SpigotModule(final JavaPlugin plugin, final Path file, final SpigotModuleMaker maker, final PluginNetwork network, final ModuleLoader loader) {
+    public SpigotModule(final JavaPlugin plugin, final Path file, final SpigotModuleMaker maker, final PluginNetwork network, final ModuleManager loader) {
         this.plugin = plugin;
         this.file = file;
         this.description = new SPDescription(this);
@@ -55,6 +55,17 @@ public class SpigotModule implements PluginModule<JavaPlugin> {
             plugin.getLogger().log(Level.WARNING, "Hooked into LockLogin as a plugin without #onEnabled(Module)");
         }
         onModEnable = onEnable;
+    }
+
+    /**
+     * Get if the module is from the
+     * marketplace
+     *
+     * @return if the module is from the marketplace
+     */
+    @Override
+    public boolean isFromMarketplace() {
+        return false; //This can never be a market-resource
     }
 
     /**
@@ -114,7 +125,7 @@ public class SpigotModule implements PluginModule<JavaPlugin> {
      * @return the loader
      */
     @Override
-    public @NotNull ModuleLoader getLoader() {
+    public @NotNull ModuleManager getManager() {
         return loader;
     }
 

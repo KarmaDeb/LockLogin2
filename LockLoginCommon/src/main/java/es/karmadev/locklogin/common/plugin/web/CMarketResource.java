@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.common.plugin.web;
 
 import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.plugin.marketplace.Category;
 import es.karmadev.locklogin.api.plugin.marketplace.resource.MarketResource;
 import es.karmadev.locklogin.api.plugin.marketplace.resource.ResourceDownload;

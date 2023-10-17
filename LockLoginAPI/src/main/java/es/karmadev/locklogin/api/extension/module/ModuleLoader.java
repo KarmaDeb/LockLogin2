@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.api.extension.module;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.event.handler.EventHandlerList;
+import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidDescriptionException;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidModuleException;
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +10,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -25,6 +28,27 @@ public final class ModuleLoader {
     private final Set<Module> loadedModules = ConcurrentHashMap.newKeySet();
     private final Set<Module> enabledModules = ConcurrentHashMap.newKeySet();
     private final Set<ModuleClassLoader> loaders = ConcurrentHashMap.newKeySet();
+
+    private final ModuleManager manager;
+
+    /**
+     * Initialize the module loader
+     *
+     * @param manager the manager that is managing
+     *                this loader
+     */
+    public ModuleLoader(final ModuleManager manager) {
+        this.manager = manager;
+    }
+
+    /**
+     * Get the context module manager
+     *
+     * @return the module manager
+     */
+    public ModuleManager getContextManager() {
+        return manager;
+    }
 
     /**
      * Get a module by its name
@@ -85,7 +109,14 @@ public final class ModuleLoader {
             AbstractModule abs = (AbstractModule) module;
             if (!abs.isEnabled()) return;
 
+            abs.onDisable();
             abs.setEnabled(false);
+
+            EventHandlerList[] handlers = manager.getHandlers(module);
+            for (EventHandlerList handler : handlers) {
+                handler.unregisterAll(module);
+            }
+
             enabledModules.remove(module);
             loaders.remove((ModuleClassLoader) abs.getClassLoader());
             return;
@@ -106,6 +137,9 @@ public final class ModuleLoader {
     @NotNull
     public Module load(final Path file) throws InvalidModuleException {
         if (!Files.exists(file)) throw new InvalidModuleException("Cannot load module " + file.toAbsolutePath() + " because it does not exist");
+        if (loadedModules.stream().anyMatch((module -> module.getFile().equals(file)))) {
+            return getModule(file);
+        }
 
         final ModuleDescription description;
         try {
@@ -153,7 +187,7 @@ public final class ModuleLoader {
 
         final ModuleClassLoader loader;
         try {
-            loader = new ModuleClassLoader(this, getClass().getClassLoader(), description, dataFolder, file);
+            loader = new ModuleClassLoader(manager, getClass().getClassLoader(), description, dataFolder, file);
         } catch (InvalidModuleException ex) {
             throw ex;
         } catch (Throwable ex) {
@@ -239,18 +273,32 @@ public final class ModuleLoader {
      * @param module the module to unload
      */
     public void unload(final Module module) {
-        if (module instanceof PluginModule) {
-            if (enabledModules.contains(module)) {
-                enabledModules.remove(module);
+        if (enabledModules.contains(module)) {
+            try {
+                CommandRegistrar registrar = manager.commands();
 
-                if (module.isEnabled())
-                    module.onDisable();
+                Method unregisterAll = registrar.getClass().getMethod("unregisterAll", Module.class);
+                unregisterAll.invoke(registrar, module);
+            } catch (ReflectiveOperationException ex) {
+                ex.printStackTrace();
             }
 
-            loadedModules.remove(module);
-            return; //Stop execution here please
+            if (module.isEnabled())
+                module.onDisable();
+
+            ClassLoader loader = module.getClass().getClassLoader();
+            if (loader instanceof ModuleClassLoader) {
+                ModuleClassLoader mcl = (ModuleClassLoader) loader;
+                try {
+                    mcl.close();
+                } catch (IOException ignored) {}
+                loaders.remove(mcl);
+            }
+
+            System.gc();
+            enabledModules.remove(module);
         }
 
-        throw new UnsupportedOperationException("Cannot unload any module but PluginModules");
+        loadedModules.remove(module);
     }
 }

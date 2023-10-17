@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.api;
 
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.Getter;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -32,7 +32,6 @@ public final class CurrentPlugin {
         if (plugin != null) throw new SecurityException("Cannot redefine plugin instance!");
         if (instance.getRuntime() == null) throw new SecurityException();
 
-        instance.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_ONLY, CurrentPlugin.class, "initialize(LockLogin)");
         plugin = instance;
     }
 

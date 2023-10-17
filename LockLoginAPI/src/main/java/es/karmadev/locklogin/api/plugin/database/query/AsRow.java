@@ -2,8 +2,6 @@ package es.karmadev.locklogin.api.plugin.database.query;
 
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.Value;
 
 /**

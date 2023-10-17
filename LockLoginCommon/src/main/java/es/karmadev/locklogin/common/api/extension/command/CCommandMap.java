@@ -1,22 +1,19 @@
 package es.karmadev.locklogin.common.api.extension.command;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
 import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import es.karmadev.locklogin.common.api.extension.CModuleManager;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CCommandMap implements CommandRegistrar {
 
-    public final Map<String, ModuleCommand> commands = new ConcurrentHashMap<>();
+    public final Map<Module, Map<ModuleCommand, Set<String>>> commands = new ConcurrentHashMap<>();
     private final CModuleManager manager;
 
     public CCommandMap(final CModuleManager manager) {
@@ -32,7 +29,16 @@ public class CCommandMap implements CommandRegistrar {
     public void register(final Module module, final ModuleCommand command) {
         if (manager.onCommandRegistered != null && manager.onCommandRegistered.apply(command)) {
             String name = command.getName();
-            commands.put(module.getName() + ":" + name, command);
+            Map<ModuleCommand, Set<String>> commandMap = commands.computeIfAbsent(module, (m) -> new ConcurrentHashMap<>());
+            Set<String> knownCommands = commandMap.computeIfAbsent(command, (m) -> ConcurrentHashMap.newKeySet());
+
+            knownCommands.add(name);
+            knownCommands.add(module.getName() + ":" + name);
+            for (String alias : command.getAliases()) {
+                knownCommands.add(module.getName() + ":" + alias);
+            }
+            commandMap.put(command, knownCommands);
+            commands.put(module, commandMap);
         }
     }
 
@@ -42,19 +48,13 @@ public class CCommandMap implements CommandRegistrar {
      * @param module the module commands
      */
     public void unregisterAll(final Module module) {
-        List<String> remove = new ArrayList<>();
+        Map<ModuleCommand, Set<String>> commandMap = commands.get(module);
+        if (commandMap == null) return;
 
-        String name = module.getName();
-        for (String key : commands.keySet()) {
-            if (key.startsWith(name + ":")) {
-                remove.add(key);
-            }
-        }
-
-        for (String key : remove) {
-            ModuleCommand command = commands.remove(key);
+        commandMap.keySet().forEach((command) -> {
             if (manager.onCommandUnregistered != null) manager.onCommandUnregistered.accept(command);
-        }
+        });
+        commands.remove(module);
     }
 
     /**
@@ -65,19 +65,17 @@ public class CCommandMap implements CommandRegistrar {
      */
     @Override
     public ModuleCommand getCommand(final String name) {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        LockLoginRuntime runtime = plugin.getRuntime();
-        String tmpName = name;
+        for (Module module : commands.keySet()) {
+            Map<ModuleCommand, Set<String>> commandMap = commands.get(module);
+            if (commandMap == null || commandMap.isEmpty()) continue;
 
-        if (!name.contains(":")) {
-            Path caller = runtime.caller();
-            Module module = manager.loader().getModule(caller);
-            if (module == null) throw new RuntimeException("Cannot get command from invalid module");
-
-            tmpName = module.getName() + ":" + name;
+            for (ModuleCommand command : commandMap.keySet()) {
+                Set<String> knownCommands = commandMap.get(command);
+                if (knownCommands.stream().anyMatch(name::equalsIgnoreCase)) return command;
+            }
         }
 
-        return commands.getOrDefault(tmpName, null);
+        return null;
     }
 
     /**
@@ -87,7 +85,15 @@ public class CCommandMap implements CommandRegistrar {
      */
     @Override
     public ModuleCommand[] getCommands() {
-        return commands.values().toArray(new ModuleCommand[0]);
+        List<ModuleCommand> list = new ArrayList<>();
+        for (Module module : commands.keySet()) {
+            Map<ModuleCommand, Set<String>> commandMap = commands.get(module);
+            if (commandMap == null || commandMap.isEmpty()) continue;
+
+            list.addAll(commandMap.keySet());
+        }
+
+        return list.toArray(new ModuleCommand[0]);
     }
 }
 

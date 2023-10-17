@@ -85,7 +85,7 @@ public class CSQLDriver implements SQLDriver {
             config.setLeakDetectionThreshold(database.leakDetection() * 1000L);
 
             source = new HikariDataSource(config);
-            plugin.info("Initialized LockLogin sqlite connection successfully");
+            plugin.logInfo("Initialized LockLogin sqlite connection successfully");
             connected = true;
 
             Connection connection = null;
@@ -230,34 +230,34 @@ public class CSQLDriver implements SQLDriver {
                 }
 
                 if (acc_create && sess_create && serv_create && user_create && brute_create) {
-                    plugin.info("Successfully setup LockLogin sqlite tables");
+                    plugin.logInfo("Successfully setup LockLogin sqlite tables");
                 } else {
-                    plugin.info("An error occurred while running SQL queries. Some tables were not able to be created");
+                    plugin.logInfo("An error occurred while running SQL queries. Some tables were not able to be created");
 
                     if (!acc_create) {
-                        plugin.err("Failed to create accounts table");
+                        //plugin.err("Failed to create accounts table");
                         plugin.logErr("Couldn't create table: account");
                     }
                     if (!sess_create) {
-                        plugin.err("Failed to create sessions table");
+                        //plugin.err("Failed to create sessions table");
                         plugin.logErr("Couldn't create table: session");
                     }
                     if (!serv_create) {
-                        plugin.err("Failed to create servers table");
+                        //plugin.err("Failed to create servers table");
                         plugin.logErr("Couldn't create table: server");
                     }
                     if (!user_create) {
-                        plugin.err("Failed to create users table");
+                        //plugin.err("Failed to create users table");
                         plugin.logErr("Couldn't create table: user");
                     }
                     if (!brute_create) {
-                        plugin.err("Failed to create brute force table");
+                        //plugin.err("Failed to create brute force table");
                         plugin.logErr("Couldn't create table: brute");
                     }
                 }
             } catch (SQLException ex) {
                 plugin.log(ex, "An exception has raised when setting up LockLogin sqlite database");
-                plugin.err("Failed to setup LockLogin sqlite connection");
+                //plugin.err("Failed to setup LockLogin sqlite connection");
             } finally {
                 close(connection, statement);
             }
@@ -296,7 +296,7 @@ public class CSQLDriver implements SQLDriver {
             }
         } catch (SQLException ex) {
             plugin.log(ex, "Failed to fetch created tables");
-            plugin.info("An error occurred while executing a sql query");
+            //plugin.info("An error occurred while executing a sql query");
         } finally {
             close(connection, statement);
         }

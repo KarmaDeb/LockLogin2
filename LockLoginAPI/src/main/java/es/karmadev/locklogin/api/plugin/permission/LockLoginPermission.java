@@ -1,15 +1,11 @@
 package es.karmadev.locklogin.api.plugin.permission;
 
-import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
-import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -353,23 +349,15 @@ public final class LockLoginPermission {
     /**
      * Register a permission
      *
+     * @param module the module owning the perimssion
      * @param permission the permission to register
      * @return the permission
-     *
-     * @throws SecurityException if a non-module or unloaded module tries
-     * to register a permission
      */
-    public static boolean register(final PermissionObject permission) throws SecurityException {
+    public static boolean register(final Module module, final PermissionObject permission) {
         if (!module_node_map.containsKey(permission.node()) &&
                 module_node_map.values().stream().noneMatch((np) -> np.getPermission().node().equals(permission.node()))) {
-            LockLogin plugin = CurrentPlugin.getPlugin();
-            plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginPermission.class, "register(PermissionObject)");
 
-            Path caller = plugin.getRuntime().caller();
-            if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
-
-            Module module = plugin.moduleManager().loader().getModule(caller);
-            if (module == null || !module.isEnabled()) throw new SecurityException("Cannot maintain a secure permission policy with an invalid API iterator");
+            if (module == null || !module.isEnabled()) return false;
 
             module_node_map.put(permission.node(), new ModulePermission(module, permission.addParent(LOCKLOGIN.addChildren(permission))));
             return true;
@@ -381,21 +369,13 @@ public final class LockLoginPermission {
     /**
      * Unregister a permission
      *
+     * @param module the module owning the permission
      * @param permission the permission to unregister
      * @return the permission
      * @throws SecurityException if a non-module or unloaded module tries to unregister a permission, or if
      * a module tries to modify the permissions of another module
      */
-    public static boolean unregister(final PermissionObject permission) throws SecurityException {
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        plugin.getRuntime().verifyIntegrity(LockLoginRuntime.PLUGIN_AND_MODULES, LockLoginPermission.class, "unregister(PermissionObject)");
-
-        Path caller = plugin.getRuntime().caller();
-        if (caller == null) throw new SecurityException("Cannot maintain a secure permission policy with a null API iterator");
-
-        Module module = plugin.moduleManager().loader().getModule(caller);
-        if (module == null || !module.isEnabled()) throw new SecurityException("Cannot maintain a secure permission policty with an invalid API iterator");
-
+    public static boolean unregister(final Module module, final PermissionObject permission) throws SecurityException {
         ModulePermission modPermission = module_node_map.getOrDefault(permission.node(), null);
         if (modPermission != null) {
             if (!modPermission.getModule().equals(module)) throw new SecurityException("Cannot modify other module permissions!");
