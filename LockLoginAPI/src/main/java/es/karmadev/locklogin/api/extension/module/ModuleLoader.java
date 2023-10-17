@@ -134,6 +134,7 @@ public final class ModuleLoader {
                 throw new InvalidModuleException("Module dependency " + depends + " for " + description.getName() + " found and loaded, but not enabled. Module " + description.getName() + " won't be loaded");
             }
         }
+
         boolean allOptsFound = true;
         for (String optional : description.getOptDepends()) {
             Module module = getModule(optional);
@@ -160,6 +161,8 @@ public final class ModuleLoader {
         }
 
         loaders.add(loader);
+        loadedModules.add(loader.module);
+
         return loader.module;
     }
 

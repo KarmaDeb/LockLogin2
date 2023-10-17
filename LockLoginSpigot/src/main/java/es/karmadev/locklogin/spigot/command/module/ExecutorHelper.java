@@ -34,6 +34,7 @@ public class ExecutorHelper implements CommandExecutor {
     public boolean onCommand(final @NotNull CommandSender sender, final @NotNull Command command, final @NotNull String label, final @NotNull String[] args) {
         PluginCommand pc = PluginCommand.of(sender, label, args);
         if (issuer != null) issuer.accept(pc);
+
         return false;
     }
 

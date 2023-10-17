@@ -1,10 +1,15 @@
 package es.karmadev.locklogin.api.extension.module;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.resource.ResourceHandle;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * The abstract module. This is the class modules must
@@ -28,8 +33,13 @@ public abstract class AbstractModule implements Module {
         if (!(loader instanceof ModuleClassLoader)) {
             throw new IllegalStateException("AbstractModule requires ModuleClassLoader");
         }
+    }
 
-        ((ModuleClassLoader) loader).initialize();
+    /**
+     * Invoke the initializer of the module
+     */
+    final void invokeInitialization() {
+        ((ModuleClassLoader) this.getClass().getClassLoader()).initialize();
     }
 
     /**
@@ -54,6 +64,17 @@ public abstract class AbstractModule implements Module {
     }
 
     /**
+     * Get a stream of a resource
+     *
+     * @param resource the resource name
+     * @return the resource
+     */
+    @Override
+    public @NotNull Optional<ResourceHandle> getResource(final String resource) {
+        return Optional.empty();
+    }
+
+    /**
      * Get the module name
      *
      * @return the module name
@@ -61,6 +82,36 @@ public abstract class AbstractModule implements Module {
     @Override
     public final String getName() {
         return Module.super.getName();
+    }
+
+    /**
+     * Get the module command
+     *
+     * @param name the command name
+     * @return the command name
+     */
+    @Nullable
+    public final ModuleCommand getCommand(final String name) {
+        String targetName = name;
+
+        if (targetName.contains(":")) {
+            String[] data = name.split(":");
+            String important = data[0];
+
+            targetName = name.replace(important + ':', "");
+        }
+
+        return CurrentPlugin.getPlugin().moduleManager().commands().getCommand(getName() + ":" + targetName);
+    }
+
+    /**
+     * Get the current LockLogin
+     * plugin
+     *
+     * @return the plugin
+     */
+    public final LockLogin getPlugin() {
+        return CurrentPlugin.getPlugin();
     }
 
     /**

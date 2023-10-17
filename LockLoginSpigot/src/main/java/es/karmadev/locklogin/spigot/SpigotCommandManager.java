@@ -49,8 +49,7 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {
                     online.updateCommands();
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) {}
             }
         }
     }
@@ -75,6 +74,8 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
                 .executor(ExecutorHelper.createExecutor((pluginCommand) -> {
                     CommandExecutor executor = command.getExecutor();
                     if (executor != null) {
+                        plugin.info("Executing command: {0}", command.getName());
+
                         CommandSender sender = pluginCommand.getSender();
                         String label = pluginCommand.getLabel();
                         String[] args = pluginCommand.getArgs();
@@ -117,12 +118,14 @@ public class SpigotCommandManager implements Function<ModuleCommand, Boolean>, C
                                 plugin.sendMessage(messages.prefix() + "&cFailed to issue command " + event.getMessage() + ". &7" + event.cancelReason());
                             }
                         }
+                    } else {
+                        plugin.err("Cannot execute command {0} from module {1} (missing executor)", command.getName(), module.getName());
                     }
                 })).build();
 
         if (map.register(command.getName(), module.getName(), handler)) {
             handlers.put(command, handler);
-            plugin.info("Registered command {0} from module {1}", command.getName(), module.getName());
+            plugin.logInfo("Registered command {0} from module {1}", command.getName(), module.getName());
 
             for (Player online : plugin.plugin().getServer().getOnlinePlayers()) {
                 try {

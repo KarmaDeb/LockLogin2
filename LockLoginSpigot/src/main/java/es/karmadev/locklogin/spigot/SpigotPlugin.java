@@ -153,7 +153,7 @@ public class SpigotPlugin extends KarmaPlugin {
             long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
 
             long rs = diff + diff2;
-            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
+            logger().log(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
 
             spigot.getSessionFactory(false).getSessions().forEach((session) -> {
                 session.invalidate();
@@ -184,16 +184,16 @@ public class SpigotPlugin extends KarmaPlugin {
                                     Method precache = clazz.getDeclaredMethod("preCache");
                                     precache.invoke(clazz);
 
-                                    spigot.info("Cached {0}", cacheAble.name());
+                                    spigot.logInfo("Cached {0}", cacheAble.name());
                                 } catch (NoSuchMethodException | IllegalAccessException |
                                          InvocationTargetException ex) {
                                     ex.printStackTrace();
                                     spigot.log(ex, "Failed to cache {0}", cacheAble.name());
-                                    spigot.warn("Failed to cache {0}", cacheAble.name());
+                                    //spigot.logWarn("Failed to cache {0}", cacheAble.name());
                                 }
                             }
                         } catch (NoClassDefFoundError | ClassNotFoundException ex) {
-                            spigot.warn("Couldn't find class: {0}", className);
+                            spigot.logWarn("Couldn't find class: {0}", className);
                         }
                     }
                 }
@@ -212,7 +212,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 compatible (in most cases), but might still break some old versions of
                 the plugin, so we blame the user about that
                  */
-                spigot.warn("Plugin is using an out-dated marketplace version ({0}, we are on {1}), this could result in some things not working properly", version, required);
+                spigot.logWarn("Plugin is using an out-dated marketplace version ({0}, we are on {1}), this could result in some things not working properly", version, required);
             }
             if (version < required) {
                 /*
@@ -221,10 +221,10 @@ public class SpigotPlugin extends KarmaPlugin {
                 marketplace API. So we advise the user that marketplace might not work
                 or even the plugin itself
                  */
-                spigot.warn("Inconsistent plugin and marketplace versions ({0}, we are on {1})! This usually means you are on a pre-build version of the plugin and should not be used on production", version, required);
+                spigot.logWarn("Inconsistent plugin and marketplace versions ({0}, we are on {1})! This usually means you are on a pre-build version of the plugin and should not be used on production", version, required);
             }
             if (version == required) {
-                spigot.info("Using LockLogin marketplace version {0}", version);
+                spigot.logInfo("Using LockLogin marketplace version {0}", version);
             }
 
             try {
@@ -241,7 +241,7 @@ public class SpigotPlugin extends KarmaPlugin {
 
             Path legacyUserDirectory = spigot.workingDirectory().resolve("data").resolve("accounts");
             if (Files.exists(legacyUserDirectory) && Files.isDirectory(legacyUserDirectory)) {
-                logger().send(LogLevel.INFO, "Found legacy accounts folder, preparing to migrate existing data");
+                logger().log(LogLevel.INFO, "Found legacy accounts folder, preparing to migrate existing data");
 
                 try(Stream<Path> files = Files.list(legacyUserDirectory).filter((file) ->
                         !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("lldb"))) {
@@ -318,7 +318,7 @@ public class SpigotPlugin extends KarmaPlugin {
                         if (name == null || legacyPassword == null ||
                                 gAuth == null || legacyPin == null || legacyPanic == null) {
 
-                            logger().send(LogLevel.WARNING, "Ignoring migration of {0} because there's missing data [{1}]",
+                            logger().log(LogLevel.WARNING, "Ignoring migration of {0} because there's missing data [{1}]",
                                     (name != null ? name : PathUtilities.getName(file, false)));
                             return;
                         }
@@ -342,7 +342,7 @@ public class SpigotPlugin extends KarmaPlugin {
 
                         UserAccount migrated = migrator.migrate(client, legacy, AccountField.EMAIL);
                         if (migrated != null) {
-                            logger().send(LogLevel.SUCCESS, "Successfully migrated account of {0}", name);
+                            logger().log(LogLevel.SUCCESS, "Successfully migrated account of {0}", name);
                             try {
                                 Files.move(file, migrationFile, StandardCopyOption.REPLACE_EXISTING);
                             } catch (IOException ex) {
@@ -375,7 +375,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 Log4Logger filter = new Log4Logger(this, commandHelper.getCommands());
                 logger.addFilter(filter);
             } catch (ClassCastException ex) {
-                logger().send(LogLevel.ERROR, "Failed to bind into server's logger, user sensitive information might be exposed!");
+                logger().log(LogLevel.ERROR, "Failed to bind into server's logger, user sensitive information might be exposed!");
                 java.util.logging.LogManager javaLM = java.util.logging.LogManager.getLogManager();
                 Enumeration<String> names = javaLM.getLoggerNames();
 
@@ -568,7 +568,7 @@ public class SpigotPlugin extends KarmaPlugin {
         if (Files.exists(legacy_mod_directory)) {
             try(Stream<Path> files = Files.list(legacy_mod_directory).filter((file) -> !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("jar"))) {
                 if (files.findAny().isPresent()) {
-                    logger().send(LogLevel.WARNING, "LockLogin has detected presence of legacy modules folder. Those won't be loaded as they used an unsupported plugin API. Please refer to {0} to update the modules and install them in the /mods plugin directory",
+                    logger().log(LogLevel.WARNING, "LockLogin has detected presence of legacy modules folder. Those won't be loaded as they used an unsupported plugin API. Please refer to {0} to update the modules and install them in the /mods plugin directory",
                             "https://reddo.es/karmadev/locklogin/community/products/");
                 }
             } catch (IOException ignored) {}
@@ -608,9 +608,11 @@ public class SpigotPlugin extends KarmaPlugin {
                 try {
                     Module module = loader.load(modFile);
                     spigot.info("Loaded module {0}", module.getName());
+
+                    loader.enable(module);
                 } catch (InvalidModuleException ex) {
                     spigot.log(ex, "Failed to load file {0} as module", PathUtilities.getName(modFile));
-                    spigot.err("Failed to load file {0} as a module file. Does it contains a module.yml?", PathUtilities.pathString(modFile));
+                    //spigot.err("Failed to load file {0} as a module file. Does it contains a module.yml?", PathUtilities.pathString(modFile));
                 }
             });
         } catch (IOException ex) {

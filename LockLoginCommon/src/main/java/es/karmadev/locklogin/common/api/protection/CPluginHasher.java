@@ -13,6 +13,7 @@ import es.karmadev.locklogin.api.security.virtual.VirtualID;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 import es.karmadev.locklogin.common.api.protection.legacy.LegacyHash;
 import es.karmadev.locklogin.common.api.protection.virtual.CVirtualId;
+import es.karmadev.locklogin.common.api.runtime.CDependencyManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,14 +39,14 @@ public class CPluginHasher implements LockLoginHasher {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         if (hashes.stream().noneMatch((stored) -> stored.name().equals(hash.name()))) {
-            plugin.info("Validating hash {0}", hash.name());
+            //plugin.info("Validating hash {0}", hash.name());
             plugin.logInfo("Preparing to register hash {0}", hash.name());
 
             String test = StringUtils.generateString();
             try {
                 HashResult result = hash.hash(test);
                 if (result == null) {
-                    plugin.warn("Cannot register hashing method {0} because it does not provide a valid hasher", hash.name());
+                    //plugin.warn("Cannot register hashing method {0} because it does not provide a valid hasher", hash.name());
                     plugin.logErr("Failed to register hash method {0}. It does not provide a valid hasher", hash.name());
 
                     return;
@@ -78,7 +79,7 @@ public class CPluginHasher implements LockLoginHasher {
                 }
 
                 if (raw.equalsIgnoreCase(test)) {
-                    plugin.warn("Cannot register hashing method {0} because it's not safe for production use (THIS HASHING METHOD DOES NOT HASH)", hash.name());
+                    //plugin.warn("Cannot register hashing method {0} because it's not safe for production use (THIS HASHING METHOD DOES NOT HASH)", hash.name());
                     plugin.logErr("Failed to register hash method {0}. It does not perform any type of hash", hash.name());
 
                     return;
@@ -87,7 +88,7 @@ public class CPluginHasher implements LockLoginHasher {
                 }
 
                 if (!hash.verify(test, result)) {
-                    plugin.warn("Cannot register hashing method {0} because it does not provide a valid hash validator", hash.name());
+                    //plugin.warn("Cannot register hashing method {0} because it does not provide a valid hash validator", hash.name());
                     plugin.logErr("Failed to register hash method {0}. It does not provide a valid hash validator", hash.name());
 
                     return;
@@ -97,15 +98,15 @@ public class CPluginHasher implements LockLoginHasher {
 
                 hashes.add(hash);
                 plugin.logInfo("Registered hash method {0}", hash.name());
-                plugin.info("Registered hash method {0}", hash.name());
+                //plugin.info("Registered hash method {0}", hash.name());
             } catch (Throwable ex) {
-                ex.printStackTrace();
-                plugin.log(ex, "Failed to register hashing method");
+                //ex.printStackTrace();
+                //plugin.log(ex, "Failed to register hashing method");
                 plugin.logInfo("An exception was raised while trying to register hash method {0}", hash.name());
-                plugin.err("An error occurred while registering hashing method {0}", hash.name());
+                //plugin.err("An error occurred while registering hashing method {0}", hash.name());
             }
         } else {
-            plugin.err("Failed to register hash {0} because it is already registered", hash.name());
+            //plugin.err("Failed to register hash {0} because it is already registered", hash.name());
             plugin.logErr("Failed to register hash method {0}. It is already registered", hash.name());
         }
     }

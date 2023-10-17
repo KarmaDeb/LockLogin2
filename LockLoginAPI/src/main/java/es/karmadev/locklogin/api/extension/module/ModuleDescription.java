@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.api.extension.module;
 
+import es.karmadev.api.security.PermissionManager;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidDescriptionException;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,6 +29,7 @@ public class ModuleDescription {
     protected String main;
     protected List<String> depends = new ArrayList<>();
     protected List<String> optDepends = new ArrayList<>();
+    protected Map<String, Object> yaml;
 
     protected ModuleDescription() {}
 
@@ -49,6 +52,7 @@ public class ModuleDescription {
         if (!data.containsKey("main")) {
             throw new InvalidDescriptionException("Missing main class from description");
         }
+
         if (data.containsKey("depends")) {
             Object value = data.get("depends");
             if (value instanceof Map) {
@@ -77,5 +81,7 @@ public class ModuleDescription {
         description = String.valueOf(data.get("description"));
         author = String.valueOf(data.get("author"));
         main = String.valueOf(data.get("main"));
+
+        this.yaml = data;
     }
 }

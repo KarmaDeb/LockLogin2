@@ -113,7 +113,8 @@ public class SpigotPinProcess implements UserAuthProcess {
             task.complete(CAuthProcess.forResult(false, this));
             return task;
         }
-        if (!client.account().hasPin() && client.session().fetch("pin_logged", false)) {
+
+        if (!client.account().hasPin() || client.session().fetch("pin_logged", false)) {
             if (!client.account().hasTotp()) {
                 client.session().append(CSessionField.newField(Boolean.class, "totp_logged", true));
             }

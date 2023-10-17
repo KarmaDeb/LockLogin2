@@ -80,7 +80,7 @@ public class CommandHelper {
                             Command registered = map.getCommand("locklogin:" + cmd);
                             if (registered != null) {
                                 unMap(registered);
-                                spigot.info("Unregistered command {0}", command.command());
+                                spigot.logInfo("Unregistered command {0}", command.command());
                             }
 
                             continue;
@@ -108,19 +108,19 @@ public class CommandHelper {
                             commandToUnregister.put(unknownCommand, localUnregister);
 
                             if (success) {
-                                spigot.info("Registered command {0}", command.command());
+                                spigot.logInfo("Registered command {0}", command.command());
                             } else {
-                                spigot.err("Failed to register command {0}", command.command());
+                                spigot.logErr("Failed to register command {0}", command.command());
                             }
                         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
                                  IllegalAccessException ex) {
                             spigot.log(ex, "An error occurred while registering command {0}", command.command());
-                            spigot.err("Something went wrong while registering command {0}", command.command());
+                            //spigot.logErr("Something went wrong while registering command {0}", command.command());
                         }
                     } else {
                         if (!registered.isRegistered()) {
                             registered.register(map);
-                            spigot.info("Registered command {0}", command.command());
+                            spigot.logInfo("Registered command {0}", command.command());
                         }
                     }
                 }

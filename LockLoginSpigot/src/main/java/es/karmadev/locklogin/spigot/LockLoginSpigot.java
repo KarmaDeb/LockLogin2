@@ -128,7 +128,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
     private final CMarketPlace marketPlace = new CMarketPlace();
     private final CModuleManager moduleManager = new CModuleManager();
-    private final SubmissiveRuntime runtime = new SubmissiveRuntime(moduleManager);
+    private final SubmissiveRuntime runtime = new SubmissiveRuntime();
     private CPluginNetwork network;
     private CPremiumDataStore premiumDataStore;
     private final CPluginHasher hasher;
@@ -178,7 +178,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             throw new RuntimeException("Couldn't initialize LockLogin");
         }
 
-        plugin.logger().send(LogLevel.WARNING, "Preparing to inject dependencies. Please wait...");
+        plugin.logger().log(LogLevel.WARNING, "Preparing to inject dependencies. Please wait...");
         CPluginDependency.load();
 
         PluginManager pluginManager = Bukkit.getServer().getPluginManager();
@@ -195,14 +195,14 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
                     if (API_VERSION.equals(platform)) {
                         if (API_VERSION.compareTo(version) >= 1) {
-                            plugin.logger().send(LogLevel.INFO, "KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
+                            plugin.logger().log(LogLevel.INFO, "KarmaAPI detected successfully. Version {0}[{1}] of {2}[{3}] (required)", API_VERSION, PLUGIN_VERSION, platform, version);
                         } else {
-                            plugin.logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", version, PLUGIN_VERSION);
+                            plugin.logger().log(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is out of date ({0}). Yours: {1}", version, PLUGIN_VERSION);
                             boot = false;
                             break;
                         }
                     } else {
-                        plugin.logger().send(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", platform, API_VERSION);
+                        plugin.logger().log(LogLevel.SEVERE, "Cannot load LockLogin as required dependency (KarmaAPI) is not in the required build ({0}). Yours: {1}", platform, API_VERSION);
                         boot = false;
                         break;
                     }
@@ -213,9 +213,9 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                             Version pluginVersion = Version.parse(tmpPlugin.getDescription().getVersion());
 
                             if (pluginVersion.compareTo(version) < 0) {
-                                plugin.logger().send(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
+                                plugin.logger().log(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
                             } else {
-                                plugin.logger().send(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
+                                plugin.logger().log(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
                                 /*if (name.equalsIgnoreCase("Spartan")) {
                                     registerService("spartan", new SpartanService());
                                 }*/
@@ -321,7 +321,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             registerService("floodgate", floodgate_service);
         } catch (ClassNotFoundException ex) {
             plugin.logger().log(LogLevel.INFO, "Ignoring FloodGate service compatibility");
-            plugin.logger().send(LogLevel.WARNING, "Failed to detect FloodGate API. FloodGate service will be disabled");
+            //plugin.logger().send(LogLevel.WARNING, "Failed to detect FloodGate API. FloodGate service will be disabled");
         }
 
         registerService("totp", new CTotpService());
@@ -400,7 +400,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
                 String tableName = database.tableName(table);
                 if (!tableName.equals(tableValue)) {
-                    info("Detected outdated table name, renaming {0} to {1}", tableValue, tableName);
+                    logInfo("Detected outdated table name, renaming {0} to {1}", tableValue, tableName);
 
                     Connection connection = null;
                     Statement statement = null;
@@ -428,7 +428,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
                     String columnName = database.columnName(table, row);
                     if (!columnName.equals(columnValue)) {
-                        info("Detected outdated column name at {0}, renaming {1} to {2}", tableName, columnValue, columnName);
+                        logInfo("Detected outdated column name at {0}, renaming {1} to {2}", tableName, columnValue, columnName);
 
                         Connection connection = null;
                         Statement statement = null;
@@ -440,7 +440,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                             statement = connection.createStatement();
 
                             if (!columns.next()) {
-                                err("Column {0} not found at {1}, plugin cannot proceed", columnValue, tableName, columnName);
+                                logErr("Column {0} not found at {1}, plugin cannot proceed", columnValue, tableName, columnName);
                                 Bukkit.getServer().getPluginManager().disablePlugin(plugin);
                                 return;
                             }
@@ -872,7 +872,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             server.setPrettySave(true);
 
             if (server.save()) {
-                plugin.logger().send(LogLevel.DEBUG, "Successfully migrated from legacy KarmaMain to JsonDatabase");
+                plugin.logger().log(LogLevel.DEBUG, "Successfully migrated from legacy KarmaMain to JsonDatabase");
                 PathUtilities.destroy(data);
             }
         }
@@ -1275,7 +1275,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                 break;
             case CHANNEL_CLOSE:
                 this.sharedSecret = null;
-                info("Received channel close message from proxy");
+                logInfo("Received channel close message from proxy");
                 break;
             case CONNECTION_INIT:
                 out.addProperty("hello", "world!");

@@ -5,8 +5,11 @@ import java.nio.file.Path;
 
 /**
  * LockLogin plugin runtime
+ * @deprecated no longer supported, unfortunately, there are
+ * a lot of inconsistencies with the runtime. Even though this
+ * will still exist in the plugin, won't have impact anymore
  */
-@SuppressWarnings("unused")
+@Deprecated
 public abstract class LockLoginRuntime {
 
     /**

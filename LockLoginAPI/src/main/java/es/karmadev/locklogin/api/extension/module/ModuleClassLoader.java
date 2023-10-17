@@ -1,15 +1,23 @@
 package es.karmadev.locklogin.api.extension.module;
 
+import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.extension.module.command.CommandRegistrar;
+import es.karmadev.locklogin.api.extension.module.command.ModuleCommand;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandCompletor;
+import es.karmadev.locklogin.api.extension.module.command.worker.CommandExecutor;
 import es.karmadev.locklogin.api.extension.module.exception.InvalidModuleException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarFile;
@@ -66,7 +74,50 @@ final class ModuleClassLoader extends URLClassLoader {
                 throw new InvalidModuleException("Main class \"" + description.getMain() + "\" does not extend AbstractModule");
             }
 
-            module = moduleClass.getDeclaredConstructor().newInstance();
+            module = moduleClass.getConstructor().newInstance();
+            module.invokeInitialization();
+
+            if (description.yaml.containsKey("commands")) {
+                Object value = description.yaml.get("commands");
+                if (value instanceof Map) {
+                    Map<?, ?> unknownMap = (Map<?, ?>) value;
+                    for (Object key : unknownMap.keySet()) {
+                        Object mapValue = unknownMap.get(key);
+                        if (key instanceof String && mapValue instanceof Map) {
+                            Map<?, ?> mapData = (Map<?, ?>) mapValue;
+
+                            String commandName = (String) key;
+                            String cmdDescription = "";
+                            List<String> cmdAliases = new ArrayList<>();
+
+                            if (!mapData.containsKey("description")) continue;
+                            cmdDescription = String.valueOf(mapData.get("description"));
+
+                            if (mapData.containsKey("aliases")) {
+                                Object aliasesObject = mapData.get("aliases");
+                                if (aliasesObject instanceof List) {
+                                    List<?> list = (List<?>) aliasesObject;
+                                    list.forEach((obj) -> cmdAliases.add(String.valueOf(obj)));
+                                }
+                            }
+
+                            ModuleCommand command = new AbstractCommand(
+                                    module, commandName, cmdDescription, cmdAliases.toArray(new String[0]));
+
+                            try {
+                                CommandRegistrar registrar = CurrentPlugin.getPlugin().moduleManager().commands();
+
+                                Method register = registrar.getClass().getDeclaredMethod("register", Module.class, ModuleCommand.class);
+                                register.invoke(registrar, module, command);
+                            } catch (ReflectiveOperationException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    }
+                }
+            }
+
+            module.onLoad();
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
             throw new InvalidModuleException("No public module constructor found", ex);
         } catch (InstantiationException ex) {

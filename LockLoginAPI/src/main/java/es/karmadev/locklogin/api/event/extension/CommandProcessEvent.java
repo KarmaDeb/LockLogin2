@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.api.event.extension;
 
 import es.karmadev.locklogin.api.event.LockLoginEvent;
+import es.karmadev.locklogin.api.event.handler.EventHandlerList;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 
@@ -12,6 +13,8 @@ import java.util.List;
  * When a command is processed
  */
 public class CommandProcessEvent extends LockLoginEvent implements CommandEvent {
+
+    private final static EventHandlerList HANDLER_LIST = new EventHandlerList();
 
     private final NetworkEntity issuer;
 
@@ -162,5 +165,15 @@ public class CommandProcessEvent extends LockLoginEvent implements CommandEvent 
         }
 
         return arguments.toArray(new String[0]);
+    }
+
+    /**
+     * Get all the handlers for this
+     * event
+     *
+     * @return the event handlers
+     */
+    public static EventHandlerList getHandlers() {
+        return HANDLER_LIST;
     }
 }

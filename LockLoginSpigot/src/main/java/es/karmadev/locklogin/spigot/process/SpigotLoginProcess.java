@@ -1,6 +1,8 @@
 package es.karmadev.locklogin.spigot.process;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.event.entity.client.EntityAuthenticateEvent;
+import es.karmadev.locklogin.api.event.entity.client.EntityProcessEvent;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.MovementConfiguration;

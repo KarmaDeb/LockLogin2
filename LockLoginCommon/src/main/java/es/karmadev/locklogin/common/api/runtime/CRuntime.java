@@ -19,13 +19,8 @@ import java.security.CodeSource;
 public class CRuntime extends LockLoginRuntime {
 
     DependencyManager manager;
-    private final ModuleManager modManager;
 
     public boolean booted = false;
-
-    public CRuntime(final ModuleManager manager) {
-        modManager = manager;
-    }
 
     /**
      * Get the plugin runtime dependency manager
@@ -60,53 +55,28 @@ public class CRuntime extends LockLoginRuntime {
      */
     @Override
     public Path caller() {
-        Path plugin = file();
+        /*Path plugin = file();
 
-        try {
-            Path pluginsFolder = SourceManager.getProvider("LockLogin").workingDirectory().toAbsolutePath().getParent();
-            String loaderPath = APISource.class.getProtectionDomain().getCodeSource().getLocation().getFile().replaceAll("%20", " ");
-            if (loaderPath.startsWith("/")) {
-                loaderPath = loaderPath.substring(1);
-            }
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        if (elements.length >= 5) {
+            StackTraceElement caller = elements[4]; //CRuntime and SubmissiveRuntime call counts!
+            String name = caller.getClassName();
+            try {
+                Class<?> clazz = Class.forName(name);
+                URL url = clazz.getResource('/' + name.replace('.', '/') + ".class");
+                if (url != null) {
+                    String urlPath = url.getPath();
 
-            Path loader = Paths.get(loaderPath);
-            CodeSource source = LockLoginRuntime.class.getClassLoader().getClass().getProtectionDomain().getCodeSource();
-            if (source == null) return plugin;
-
-            String serverPath = source.getLocation().getFile();
-            if (serverPath.startsWith("/")) {
-                serverPath = serverPath.substring(1);
-            }
-
-            String pluginsPath = PathUtilities.pathString(pluginsFolder, '/');
-
-            Path server = Paths.get(serverPath);
-            StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-            for (StackTraceElement element : elements) {
-                String name = element.getClassName();
-                try {
-                    Class<?> clazz = Class.forName(name);
-                    URL url = clazz.getResource('/' + name.replace('.', '/') + ".class");
-                    if (url != null) {
-                        String urlPath = url.getPath();
-                        if (urlPath.startsWith("file:") && urlPath.contains("!")) {
-                            String jarPath = urlPath.substring((urlPath.startsWith("file:/") ? 6 : 5), urlPath.indexOf('!')).replaceAll("%20", " ");
-                            Path path = Paths.get(jarPath);
-                            jarPath = PathUtilities.pathString(path, '/');
-
-                            if (!plugin.equals(path) && !loader.equals(path) && !path.equals(server)) {
-                                if (jarPath.startsWith(pluginsPath)) {
-                                    return path;
-                                }
-                            }
-                        }
+                    if (urlPath.startsWith("file:") && urlPath.contains("!")) {
+                        String jarPath = urlPath.substring((urlPath.startsWith("file:/") ? 6 : 5), urlPath.indexOf('!')).replaceAll("%20", " ");
+                        return Paths.get(jarPath);
                     }
-                } catch (Throwable ignored) {
                 }
+            } catch (FileSystemNotFoundException | ClassNotFoundException ignored) {
             }
-        } catch (UnknownProviderException ignored) {}
+        }*/
 
-        return plugin;
+        return file();
     }
 
     /**
@@ -119,7 +89,7 @@ public class CRuntime extends LockLoginRuntime {
      */
     @Override
     public void verifyIntegrity(final int permission, final Class<?> targetClazz, String targetMethod) throws SecurityException {
-        try {
+        /*try {
             Path filePath = Paths.get(LockLoginRuntime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             String path = PathUtilities.pathString(filePath, '/');
 
@@ -154,11 +124,6 @@ public class CRuntime extends LockLoginRuntime {
                 }
 
                 if (bypass) return;
-                /*
-                Allow internal classes to bypass this restriction in order to allow its normal function,
-                for instance, SpigotModuleMaker, to allow plugins to be implemented into a module, the plugin
-                must somehow access (inheritable) to the module manager, which is "protected"
-                 */
 
                 StackTraceElement caller = elements[4]; //CRuntime and SubmissiveRuntime call counts!
                 String name = caller.getClassName();
@@ -194,7 +159,7 @@ public class CRuntime extends LockLoginRuntime {
             }
         } catch (URISyntaxException ex) {
             throw new SecurityException(ex);
-        }
+        }*/
     }
 
     /**

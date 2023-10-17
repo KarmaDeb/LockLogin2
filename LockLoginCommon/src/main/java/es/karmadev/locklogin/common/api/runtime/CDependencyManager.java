@@ -46,11 +46,11 @@ public class CDependencyManager implements DependencyManager {
 
                 boolean download = generated == null || loaded == null || !generated.matches(loaded);
                 if (download) {
-                    plugin.info("Dependency {0} is being downloaded...", dependency.name());
+                    plugin.logInfo("Dependency {0} is being downloaded...", dependency.name());
 
                     URL url = dependency.downloadURL();
                     if (url == null) {
-                        plugin.err("Cannot download dependency {0} because its download URL is not valid", dependency.name());
+                        plugin.logErr("Cannot download dependency {0} because its download URL is not valid", dependency.name());
                         return;
                     }
 
@@ -59,7 +59,7 @@ public class CDependencyManager implements DependencyManager {
                         downloader.download(dependency.file());
                     } catch (IOException | NoSuchAlgorithmException | KeyManagementException ex2) {
                         plugin.log(ex2, "An error occurred while downloading {0}", dependency.name());
-                        plugin.err("Cannot download dependency {0}", dependency.name());
+                        //plugin.err("Cannot download dependency {0}", dependency.name());
                         return;
                     }
                 }
@@ -75,7 +75,7 @@ public class CDependencyManager implements DependencyManager {
                         KarmaAPI.inject(destination, CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
                         dependencies.add(dependency);
 
-                        plugin.info("Loaded dependency {0}", dependency.name());
+                        plugin.logInfo("Loaded dependency {0}", dependency.name());
                         return;
                     }
 
@@ -95,10 +95,10 @@ public class CDependencyManager implements DependencyManager {
                         KarmaAPI.inject(destination, CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
                         dependencies.add(dependency);
 
-                        plugin.info("Loaded dependency {0}", dependency.name());
+                        plugin.logInfo("Loaded dependency {0}", dependency.name());
                     } catch (IOException ex2) {
                         plugin.log(ex2, "Failed to relocate {0}", dependency.name());
-                        plugin.err("Cannot load dependency {0} because it could not be relocated", dependency.name());
+                        //plugin.err("Cannot load dependency {0} because it could not be relocated", dependency.name());
                     }
 
                     return;
@@ -107,7 +107,7 @@ public class CDependencyManager implements DependencyManager {
                 KarmaAPI.inject(dependency.file(), CurrentPlugin.getPlugin().plugin().getClass().getClassLoader());
                 dependencies.add(dependency);
 
-                plugin.info("Loaded dependency {0}", dependency.name());
+                plugin.logInfo("Loaded dependency {0}", dependency.name());
             }
         }
     }

@@ -56,7 +56,7 @@ public class CPluginDependency {
 
                         int response = connection.getResponseCode();
                         if (response == HttpURLConnection.HTTP_OK) {
-                            plugin.info("&aFetching checksum results to keep dependencies safe ( {0} )", checksum_url);
+                            plugin.logInfo("Fetching checksum results to keep dependencies safe ( {0} )", checksum_url);
 
                             InputStream inputStream = connection.getInputStream();
                             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
@@ -149,7 +149,7 @@ public class CPluginDependency {
                         plugin.logInfo("Dependency {0} will be loaded from memory", dependency.name());
                     }
                     for (JsonDependency dependency : install) {
-                        plugin.warn("Dependency {0} will be downloaded", dependency.name());
+                        plugin.logWarn("Dependency {0} will be downloaded", dependency.name());
                     }
                 }
             }

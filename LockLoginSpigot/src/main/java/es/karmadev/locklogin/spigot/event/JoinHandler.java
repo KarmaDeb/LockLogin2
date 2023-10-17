@@ -13,9 +13,7 @@ import es.karmadev.api.spigot.reflection.title.SpigotTitle;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.event.entity.client.EntityCreatedEvent;
-import es.karmadev.locklogin.api.event.entity.client.EntityPreConnectEvent;
-import es.karmadev.locklogin.api.event.entity.client.EntityValidationEvent;
+import es.karmadev.locklogin.api.event.entity.client.*;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
@@ -463,10 +461,19 @@ public class JoinHandler implements Listener {
         ProcessFactory factory = plugin.getProcessFactory();
         UserAuthProcess process = factory.nextProcess(client).orElse(null);
         if (process == null && !passedProcess.contains(client.uniqueId())) {
+            EntityAuthenticateEvent event = new EntityAuthenticateEvent(client, true);
+            plugin.moduleManager().fireEvent(event);
+
+            if (event.isCancelled()) {
+                client.kick(event.cancelReason());
+                return;
+            }
+
             plugin.err("Your LockLogin instance is not using any auth process. This is a security risk!");
             client.session().login(true);
             client.session().totpLogin(true);
             client.session().pinLogin(true);
+
             return;
         }
 
@@ -476,11 +483,23 @@ public class JoinHandler implements Listener {
 
             //Final auth step
             if (log) {
+                EntityAuthenticateEvent event = new EntityAuthenticateEvent(client, true);
+                plugin.moduleManager().fireEvent(event);
+
+                if (event.isCancelled())
+                    client.kick(event.cancelReason());
+
                 client.session().login(true);
                 client.session().totpLogin(true);
                 client.session().pinLogin(true);
             } else {
-                client.kick("&cInvalid session status");
+                EntityAuthenticateEvent event = new EntityAuthenticateEvent(client, false);
+                event.setCancelled(true, "&cInvalid session status");
+                plugin.moduleManager().fireEvent(event);
+
+                if (event.isCancelled()) {
+                    client.kick(event.cancelReason());
+                }
             }
 
             return;
@@ -523,6 +542,9 @@ public class JoinHandler implements Listener {
                         }
 
                         startAuthProcess(client, authProcess); //Go to the next auth process
+
+                        EntityProcessEvent event = new EntityProcessEvent(client, authProcess.wasSuccess(), authProcess.authProcess());
+                        plugin.moduleManager().fireEvent(event);
                     }));
                 } else {
                     startAuthProcess(client, previous);

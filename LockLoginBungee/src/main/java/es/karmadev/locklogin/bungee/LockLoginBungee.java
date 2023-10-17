@@ -117,7 +117,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
     private final CMarketPlace marketPlace = new CMarketPlace();
     private final CModuleManager moduleManager = new CModuleManager();
-    private final SubmissiveRuntime runtime = new SubmissiveRuntime(moduleManager);
+    private final SubmissiveRuntime runtime = new SubmissiveRuntime();
     private CPluginNetwork network;
     private CPremiumDataStore premiumDataStore;
     private final CPluginHasher hasher;
