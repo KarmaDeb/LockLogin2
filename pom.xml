@@ -485,9 +485,9 @@
             </dependency>
             -->
             <dependency>
-                <groupId>com.warrenstrange</groupId>
+                <groupId>es.karmadev</groupId>
                 <artifactId>googleauth</artifactId>
-                <version>1.6.1-SNAPSHOT</version>
+                <version>1.0.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
 

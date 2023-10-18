@@ -75,7 +75,7 @@
         -->
 
         <dependency>
-            <groupId>com.warrenstrange</groupId>
+            <groupId>es.karmadev</groupId>
             <artifactId>googleauth</artifactId>
         </dependency>
 
