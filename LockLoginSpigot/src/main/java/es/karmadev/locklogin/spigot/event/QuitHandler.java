@@ -7,6 +7,7 @@ import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.PlayerLocationStorage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,30 +25,37 @@ public class QuitHandler implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
-
         int networkId = UserDataHandler.getNetworkId(player);
-        if (networkId > 0) {
-            CPluginNetwork network = (CPluginNetwork) spigot.network();
-            NetworkClient client = network.getPlayer(networkId);
-            if (client != null) {
-                client.getSessionChecker().cancel();
-                network.disconnectClient(client);
 
-                PlayerLocationStorage storage = new PlayerLocationStorage(client);
-                storage.assign(player.getLocation());
+        Bukkit.getScheduler().runTaskAsynchronously(spigot.plugin(), () -> {
+            if (networkId > 0) {
+                CPluginNetwork network = (CPluginNetwork) spigot.network();
+                NetworkClient client = network.getPlayer(networkId);
+                if (client != null) {
+                    client.getSessionChecker().cancel();
+                    network.disconnectClient(client);
 
-                ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
+                    PlayerLocationStorage storage = new PlayerLocationStorage(client);
+                    storage.assign(player.getLocation());
 
-                spigot.getInjector().release(client);
-                spigot.getTotpHandler().destroyAll(client);
+                    ((CProcessFactory) CurrentPlugin.getPlugin().getProcessFactory()).removeProgress(client);
+
+                    spigot.getInjector().release(client);
+                    spigot.getTotpHandler().destroyAll(client);
+
+                    client.session().reset();
+                    client.account().reset();
+                    client.reset();
+                    //Reset caches
+                }
             }
-        }
 
-        UserDataHandler.handleDisconnect(player);
-        /*
-        We must run always the #handleDisconnect method, as a player
-        could as been marked as ready to handle, but he might not have reach
-        the network ID assignment
-         */
+            /*
+            We must run always the #handleDisconnect method, as a player
+            could as been marked as ready to handle, but he might not have reach
+            the network ID assignment
+             */
+            UserDataHandler.handleDisconnect(player);
+        });
     }
 }

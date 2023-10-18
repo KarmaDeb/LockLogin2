@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
-import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
@@ -19,7 +18,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CSession implements UserSession, Cached {
+public class CSession implements UserSession {
 
     private final int id;
     private final int session_id;

@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.api.user.account;
 
 import es.karmadev.api.object.ObjectUtils;
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.security.hash.HashResult;
 
@@ -10,7 +11,8 @@ import java.util.UUID;
 /**
  * Client account
  */
-public interface UserAccount {
+@SuppressWarnings("unused")
+public interface UserAccount extends Cached {
 
     /**
      * Get the account id

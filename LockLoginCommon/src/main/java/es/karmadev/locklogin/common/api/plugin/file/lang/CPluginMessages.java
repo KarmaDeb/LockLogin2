@@ -327,7 +327,9 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -409,7 +411,9 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -466,7 +470,11 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{color}", color).replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{color}", color)
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -585,7 +593,10 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -641,7 +652,10 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -673,7 +687,7 @@ public class CPluginMessages implements Messages {
     public String login(String code) {
         if (code == null) code = "";
 
-        String str = yaml.getString("Captcha", "&7Your captcha code is: &e{captcha}");
+        String str = yaml.getString("Login", "&5&oPlease, use /login <password> <captcha>");
         Configuration config = CurrentPlugin.getPlugin().configuration();
 
         String captcha = code;
@@ -702,7 +716,9 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -759,7 +775,11 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{color}", color).replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{color}", color)
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -855,7 +875,10 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**
@@ -911,7 +934,10 @@ public class CPluginMessages implements Messages {
             str = str.replace("<captcha>", "");
         }
 
-        return parser.parse(str.replace("{time}", format).replace("{captcha}", captcha));
+        return parser.parse(str
+                .replace("{time}", format)
+                .replace("{captcha}", captcha)
+                .replace("<captcha>", captcha));
     }
 
     /**

@@ -12,8 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByBlockEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.util.Vector;
 
 public class PlayerVersusHandler implements Listener {
@@ -24,7 +23,80 @@ public class PlayerVersusHandler implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onDrown(EntityAirChangeEvent e) {
+        Entity entity = e.getEntity();
+        if (!(entity instanceof Player)) return;
+
+        Player player = (Player) entity;
+        int networkId = UserDataHandler.getNetworkId(player);
+
+        if (networkId <= 0) {
+            if (UserDataHandler.isReady(player)) {
+                e.setCancelled(true);
+            }
+
+            return;
+        }
+
+        NetworkClient client = plugin.network().getPlayer(networkId);
+        if (client == null) {
+            if (UserDataHandler.isReady(player)) {
+                e.setCancelled(true);
+            }
+
+            return;
+        }
+
+        UserSession session = client.session();
+        e.setCancelled(!session.isLogged() || !session.isPinLogged() || !session.isTotpLogged());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onGeneric(EntityDamageEvent e) {
+        Entity entity = e.getEntity();
+        if (!(entity instanceof Player)) return;
+
+        Player player = (Player) entity;
+        int networkId = UserDataHandler.getNetworkId(player);
+
+        if (networkId <= 0) {
+            if (UserDataHandler.isReady(player)) {
+                e.setCancelled(true);
+            }
+
+            return;
+        }
+
+        NetworkClient client = plugin.network().getPlayer(networkId);
+        if (client == null) {
+            if (UserDataHandler.isReady(player)) {
+                e.setCancelled(true);
+            }
+
+            return;
+        }
+
+        UserSession session = client.session();
+        e.setCancelled(!session.isLogged() || !session.isPinLogged() || !session.isTotpLogged());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onCreeper(final EntityExplodeEvent e) {
+        Entity entity = e.getEntity();
+        float yield = e.getYield();
+
+        for (Entity near : e.getEntity().getNearbyEntities(yield, yield, yield)) {
+            if (near instanceof Player) {
+                Player player = (Player) near;
+                if (handlePVE(player, entity, false)) {
+                    e.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerVersus(EntityDamageByEntityEvent e) {
         Entity entity = e.getEntity();
         Entity damager = e.getDamager();
@@ -53,7 +125,7 @@ public class PlayerVersusHandler implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerVersusBlock(EntityDamageByBlockEvent e) {
         Entity entity = e.getEntity();
         if (entity instanceof Player) {
@@ -134,11 +206,11 @@ public class PlayerVersusHandler implements Listener {
         }
 
         if (entityToPlayer) {
-            Vector direction = subject1.getLocation().toVector().subtract(subject2.getLocation().toVector()).normalize();
-            Vector yMod = new Vector(0, 0.25, 0);
+            Vector direction = subject2.getLocation().toVector().subtract(subject1.getLocation().toVector()).normalize();
+            Vector yMod = new Vector(0, 0.5, 0);
             direction.add(yMod);
 
-            subject1.setVelocity(yMod);
+            subject2.setVelocity(yMod.multiply(2));
             //Throw the entity at the player's opposite direction
         }
 

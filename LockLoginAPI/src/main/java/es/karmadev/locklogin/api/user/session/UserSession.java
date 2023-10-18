@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.api.user.session;
 
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 
 import java.time.Instant;
@@ -7,7 +8,7 @@ import java.time.Instant;
 /**
  * User session
  */
-public interface UserSession {
+public interface UserSession extends Cached {
 
     /**
      * Get the session id

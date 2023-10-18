@@ -3,7 +3,6 @@ package es.karmadev.locklogin.common.api.user.storage.account;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
@@ -25,7 +24,7 @@ import java.sql.Statement;
 import java.time.Instant;
 import java.util.UUID;
 
-public class CAccount implements UserAccount, Cached {
+public class CAccount implements UserAccount {
 
     private final int id;
     private final int account_id;

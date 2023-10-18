@@ -178,11 +178,15 @@ public class ChatHandler implements Listener {
                     e.setMessage(masked);
                 }
 
-
                 if (CommandWhitelist.isBlacklisted(command)) {
                     e.setCancelled(true);
                     if (!pwdLogged) {
-                        client.sendMessage(messages.prefix() + messages.login(session.captcha()));
+                        if (client.account().isRegistered()) {
+                            client.sendMessage(messages.prefix() + messages.login(session.captcha()));
+                        } else {
+                            client.sendMessage(messages.prefix() + messages.register(session.captcha()));
+                        }
+
                         return;
                     }
 

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class CSessionChecker implements SessionChecker {
@@ -150,6 +151,9 @@ public class CSessionChecker implements SessionChecker {
             AtomicBoolean registered = new AtomicBoolean(account.isRegistered());
             int authTime = (registered.get() ? configuration.login().timeout() : configuration.register().timeout());
 
+            AtomicInteger nextLoginMessage = new AtomicInteger(-1);
+            AtomicInteger nextRegisterMessage = new AtomicInteger(-1);
+
             runner = new AsyncTaskExecutor(authTime, TimeUnit.SECONDS);
             runner.on(TaskEvent.TICK, (time) -> {
                 long timeLeft = runner.timeLeft(TimeUnit.SECONDS);
@@ -161,6 +165,8 @@ public class CSessionChecker implements SessionChecker {
                 }
 
                 boolean updatedRegistered = account.isRegistered();
+                account.reset("password"); //We want live updates on this
+
                 if (!paused) {
                     if (updatedRegistered != registered.get()) {
                         registered.set(updatedRegistered);
@@ -191,6 +197,18 @@ public class CSessionChecker implements SessionChecker {
                             messages.registerSubtitle(captcha, timeLeft)
                                     .replace('&', '§'),
                             0, 20, 0);
+                }
+
+                if (account.isRegistered()) {
+                    if (nextLoginMessage.get() == -1 || nextLoginMessage.get() == time) {
+                        client.sendMessage(messages.prefix() + messages.login(session.captcha()));
+                        nextLoginMessage.set(time.intValue() + configuration.messageInterval().logging());
+                    }
+                } else {
+                    if (nextRegisterMessage.get() == -1 || nextRegisterMessage.get() == time) {
+                        client.sendMessage(messages.prefix() + messages.register(session.captcha()));
+                        nextRegisterMessage.set(time.intValue() + configuration.messageInterval().registration());
+                    }
                 }
             });
 
