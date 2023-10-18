@@ -658,7 +658,6 @@
     </distributionManagement>
     -->
 
-    <!--
     <distributionManagement>
         <repository>
             <id>karmadev_releases</id>
@@ -669,7 +668,8 @@
             <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-    -->
+
+    <!--
     <distributionManagement>
         <repository>
             <id>local_repository</id>
@@ -680,5 +680,5 @@
             <url>file:${project.basedir}/v${project.version}/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
-
+    -->
 </project>
