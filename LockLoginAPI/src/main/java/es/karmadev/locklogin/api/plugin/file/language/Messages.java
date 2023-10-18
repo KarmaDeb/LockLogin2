@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * LockLogin messages
  */
+@SuppressWarnings("unused")
 public interface Messages {
     
     /**
@@ -877,9 +878,10 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @param rawLocation message replace
      * @return plugin message
      */
-    String spawnSet();
+    String spawnSet(final String rawLocation);
 
     /**
      * Get a plugin message
@@ -891,9 +893,24 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @param time message replace
+     * @return plugin message
+     */
+    String spawnTeleportTime(final int time);
+
+    /**
+     * Get a plugin message
+     *
      * @return plugin message
      */
     String spawnTeleport();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnTeleportAdmin();
 
     /**
      * Get a plugin message

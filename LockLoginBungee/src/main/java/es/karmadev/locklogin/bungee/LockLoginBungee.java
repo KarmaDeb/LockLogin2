@@ -36,7 +36,7 @@ import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Database;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
 import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
@@ -144,9 +144,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     private final Instant startup = Instant.now();
     @Getter
     private Instant postStartup;
-
-    //@Getter
-    //private final ClientInjector injector;
 
     public boolean boot = true;
     private final KeyPair pair;
@@ -274,8 +271,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             messages = null;
             hasher = null;
             process_factory = null;
-            //moduleMaker = null;
-            //injector = null;
             return; //We won't boot
         }
 
@@ -308,6 +303,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
         postStartup = Instant.now();
     }
 
+    @SuppressWarnings("unused")
     void installDriver() {
         driver.connect();
 
@@ -605,7 +601,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     /**
      * Get the plugin language pack manager
      *
-     * @return the plugin langauge pack
+     * @return the plugin language pack
      * manager
      */
     @Override
@@ -1114,10 +1110,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
         switch (packet.getType()) {
             case HELLO:
                 byte[] publicKey = pair.getPublic().getEncoded();
-                //info("Public key: {0}", (Object) publicKey);
-                /*KeyMap map = new KeyMap(pair.getPublic());
-                map.map();*/
-
                 String sharedKey = Base64.getEncoder().encodeToString(publicKey);
 
                 //String str = StringUtils.serialize(map);
@@ -1131,7 +1123,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(sharedSecret);
 
                         this.sharedSecret = factory.generatePrivate(spec);
-                        //info("Stored proxy shared secret message");
                     } catch (NoSuchAlgorithmException | InvalidKeySpecException ignored) {
                     }
                 }
@@ -1144,24 +1135,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                 out.addProperty("hello", "world!");
                 break;
         }
-
-        /*Object[] payloads = NMSHelper.createPayloads(identifier, out);
-
-        Player bridge = null;
-        for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-            if (player != null && player.isOnline()) {
-                bridge = player;
-                break;
-            }
-        }
-
-        for (Object payload : payloads) {
-            try {
-                NMSHelper.sendPacket(bridge, payload);
-            } catch (InvocationTargetException | IllegalAccessException ex) {
-                ex.printStackTrace();
-            }
-        }*/
     }
 
     /**

@@ -80,14 +80,10 @@ BungeeMotd: true
 # Boss -> Shows a boss bar which health and color
 #         depends on the remaining time ( bar color requires
 #         MC 1.9+ )
+#
 # Blind -> Applies a blind potion
 #          effect when the player
 #          joins if he's not registered
-#
-# Nausea -> Applies a confusion effect
-#           when the player joins if he's
-#           not registered, util for anarchy
-#           servers
 #
 # TimeOut -> The maximum time the player has
 #            to perform the register
@@ -104,14 +100,10 @@ Register:
 # Boss -> Shows a boss bar which health and color
 #         depends on the remaining time ( bar color requires
 #         MC 1.9+ )
+#
 # Blind -> Applies a blind potion
 #          effect when the player
 #          joins if he's not logged in
-#
-# Nausea -> Applies a confusion effect
-#           when the player joins if he's
-#           not logged in, util for anarchy
-#           servers
 #
 # TimeOut -> The maximum time the player has
 #            to perform the login
@@ -163,6 +155,13 @@ HideNonLogged: false
 MessagesInterval:
   Registration: 10
   Logging: 10
+
+#Inventory options
+# When enabled, the inventory of the
+# client will be completely wiped (after
+# being saved) and restored after a
+# successful login
+InventoryProtection: false
 
 #Captcha options
 # Available options:
@@ -370,7 +369,7 @@ Updater:
   CheckTime: 10
 
 #Spawn options
-Spawn: "Moved to spawn.yml"
+Spawn: "Moved to config.yml"
 
 #Enable clear chat feature, this
 #option will clear ONLY CONNECTED

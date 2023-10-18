@@ -14,8 +14,8 @@ import es.karmadev.locklogin.api.plugin.database.query.QueryModifier;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import es.karmadev.locklogin.api.plugin.file.Database;
-import es.karmadev.locklogin.common.api.plugin.file.CDatabaseConfiguration;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
+import es.karmadev.locklogin.common.api.plugin.file.database.CDatabaseConfiguration;
 
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -58,7 +58,7 @@ public class CSQLDriver implements SQLDriver {
     public void connect() {
         if (!connected) {
             LockLogin plugin = CurrentPlugin.getPlugin();
-            Database database = new CDatabaseConfiguration(driver);
+            Database database = new CDatabaseConfiguration(plugin, driver);
 
             driver.testDriver();
 

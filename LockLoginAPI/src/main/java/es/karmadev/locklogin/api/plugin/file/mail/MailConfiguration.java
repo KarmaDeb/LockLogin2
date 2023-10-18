@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.api.plugin.file;
+package es.karmadev.locklogin.api.plugin.file.mail;
 
 import es.karmadev.api.object.ObjectUtils;
 

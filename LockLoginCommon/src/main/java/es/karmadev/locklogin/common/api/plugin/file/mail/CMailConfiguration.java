@@ -1,11 +1,11 @@
-package es.karmadev.locklogin.common.api.plugin.file;
+package es.karmadev.locklogin.common.api.plugin.file.mail;
 
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.locklogin.api.LockLogin;
-import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
+import es.karmadev.locklogin.api.plugin.file.mail.MailConfiguration;
 
 import javax.net.ssl.SNIHostName;
 import java.io.IOException;
@@ -21,11 +21,11 @@ public class CMailConfiguration implements MailConfiguration {
     public CMailConfiguration(final LockLogin plugin) {
         Path file = plugin.workingDirectory().resolve("mailer.yml");
         if (!Files.exists(file)) {
-            PathUtilities.copy(plugin, "plugin/yaml/mailer.yml", file);
+            PathUtilities.copy(plugin, "plugin/yaml/configuration/mailer/config.yml", file);
         }
 
         try {
-            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/mailer.yml"));
+            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/configuration/mailer/config.yml"));
             yaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             throw new RuntimeException(ex);

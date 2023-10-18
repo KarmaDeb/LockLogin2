@@ -12,11 +12,15 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Database;
-import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.file.ProxyConfiguration;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
+import es.karmadev.locklogin.api.plugin.file.mail.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
+import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
+import es.karmadev.locklogin.common.api.plugin.file.database.CDatabaseConfiguration;
+import es.karmadev.locklogin.common.api.plugin.file.mail.CMailConfiguration;
 import es.karmadev.locklogin.common.api.plugin.file.section.*;
+import es.karmadev.locklogin.common.api.plugin.file.spawn.CSpawnConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +40,7 @@ public class CPluginConfiguration implements Configuration {
     private final CProxyConfiguration proxy_config;
     private final CMailConfiguration mail_config;
     private final CDatabaseConfiguration database_config;
+    private final CSpawnConfiguration spawn_config;
 
     /**
      * Initialize the plugin configuration
@@ -43,11 +48,11 @@ public class CPluginConfiguration implements Configuration {
     public CPluginConfiguration(final @NotNull LockLogin plugin) {
         Path file = plugin.workingDirectory().resolve("config.yml");
         if (!Files.exists(file)) {
-            PathUtilities.copy(plugin, "plugin/yaml/config.yml", file);
+            PathUtilities.copy(plugin, "plugin/yaml/configuration/config.yml", file);
         }
 
         try {
-            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/config.yml"));
+            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/configuration/config.yml"));
             yaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -71,7 +76,8 @@ public class CPluginConfiguration implements Configuration {
         }
 
         yaml.validate();
-        database_config = new CDatabaseConfiguration(driver);
+        database_config = new CDatabaseConfiguration(plugin, driver);
+        spawn_config = new CSpawnConfiguration(plugin);
     }
 
     /**
@@ -564,12 +570,8 @@ public class CPluginConfiguration implements Configuration {
      * @return the plugin spawn configuration
      */
     @Override
-    public SpawnSection spawn() {
-        boolean manage = yaml.getBoolean("Spawn.Manage", false);
-        boolean back = yaml.getBoolean("Spawn.TakeBack", false);
-        int distance = yaml.getInteger("Spawn.SpawnDistance", 30);
-
-        return CSpawnSection.of(manage, back, distance);
+    public SpawnConfiguration spawn() {
+        return spawn_config;
     }
 
     /**

@@ -5,7 +5,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.MailConfiguration;
+import es.karmadev.locklogin.api.plugin.file.mail.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.service.mail.EmailService;
 import es.karmadev.locklogin.api.plugin.service.mail.MailMessage;
 import jakarta.activation.DataHandler;

@@ -8,7 +8,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
-import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
+import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @PluginCommand(command = "register", processAttachment = SpigotRegisterProcess.class)
+@SuppressWarnings("unused")
 public class RegisterCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
@@ -202,7 +203,7 @@ public class RegisterCommand extends Command {
                 player.removeMetadata("flySpeed", (Plugin) plugin.plugin());
             }
 
-            SpawnSection spawn = configuration.spawn();
+            SpawnConfiguration spawn = configuration.spawn();
             if (spawn.takeBack()) {
                 PlayerLocationStorage storage = new PlayerLocationStorage(client);
                 Location location = storage.load();

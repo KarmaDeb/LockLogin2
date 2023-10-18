@@ -19,7 +19,6 @@ import java.util.List;
 @CacheAble(name = "LockLogin Marketplace")
 public class CMarketPlace implements MarketPlace {
 
-    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal"})
     private static int cachedVersion = 0;
 
     /**

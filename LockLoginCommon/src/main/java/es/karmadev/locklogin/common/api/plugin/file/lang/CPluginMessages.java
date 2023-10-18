@@ -33,7 +33,7 @@ public class CPluginMessages implements Messages {
 
     public CPluginMessages(final Path file, final InternalPack parser) {
         YamlFileHandler tmpYaml;
-        String template = "";
+        String template;
         switch (parser.getName().toLowerCase()) {
             case "en_en":
             case "english":
@@ -1741,17 +1741,20 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnUsage() {
-        return null;
+        return parser.parse(yaml.getString("SpawnUsage", "&5&oValid spawn sub-arguments: &e<set>&7, &e<unset>&7, &e<teleport>&7, &e<back>"));
     }
 
     /**
      * Get a plugin message
      *
+     * @param rawLocation message replace
      * @return plugin message
      */
     @Override
-    public String spawnSet() {
-        return parser.parse(yaml.getString("SpawnSet", "&dThe login spawn location have been set"));
+    public String spawnSet(final String rawLocation) {
+        String str = yaml.getString("SpawnSet", "&dThe login spawn location have been set at&7 {position}");
+
+        return parser.parse(str.replace("{location}", rawLocation));
     }
 
     /**
@@ -1761,7 +1764,20 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnUnset() {
-        return null;
+        return parser.parse(yaml.getString("SpawnUnset", "&dThe login spawn location has been unset"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param time message replace
+     * @return plugin message
+     */
+    @Override
+    public String spawnTeleportTime(final int time) {
+        String str = yaml.getString("SpawnTeleportTime", "&dYou will be teleported to spawn in&7 {time}&d seconds");
+
+        return parser.parse(str.replace("{time}", String.valueOf(time)));
     }
 
     /**
@@ -1771,7 +1787,17 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnTeleport() {
-        return null;
+        return parser.parse(yaml.getString("SpawnTeleport", "&dYou've been teleported to spawn"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnTeleportAdmin() {
+        return parser.parse(yaml.getString("SpawnTeleportAdmin", "&dYou've been teleported to spawn, run &7/spawn back&d to go to your previous location"));
     }
 
     /**
@@ -1781,7 +1807,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnTeleportNear() {
-        return null;
+        return parser.parse(yaml.getString("SpawnTeleportNear", "&5&oYou are too nearby to spawn!"));
     }
 
     /**
@@ -1791,7 +1817,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnBack() {
-        return null;
+        return parser.parse(yaml.getString("SpawnBack", "&dYou've been teleported to your previous location"));
     }
 
     /**
@@ -1801,7 +1827,7 @@ public class CPluginMessages implements Messages {
      */
     @Override
     public String spawnNoBack() {
-        return null;
+        return parser.parse(yaml.getString("SpawnNoBack", "&5&oYou don't have a previous location to go at"));
     }
 
     /**

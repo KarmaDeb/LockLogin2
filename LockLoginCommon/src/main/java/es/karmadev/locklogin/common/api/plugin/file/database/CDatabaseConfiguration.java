@@ -1,16 +1,17 @@
-package es.karmadev.locklogin.common.api.plugin.file;
+package es.karmadev.locklogin.common.api.plugin.file.database;
 
+import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.file.yaml.handler.YamlReader;
-import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.database.driver.Driver;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
-import es.karmadev.locklogin.api.plugin.file.Database;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class CDatabaseConfiguration implements Database {
@@ -21,15 +22,15 @@ public class CDatabaseConfiguration implements Database {
     /**
      * Initialize the plugin configuration
      */
-    public CDatabaseConfiguration(final Driver driver) {
+    public CDatabaseConfiguration(final LockLogin plugin, final Driver driver) {
         this.driver = driver;
-        final Path file = CurrentPlugin.getPlugin().workingDirectory().resolve("database.yml");
-
-        LockLogin plugin = CurrentPlugin.getPlugin();
-        //PathUtilities.copy(plugin, "plugin/yaml/database.yml", file);
+        Path file = plugin.workingDirectory().resolve("database.yml");
+        if (!Files.exists(file)) {
+            PathUtilities.copy(plugin, "plugin/yaml/configuration/database/config.yml", file);
+        }
 
         try {
-            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
+            YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/configuration/database/config.yml"));
             yaml = YamlHandler.load(file, reader);
         } catch (IOException ex) {
             throw new RuntimeException(ex);

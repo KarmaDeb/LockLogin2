@@ -38,7 +38,7 @@ import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
-import es.karmadev.locklogin.api.plugin.file.Database;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
 import es.karmadev.locklogin.api.plugin.file.language.LanguagePackManager;
 import es.karmadev.locklogin.api.plugin.marketplace.MarketPlace;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;

@@ -1,11 +1,15 @@
 package es.karmadev.locklogin.api.plugin.file;
 
+import es.karmadev.locklogin.api.plugin.file.database.Database;
+import es.karmadev.locklogin.api.plugin.file.mail.MailConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.*;
+import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
  * LockLogin configuration
  */
+@SuppressWarnings("unused")
 public interface Configuration {
 
     /**
@@ -251,7 +255,7 @@ public interface Configuration {
      *
      * @return the plugin spawn configuration
      */
-    SpawnSection spawn();
+    SpawnConfiguration spawn();
 
     /**
      * Get if the player chat gets cleared when

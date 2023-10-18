@@ -3,6 +3,7 @@ package es.karmadev.locklogin.api.network.communication.data;
 /**
  * LockLogin channel
  */
+@SuppressWarnings("unused")
 public enum Channel {
     /**
      * Plugin channel
@@ -16,7 +17,7 @@ public enum Channel {
     /**
      * The channel name
      */
-    public String name;
+    public final String name;
 
     /**
      * Initialize the channel

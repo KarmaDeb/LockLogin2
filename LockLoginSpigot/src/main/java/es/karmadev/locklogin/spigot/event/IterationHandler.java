@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.spigot.event.iteration;
+package es.karmadev.locklogin.spigot.event;
 
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.user.session.UserSession;

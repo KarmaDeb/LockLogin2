@@ -10,7 +10,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.BruteForceConfiguration;
-import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
+import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.security.hash.HashResult;
@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @PluginCommand(command = "login", processAttachment = SpigotLoginProcess.class)
+@SuppressWarnings("unused")
 public class LoginCommand extends Command {
 
     private final LockLogin plugin = CurrentPlugin.getPlugin();
@@ -189,7 +190,7 @@ public class LoginCommand extends Command {
                 player.removeMetadata("flySpeed", (Plugin) plugin.plugin());
             }
 
-            SpawnSection spawn = configuration.spawn();
+            SpawnConfiguration spawn = configuration.spawn();
             if (spawn.takeBack()) {
                 PlayerLocationStorage storage = new PlayerLocationStorage(client);
                 Location location = storage.load();

@@ -3,7 +3,7 @@ package es.karmadev.locklogin.spigot.event;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.section.MovementConfiguration;
-import es.karmadev.locklogin.api.plugin.file.section.SpawnSection;
+import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
@@ -41,7 +41,7 @@ public class MovementHandler implements Listener {
 
         Configuration configuration = spigot.configuration();
         MovementConfiguration movement = configuration.movement();
-        SpawnSection spawn = configuration.spawn();
+        SpawnConfiguration spawn = configuration.spawn();
 
         if (movement.allow()) {
             int maxDistance = movement.distance();
@@ -52,7 +52,7 @@ public class MovementHandler implements Listener {
                 return;
             }
 
-            if (spawn.enable()) {
+            if (spawn.enabled()) {
                 Location spawnLocation = SpawnLocationStorage.load();
                 if (spawnLocation != null) {
                     if (spawnLocation.distance(player.getLocation()) > maxDistance) {
