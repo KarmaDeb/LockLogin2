@@ -57,7 +57,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <locklogin.lang>1</locklogin.lang>
+        <locklogin.lang>2</locklogin.lang>
 
         <locklogin.version.type>snapshot</locklogin.version.type>
         <locklogin.version.letter>a</locklogin.version.letter>
@@ -338,11 +338,6 @@
             <url>https://nexus.sparky.ac/repository/Sparky/</url>
         </repository>
         -->
-
-        <repository>
-            <id>exceptionflug</id>
-            <url>https://mvn.exceptionflug.de/repository/exceptionflug-public/</url>
-        </repository>
 
         <repository>
             <id>ow2</id>

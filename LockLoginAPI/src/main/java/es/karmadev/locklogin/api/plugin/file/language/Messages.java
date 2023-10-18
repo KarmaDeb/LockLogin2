@@ -888,6 +888,13 @@ public interface Messages {
      *
      * @return plugin message
      */
+    String spawnNotSet();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
     String spawnUnset();
 
     /**
@@ -918,6 +925,13 @@ public interface Messages {
      * @return plugin message
      */
     String spawnTeleportNear();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String spawnCancelled();
 
     /**
      * Get a plugin message

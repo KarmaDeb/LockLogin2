@@ -53,6 +53,7 @@ import es.karmadev.locklogin.spigot.event.QuitHandler;
 import es.karmadev.locklogin.spigot.event.ui.InterfaceIOEvent;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
+import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -147,13 +148,6 @@ public class SpigotPlugin extends KarmaPlugin {
 
             //Reorganize legacy directories with the new ones
             reorganizeDirectories();
-
-            long end = System.currentTimeMillis();
-            long diff = end - start;
-            long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
-
-            long rs = diff + diff2;
-            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
 
             spigot.getSessionFactory(false).getSessions().forEach((session) -> {
                 session.invalidate();
@@ -456,6 +450,14 @@ public class SpigotPlugin extends KarmaPlugin {
                 spigot.languagePackManager().setLang(spigot.configuration().language());
 
                 spigot.messages().reload();
+                SpawnLocationStorage.load(); //Precache spawn location, regardless if it's enabled or not
+
+                long end = System.currentTimeMillis();
+                long diff = end - start;
+                long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
+
+                long rs = diff + diff2;
+                logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
             } catch (IOException ex) {
                 logger().log(ex, "Failed to load resources");
             }

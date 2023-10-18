@@ -1,8 +1,5 @@
 package es.karmadev.locklogin.api.plugin.database.query;
 
-import es.karmadev.api.file.yaml.YamlFileHandler;
-import es.karmadev.api.file.yaml.handler.YamlHandler;
-import es.karmadev.api.file.yaml.handler.YamlReader;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -12,11 +9,8 @@ import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.RowType;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.database.Database;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +60,7 @@ public final class QueryBuilder {
     /**
      * Table and row translator
      */
-    private final YamlFileHandler tablesConfiguration;
+    private final Database databaseSettings;
 
     /**
      * Initialize the query builder
@@ -76,32 +70,7 @@ public final class QueryBuilder {
         this.driver = driver;
         LockLogin plugin = CurrentPlugin.getPlugin();
 
-        Path tmpDatabaseConfig = Paths.get("database.yml");
-        YamlFileHandler tmp;
-        if (Files.exists(tmpDatabaseConfig)) {
-            try {
-                YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
-                tmp = YamlHandler.load(tmpDatabaseConfig, reader);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        } else {
-            tmp = YamlHandler.load("");
-        }
-
-        if (plugin != null) {
-            Path database_config = plugin.workingDirectory().resolve("database.yml");
-            //PathUtilities.copy(plugin, "plugin/yaml/database.yml", database_config);
-            try {
-                YamlReader reader = new YamlReader(plugin.loadResource("plugin/yaml/database.yml"));
-                tmp = YamlHandler.load(database_config, reader);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        tablesConfiguration = tmp;
-        tmp.validate();
+        databaseSettings = plugin.configuration().database();
     }
 
     /**
@@ -145,7 +114,7 @@ public final class QueryBuilder {
         queryType = "create";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         rawQuery.append("CREATE TABLE").append((if_not_exists ? " IF NOT EXISTS `" : " `")).append(tableName).append("` (");
 
@@ -164,14 +133,14 @@ public final class QueryBuilder {
         queryType = "insert";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         rawQuery.append("INSERT INTO `").append(tableName).append("` (");
         List<Row> usableRows = Arrays.stream(rows).filter(table::hasRow).collect(Collectors.toList());
 
         StringBuilder rowBuilder = new StringBuilder();
         for (Row row : usableRows) {
-            String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+            String rowName = databaseSettings.columnName(table, row);
             rowBuilder.append("`").append(rowName).append("`").append(", ");
         }
         String finalRow = StringUtils.replaceLast(rowBuilder.toString(), ", ", "");
@@ -191,7 +160,7 @@ public final class QueryBuilder {
         queryType = "update";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         rawQuery.append("UPDATE `").append(tableName).append("` ");
         return this;
@@ -209,12 +178,12 @@ public final class QueryBuilder {
         queryType = "fetch";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
         List<Row> usableRows = Arrays.stream(rows).filter(table::hasRow).collect(Collectors.toList());
 
         StringBuilder rowBuilder = new StringBuilder();
         for (Row row : usableRows) {
-            String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+            String rowName = databaseSettings.columnName(table, row);
 
             rowBuilder.append("`").append(rowName).append("`").append(", ");
         }
@@ -236,13 +205,13 @@ public final class QueryBuilder {
         queryType = "fetch";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
         List<AsRow> usableRows = Arrays.stream(rows).filter((as) -> table.hasRow(as.getRow())).collect(Collectors.toList());
 
         StringBuilder rowBuilder = new StringBuilder();
         for (AsRow asRow : usableRows) {
             Row row = asRow.getRow();
-            String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+            String rowName = databaseSettings.columnName(table, row);
 
             rowBuilder.append("`").append(rowName).append("`").append(" AS `").append(asRow.getName()).append("`").append(", ");
         }
@@ -266,7 +235,7 @@ public final class QueryBuilder {
         joinSuitable = true;
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
         List<JoinRow> usableRows = Arrays.stream(rows).filter((join) -> table.hasRow(join.getRow())).collect(Collectors.toList());
 
         StringBuilder rowBuilder = new StringBuilder();
@@ -275,8 +244,8 @@ public final class QueryBuilder {
             Table joinTable = jr.getTable();
             if (joinTable == null) joinTable = table;
 
-            String joinTableName = tablesConfiguration.getString(joinTable.name + ".Table", joinTable.name());
-            String rowName = tablesConfiguration.getString(joinTable.name + ".Columns." + row.name, row.name());
+            String joinTableName = databaseSettings.tableName(joinTable);
+            String rowName = databaseSettings.columnName(joinTable, row);
 
             rowBuilder.append("`").append(joinTableName).append("`").append(".").append("`").append(rowName).append("`").append(", ");
         }
@@ -297,7 +266,7 @@ public final class QueryBuilder {
         queryType = "alter";
 
         this.table = table;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         rawQuery.append("ALTER TABLE `").append(tableName).append("` ");
         return this;
@@ -337,7 +306,7 @@ public final class QueryBuilder {
             return this;
         }
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         RowType<?> modifiedType = type;
 
         if (driver.equals(Driver.SQLite)) {
@@ -384,7 +353,7 @@ public final class QueryBuilder {
             return this;
         }
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         rawQuery.append("`").append(rowName).append("`");
 
         return this;
@@ -406,7 +375,7 @@ public final class QueryBuilder {
             return this;
         }
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         rawQuery.append(" TO `").append(rowName).append("`");
 
         return this;
@@ -423,7 +392,7 @@ public final class QueryBuilder {
         queryType = "alter-rename-table";
         firstRow = false;
 
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         rawQuery.append("RENAME TO `").append(tableName).append("`");
         return this;
@@ -439,7 +408,7 @@ public final class QueryBuilder {
     public QueryBuilder set(final Row row, final Object value) {
         if (table == null || !queryType.equals("update") || !table.hasRow(row)) return this;
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         String rawValue;
         if (value instanceof Boolean || value instanceof Number) {
             rawValue = String.valueOf(value);
@@ -487,7 +456,7 @@ public final class QueryBuilder {
 
         firstRow = false;
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         String rawValue;
 
         rawQuery.append((andOr ? "" : (join ? " " : "") + "WHERE ")).append("`").append(rowName).append("` ").append(operation);
@@ -509,7 +478,7 @@ public final class QueryBuilder {
 
         firstRow = false;
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         String rawValue;
         if (value instanceof Boolean || value instanceof Number) {
             rawValue = String.valueOf(value);
@@ -558,8 +527,8 @@ public final class QueryBuilder {
         Table tmpTable = joinRow.getTable();
         if (tmpTable == null) tmpTable = table;
 
-        String tableName = tablesConfiguration.getString(tmpTable.name + ".Table", tmpTable.name());
-        String rowName = tablesConfiguration.getString(tmpTable.name + ".Columns." + row.name, row.name());
+        String tableName = databaseSettings.tableName(tmpTable);
+        String rowName = databaseSettings.columnName(tmpTable, row);
         String rawValue;
         if (value instanceof Boolean || value instanceof Number) {
             rawValue = String.valueOf(value);
@@ -624,7 +593,7 @@ public final class QueryBuilder {
     public QueryBuilder join(final Table table) {
         if (!joinSuitable) return this;
         if (table == null || !queryType.equals("fetch")) return this;
-        String tableName = tablesConfiguration.getString("Tables." + table.name + ".Table", table.name());
+        String tableName = databaseSettings.tableName(table);
 
         join = true;
         firstRow = false;
@@ -640,8 +609,8 @@ public final class QueryBuilder {
         Table tmpTable = joinRow.getTable();
         if (tmpTable == null) tmpTable = table;
 
-        String tableName = tablesConfiguration.getString(tmpTable.name + ".Table", tmpTable.name());
-        String rowName = tablesConfiguration.getString(tmpTable.name + ".Columns." + row.name, row.name());
+        String tableName = databaseSettings.tableName(tmpTable);
+        String rowName = databaseSettings.columnName(tmpTable, row);
 
         String rawValue;
         if (value instanceof Boolean || value instanceof Number) {
@@ -738,7 +707,7 @@ public final class QueryBuilder {
             rawQuery.append(", ");
         }
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         RowType<?> modifiedType = type;
 
         if (driver.equals(Driver.SQLite)) {
@@ -792,8 +761,8 @@ public final class QueryBuilder {
         Table targetTable = target.getTable();
 
         if (targetTable == null) return this;
-        String targetTableName = tablesConfiguration.getString(targetTable.name + ".Table", targetTable.name());
-        String targetRowName = tablesConfiguration.getString(targetTable.name + ".Columns." + targetRow.name, targetRow.name());
+        String targetTableName = databaseSettings.tableName(targetTable);
+        String targetRowName = databaseSettings.columnName(targetTable, targetRow);
 
         if (firstRow) {
             firstRow = false;
@@ -801,7 +770,7 @@ public final class QueryBuilder {
             rawQuery.append(", ");
         }
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         rawQuery.append("FOREIGN KEY(").append("`").append(rowName).append("`) ").append("REFERENCES ").append("`").append(targetTableName).append("`").append("(`").append(targetRowName).append("`)").append(customModifiers);
 
         return this;
@@ -833,7 +802,7 @@ public final class QueryBuilder {
         }
 
 
-        String rowName = tablesConfiguration.getString("Tables." + table.name + ".Columns." + row.name, row.name());
+        String rowName = databaseSettings.columnName(table, row);
         rawQuery.append("PRIMARY KEY(").append("`").append(rowName).append("`").append(extra).append(")");
 
         return this;

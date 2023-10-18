@@ -7,12 +7,12 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.user.session.UserSession;
-import es.karmadev.locklogin.spigot.legacy.spawn.LegacySpawn;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -23,18 +23,23 @@ public final class SpawnLocationStorage {
 
     private final static LockLogin plugin = CurrentPlugin.getPlugin();
     private final static JsonConnection connection = ((JsonDatabase) DatabaseManager.getEngine("json").orElse(new JsonDatabase())).grabConnection("data/locations/spawn.json");
+    private static Location cachedSpawn;
 
-    /**
-     * Migrate from a legacy spawn
-     * location
-     *
-     * @param legacy the legacy spawn location
-     */
-    public static void migrateFrom(final LegacySpawn legacy) {
+    public static void assign(final @Nullable Location location) {
+        if (location == null) {
+            cachedSpawn = null;
+            connection.set("world", (String) null);
+            connection.set("x", (Number) null);
+            connection.set("y", (Number) null);
+            connection.set("z", (Number) null);
+            connection.set("yaw", (Number) null);
+            connection.set("pitch", (Number) null);
 
-    }
+            connection.save();
+            return;
+        }
 
-    public static void assign(final Location location) {
+        cachedSpawn = location;
         World world = location.getWorld();
         if (world == null) return;
 
@@ -63,6 +68,8 @@ public final class SpawnLocationStorage {
         if (!connection.isSet("world") || !connection.isSet("x") || !connection.isSet("y")
                 || !connection.isSet("z") || !connection.isSet("yaw") || !connection.isSet("pitch")) return null;
 
+        if (cachedSpawn != null) return cachedSpawn;
+
         UUID worldId = UUID.fromString(connection.getString("world"));
         World world = Bukkit.getServer().getWorld(worldId);
         if (world == null) return null;
@@ -80,6 +87,8 @@ public final class SpawnLocationStorage {
         location.setPitch(pitch);
 
         location.getChunk().load(true); //Preload the chunk
+        cachedSpawn = location;
+
         return location;
     }
 }

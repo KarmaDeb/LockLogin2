@@ -46,7 +46,9 @@ import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
 import es.karmadev.locklogin.spigot.util.PlayerPool;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.process.ClientProcessor;
+import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -436,6 +438,14 @@ public class JoinHandler implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onLogin(final PlayerLoginEvent e) {
         Player player = e.getPlayer();
+
+        if (configuration.spawn().enabled()) {
+            Location spawn = SpawnLocationStorage.load();
+            if (spawn != null) {
+                player.teleport(spawn);
+            }
+        }
+
         UserDataHandler.setReady(player);
         playerLoginPool.markForProcess(player.getUniqueId());
     }

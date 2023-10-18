@@ -90,6 +90,21 @@ public final class LockLoginPermission {
     public final static PermissionObject PERMISSION_LOCATION_SPAWN = DummyPermission.of("locklogin.location.spawn", false);
 
     /**
+     * LockLogin spawn location set permission
+     * <p>locklogin.location.spawn.set</p>
+     */
+    public final static PermissionObject PERMISSION_LOCATION_SPAWN_SET = DummyPermission.of("locklogin.location.spawn.set", false);
+
+    /**
+     * LockLogin spawn location teleport permission
+     * <p>locklogin.location.spawn.teleport</p>
+     * IF YOU WANT TO ALLOW PLAYERS TO DO /spawn, GRANT THEM
+     * THE {@link #PERMISSION_LOCATION_SPAWN spawn permission} INSTEAD,
+     * AS THIS ONE IS AN ADMINISTRATIVE PERMISSION
+     */
+    public final static PermissionObject PERMISSION_LOCATION_SPAWN_TELEPORT = DummyPermission.of("locklogin.location.spawn.teleport", false);
+
+    /**
      * LockLogin client last location management permission
      * <p>locklogin.location.client</p>
      */

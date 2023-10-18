@@ -170,6 +170,7 @@ ForcedAccountRemovalAdmin: ""
 #Spawn utilities
 SpawnUsage: ""
 SpawnSet: ""
+SpawnNotSet: ""
 SpawnUnset: ""
 SpawnTeleportTime: ""
 SpawnTeleport: ""

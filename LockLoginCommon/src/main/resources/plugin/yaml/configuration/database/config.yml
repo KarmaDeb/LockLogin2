@@ -79,7 +79,7 @@ Tables:
       pin:        "pin"
       totp_token: "totp_token"
       panic:      "panic"
-      TOTP:        "2fa"
+      totp:       "totp"
       creation:   "created_at"
   Sessions:
     Table:        "session"

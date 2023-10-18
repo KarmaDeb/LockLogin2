@@ -11,10 +11,7 @@ import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -22,7 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class UserDataHandler {
 
-    private final static Set<UUID> readyToHandle = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final static Set<UUID> readyToHandle = ConcurrentHashMap.newKeySet();
+    private final static Map<UUID, Runnable> teleporting = new ConcurrentHashMap<>();
+
 
     public static boolean isReady(final Player player) {
         return readyToHandle.contains(player.getUniqueId());
@@ -34,6 +33,28 @@ public class UserDataHandler {
 
     public static void handleDisconnect(final Player player) {
         readyToHandle.remove(player.getUniqueId());
+    }
+
+    public static boolean isTeleporting(final Player player) {
+        return teleporting.containsKey(player.getUniqueId());
+    }
+
+    public static void setTeleporting(final Player player, final Runnable signal) {
+        if (!teleporting.containsKey(player.getUniqueId()) && signal != null) {
+            teleporting.put(player.getUniqueId(), signal);
+            return;
+        }
+
+        teleporting.remove(player.getUniqueId());
+    }
+
+    public static void callTeleportSignal(final Player player) {
+        if (teleporting.containsKey(player.getUniqueId())) {
+            Runnable signal = teleporting.get(player.getUniqueId());
+            if (signal == null) return;
+
+            signal.run();
+        }
     }
 
     public static NetworkClient fromEvent(final PlayerEvent event) {

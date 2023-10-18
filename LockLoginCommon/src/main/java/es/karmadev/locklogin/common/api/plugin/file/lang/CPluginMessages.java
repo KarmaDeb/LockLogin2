@@ -43,7 +43,7 @@ public class CPluginMessages implements Messages {
                 template = "messages_template.yml";
         }
 
-        InputStream stream = CurrentPlugin.getPlugin().loadResource("plugin/yaml/" + template);
+        InputStream stream = CurrentPlugin.getPlugin().loadResource("plugin/yaml/language/" + template);
         try {
             YamlReader reader = new YamlReader(stream);
             tmpYaml = YamlHandler.load(file, reader);
@@ -1753,8 +1753,17 @@ public class CPluginMessages implements Messages {
     @Override
     public String spawnSet(final String rawLocation) {
         String str = yaml.getString("SpawnSet", "&dThe login spawn location have been set at&7 {position}");
+        return parser.parse(str.replace("{position}", rawLocation));
+    }
 
-        return parser.parse(str.replace("{location}", rawLocation));
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnNotSet() {
+        return parser.parse(yaml.getString("SpawnNotSet", "&5&oThe spawn location has not been set!"));
     }
 
     /**
@@ -1808,6 +1817,16 @@ public class CPluginMessages implements Messages {
     @Override
     public String spawnTeleportNear() {
         return parser.parse(yaml.getString("SpawnTeleportNear", "&5&oYou are too nearby to spawn!"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String spawnCancelled() {
+        return parser.parse(yaml.getString("SpawnCancelled", "&5&oThe spawn teleportation has been cancelled"));
     }
 
     /**

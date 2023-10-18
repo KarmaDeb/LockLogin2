@@ -248,11 +248,13 @@ ForcedAccountRemovalAdmin: "&dAccount of {player} removed, don't forget to run /
 #Spawn utilities
 SpawnUsage: "&5&oValid spawn sub-arguments: &e<set>&7, &e<unset>&7, &e<teleport>&7, &e<back>"
 SpawnSet: "&dThe login spawn location have been set at&7 {position}"
+SpawnNotSet: "&5&oThe spawn location has not been set!"
 SpawnUnset: "&dThe login spawn location has been unset"
 SpawnTeleportTime: "&dYou will be teleported to spawn in&7 {time}&d seconds"
 SpawnTeleport: "&dYou've been teleported to spawn"
 SpawnTeleportAdmin: "&dYou've been teleported to spawn, run &7/spawn back&d to go to your previous location"
 SpawnTeleportNear: "&5&oYou are too nearby to spawn!"
+SpawnCancelled: "&5&oThe spawn teleportation has been cancelled"
 SpawnBack: "&dYou've been teleported to your previous location"
 SpawnNoBack: "&5&oYou don't have a previous location to go at"
 

@@ -2,7 +2,9 @@ package es.karmadev.locklogin.spigot.event;
 
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.MovementConfiguration;
+import es.karmadev.locklogin.api.plugin.file.spawn.CancelPolicy;
 import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
@@ -31,9 +33,6 @@ public class MovementHandler implements Listener {
         NetworkClient client = UserDataHandler.fromEvent(e);
         if (client == null) return;
 
-        UserSession session = client.session();
-        if (session.isLogged() && session.isTotpLogged() && session.isPinLogged()) return;
-
         Location from = e.getFrom();
         Location to = e.getTo();
 
@@ -42,6 +41,21 @@ public class MovementHandler implements Listener {
         Configuration configuration = spigot.configuration();
         MovementConfiguration movement = configuration.movement();
         SpawnConfiguration spawn = configuration.spawn();
+        Messages messages = spigot.messages();
+
+        UserSession session = client.session();
+        if (session.isLogged() && session.isTotpLogged() && session.isPinLogged()) {
+            if (to == null) return;
+            Block target = to.getBlock();
+            if (source.getX() != target.getX() || source.getZ() != target.getZ() || source.getY() < target.getY()) {
+                if (UserDataHandler.isTeleporting(player) && spawn.cancelWithPolicy(CancelPolicy.MOVEMENT)) {
+                    UserDataHandler.setTeleporting(player, null);
+                    client.sendMessage(messages.prefix() + messages.spawnCancelled());
+                }
+            }
+
+            return;
+        }
 
         if (movement.allow()) {
             int maxDistance = movement.distance();
