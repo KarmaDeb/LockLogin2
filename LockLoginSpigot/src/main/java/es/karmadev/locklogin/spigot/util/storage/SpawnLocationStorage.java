@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -57,7 +58,7 @@ public final class SpawnLocationStorage {
                     NetworkClient client = plugin.network().getPlayer(networkId);
                     UserSession session = client.session();
                     if (session.id() > 0 && !session.isLogged()) {
-                        player.teleport(location); //Updated spawn location
+                        player.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN); //Updated spawn location
                     }
                 }
             }

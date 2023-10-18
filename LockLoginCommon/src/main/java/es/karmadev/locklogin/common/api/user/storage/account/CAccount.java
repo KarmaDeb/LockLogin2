@@ -3,6 +3,7 @@ package es.karmadev.locklogin.common.api.user.storage.account;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
@@ -14,6 +15,7 @@ import es.karmadev.locklogin.api.security.hash.HashResult;
 import es.karmadev.locklogin.api.security.hash.PluginHash;
 import es.karmadev.locklogin.api.user.account.AccountField;
 import es.karmadev.locklogin.api.user.account.UserAccount;
+import es.karmadev.locklogin.common.api.plugin.CacheElement;
 import es.karmadev.locklogin.common.api.protection.CHash;
 
 import java.sql.Connection;
@@ -23,11 +25,21 @@ import java.sql.Statement;
 import java.time.Instant;
 import java.util.UUID;
 
-public class CAccount implements UserAccount {
+public class CAccount implements UserAccount, Cached {
 
     private final int id;
     private final int account_id;
     private final SQLDriver engine;
+
+    private final CacheElement<String> name = new CacheElement<>();
+    private final CacheElement<String> email = new CacheElement<>();
+    private final CacheElement<UUID> uniqueId = new CacheElement<>();
+    private final CacheElement<HashResult> password = new CacheElement<>();
+    private final CacheElement<HashResult> pin = new CacheElement<>();
+    private final CacheElement<String> totp = new CacheElement<>();
+    private final CacheElement<Boolean> totpStatus = new CacheElement<>();
+    private final CacheElement<HashResult> panic = new CacheElement<>();
+    private final CacheElement<Instant> creation = new CacheElement<>();
 
     /**
      * Initialize the account
@@ -150,25 +162,27 @@ public class CAccount implements UserAccount {
      */
     @Override
     public String name() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.NAME)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    return result.getString(1);
+        return name.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.NAME)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        return result.getString(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -178,6 +192,11 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void updateName(final String name) {
+        if (this.name.elementEquals(name)) {
+            if (this.name.getElement().equals(name)) return;
+        }
+        this.name.assign(name);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -201,25 +220,27 @@ public class CAccount implements UserAccount {
      */
     @Override
     public String email() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.EMAIL)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    return result.getString(1);
+        return email.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.EMAIL)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        return result.getString(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -229,6 +250,11 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void updateEmail(final String email) {
+        if (this.email.isPresent()) {
+            if (this.email.getElement().equals(email)) return;
+        }
+        this.email.assign(email);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -252,25 +278,27 @@ public class CAccount implements UserAccount {
      */
     @Override
     public UUID uniqueId() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.UUID)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    return UUID.fromString(result.getString(1));
+        return uniqueId.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.UUID)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        return UUID.fromString(result.getString(1));
+                    }
                 }
+            } catch (SQLException | IllegalArgumentException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException | IllegalArgumentException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -280,6 +308,11 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void updateUniqueId(final UUID uuid) {
+        if (uniqueId.isPresent()) {
+            if (uniqueId.getElement().equals(uuid)) return;
+        }
+        uniqueId.assign(uuid);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -303,28 +336,30 @@ public class CAccount implements UserAccount {
      */
     @Override
     public HashResult password() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.PASSWORD)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
-                if (result.next()) {
-                    String password = result.getString(1);
-                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(password)) {
-                        return CHash.fromString(password, id);
+        return password.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.PASSWORD)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+                    if (result.next()) {
+                        String password = result.getString(1);
+                        if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(password)) {
+                            return CHash.fromString(password, id);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -334,12 +369,18 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void setPassword(final String password) {
+        if (this.password.isPresent()) {
+            if (this.password.getElement().verify(password)) return;
+        }
+
         LockLogin plugin = CurrentPlugin.getPlugin();
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(password);
+        this.password.assign(rs);
+
         String result = rs.serialize();
 
         Connection connection = null;
@@ -365,28 +406,30 @@ public class CAccount implements UserAccount {
      */
     @Override
     public HashResult pin() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.PIN)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
-                if (result.next()) {
-                    String pin = result.getString(1);
-                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(pin)) {
-                        return CHash.fromString(pin, id);
+        return pin.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.PIN)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+                    if (result.next()) {
+                        String pin = result.getString(1);
+                        if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(pin)) {
+                            return CHash.fromString(pin, id);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -396,12 +439,18 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void setPin(final String pin) {
+        if (this.pin.isPresent()) {
+            if (this.pin.getElement().verify(pin)) return;
+        }
+
         LockLogin plugin = CurrentPlugin.getPlugin();
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(pin);
+        this.pin.assign(rs);
+
         String result = rs.serialize();
 
         Connection connection = null;
@@ -427,25 +476,27 @@ public class CAccount implements UserAccount {
      */
     @Override
     public String totp() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.TOKEN_TOTP)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
-                if (result.next()) {
-                    return result.getString(1);
+        return totp.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.TOKEN_TOTP)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+                    if (result.next()) {
+                        return result.getString(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -455,6 +506,11 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void setTotp(final String token) {
+        if (totp.isPresent()) {
+            if (totp.getElement().equals(token)) return;
+        }
+        totp.assign(token);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -478,29 +534,31 @@ public class CAccount implements UserAccount {
      */
     @Override
     public HashResult panic() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.PANIC)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+        return panic.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.PANIC)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
 
-                if (result.next()) {
-                    String panic = result.getString(1);
-                    if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(panic)) {
-                        return CHash.fromString(panic, id);
+                    if (result.next()) {
+                        String panic = result.getString(1);
+                        if (!result.wasNull() && !ObjectUtils.isNullOrEmpty(panic)) {
+                            return CHash.fromString(panic, id);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -510,12 +568,18 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void setPanic(final String token) {
+        if (panic.isPresent()) {
+            if (panic.getElement().verify(token)) return;
+        }
+
         LockLogin plugin = CurrentPlugin.getPlugin();
         LockLoginHasher hasher = plugin.hasher();
         Configuration configuration = plugin.configuration();
 
         PluginHash hash = hasher.getMethod(configuration.encryption().algorithm());
         HashResult rs = hash.hash(token);
+        panic.assign(rs);
+
         String result = rs.serialize();
 
         Connection connection = null;
@@ -541,6 +605,11 @@ public class CAccount implements UserAccount {
      */
     @Override
     public void setTotp(final boolean status) {
+        if (totpStatus.isPresent()) {
+            if (totpStatus.getElement() == status) return;
+        }
+        totpStatus.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -564,25 +633,27 @@ public class CAccount implements UserAccount {
      */
     @Override
     public boolean hasTotp() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.STATUS_TOTP)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return totpStatus.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.STATUS_TOTP)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -592,25 +663,82 @@ public class CAccount implements UserAccount {
      */
     @Override
     public Instant creation() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.ACCOUNT, Row.CREATED_AT)
-                    .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
-                if (result.next()) {
-                    long millis = result.getLong(1);
-                    return Instant.ofEpochMilli(millis);
+        return creation.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.ACCOUNT, Row.CREATED_AT)
+                        .where(Row.ID, QueryBuilder.EQUALS, account_id).build())) {
+                    if (result.next()) {
+                        long millis = result.getLong(1);
+                        return Instant.ofEpochMilli(millis);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
+
+            return Instant.now();
+        });
+    }
+
+    /**
+     * Reset the cache, implementations
+     * should interpreter null as "everything"
+     *
+     * @param name the cache name to reset
+     */
+    @Override
+    public void reset(final String name) {
+        if (name == null) {
+            this.name.assign(null);
+            email.assign(null);
+            uniqueId.assign(null);
+            password.assign(null);
+            pin.assign(null);
+            totp.assign(null);
+            totpStatus.assign(null);
+            panic.assign(null);
+            creation.assign(null);
+            return;
         }
 
-        return Instant.now();
+        switch (name) {
+            case "name":
+                this.name.assign(null);
+                break;
+            case "email":
+                this.email.assign(null);
+                break;
+            case "uuid":
+                this.uniqueId.assign(null);
+                break;
+            case "password":
+                this.password.assign(null);
+                break;
+            case "pin":
+                this.pin.assign(null);
+                break;
+            case "totp":
+                this.totp.assign(null);
+                break;
+            case "totp_status":
+                this.totpStatus.assign(null);
+                break;
+            case "panic":
+                this.panic.assign(null);
+                break;
+            case "creation":
+                creation.assign(null);
+                break;
+            default:
+                reset(null);
+                break;
+        }
     }
 }

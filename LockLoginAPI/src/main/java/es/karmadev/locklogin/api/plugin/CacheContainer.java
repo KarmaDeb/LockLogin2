@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 /**
  * Contains cached elements for an object
  */
+@SuppressWarnings("unused")
 public interface CacheContainer<T> {
 
     /**
@@ -13,6 +14,30 @@ public interface CacheContainer<T> {
      * @return the cached element
      */
     T getElement();
+
+    /**
+     * Get the cached element, or
+     * the default value if not present.
+     * Unlike {@link #getOrElse(Object)}, this
+     * method does not put the default value,
+     * but uses it as an "always-safe" value
+     *
+     * @param other the other element
+     * @return the element
+     */
+    T getElement(final T other);
+
+    /**
+     * Get the cached element, or
+     * the default value if not present.
+     * Unlike {@link #getOrElse(Supplier)}, this
+     * method does not put the default value,
+     * but uses it as an "always-safe" value
+     *
+     * @param provider the other element
+     * @return the element
+     */
+    T getElement(final Supplier<T> provider);
 
     /**
      * Get the cached element or the other
@@ -49,6 +74,16 @@ public interface CacheContainer<T> {
     boolean expires();
 
     /**
+     * Get if the cache element is
+     * present
+     *
+     * @return if the element is present
+     */
+    default boolean isPresent() {
+        return getElement((T) null) != null;
+    }
+
+    /**
      * Get the expiration time for this
      * element in milliseconds
      *
@@ -71,4 +106,16 @@ public interface CacheContainer<T> {
      * @param element the new element
      */
     void assign(final T element);
+
+    /**
+     * Check if the element matches the
+     * provided element
+     *
+     * @param element the element to check
+     * @return if the element is the same
+     * as the current one
+     * @param <A> the type of the element to check
+     * @param <B> the matching type of the element
+     */
+    <A extends T, B extends A> boolean elementEquals(final B element);
 }

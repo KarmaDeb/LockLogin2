@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public class SpawnCommand extends Command {
                                             }
 
                                             if (remaining <= 0) {
-                                                Bukkit.getScheduler().runTask((Plugin) plugin.plugin(), () -> player.teleport(spawn));
+                                                Bukkit.getScheduler().runTask((Plugin) plugin.plugin(), () -> player.teleport(spawn, PlayerTeleportEvent.TeleportCause.COMMAND));
                                                 client.sendMessage(messages.prefix() + messages.spawnTeleport());
                                                 cancel();
                                                 UserDataHandler.setTeleporting(player, null);
@@ -112,7 +113,7 @@ public class SpawnCommand extends Command {
                                     return false;
                                 }
 
-                                player.teleport(spawn);
+                                player.teleport(spawn, PlayerTeleportEvent.TeleportCause.COMMAND);
                                 client.sendMessage(messages.prefix() + messages.spawnTeleport());
                             } else {
                                 client.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_LOCATION_SPAWN));
@@ -166,7 +167,13 @@ public class SpawnCommand extends Command {
                                 }
 
                                 previousLocations.put(player.getUniqueId(), current);
-                                player.teleport(spawn);
+                                player.teleport(spawn, PlayerTeleportEvent.TeleportCause.PLUGIN);
+                                /*
+                                As this is an administrator case, we teleport
+                                the client as if we wanted him to go the location.
+                                Hopefully, by doing this other plugins don't break
+                                us
+                                 */
 
                                 client.sendMessage(messages.prefix() + messages.spawnTeleportAdmin());
                             } else {
@@ -181,7 +188,7 @@ public class SpawnCommand extends Command {
                                     return false;
                                 }
 
-                                player.teleport(previous);
+                                player.teleport(previous, PlayerTeleportEvent.TeleportCause.PLUGIN);
                                 client.sendMessage(messages.prefix() + messages.spawnBack());
                             } else {
                                 client.sendMessage(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_LOCATION_SPAWN_TELEPORT));

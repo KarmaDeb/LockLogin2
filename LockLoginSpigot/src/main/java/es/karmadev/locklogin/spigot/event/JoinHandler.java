@@ -53,10 +53,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import java.net.InetAddress;
@@ -179,9 +176,12 @@ public class JoinHandler implements Listener {
             CPluginNetwork network = (CPluginNetwork) plugin.network();
             network.appendClient(online);
 
-            online.session().append(CSessionField.newField(Boolean.class, "pass_logged", false));
-            online.session().append(CSessionField.newField(Boolean.class, "pin_logged", false));
-            online.session().append(CSessionField.newField(Boolean.class, "totp_logged", false));
+            boolean auth = false;
+            //TODO: Logic to auto-login if needed
+
+            online.session().append(CSessionField.newField(Boolean.class, "pass_logged", auth));
+            online.session().append(CSessionField.newField(Boolean.class, "pin_logged", auth));
+            online.session().append(CSessionField.newField(Boolean.class, "totp_logged", auth));
             player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
 
             ClientInjector injector = plugin.getInjector();
@@ -212,9 +212,6 @@ public class JoinHandler implements Listener {
             UUID online_uid = premium.onlineId(name);
             if (online_uid == null) {
                 online_uid = UUIDFetcher.fetchUUID(name, UUIDType.ONLINE);
-                /*if (online_uid != null) {
-                    premium.saveId(name, online_uid);
-                }*/
             }
 
             CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(offline_uid);
@@ -236,19 +233,10 @@ public class JoinHandler implements Listener {
             networkClients.put(offline_uid, offline);
 
             UserSession session = offline.session();
-            /*if (session == null) {
-                EntitySessionCreatedEvent event = new EntitySessionCreatedEvent(offline, session);
-                plugin.moduleManager().fireEvent(event);
-            }*/
 
             session.login(false);
             session.totpLogin(false);
             session.pinLogin(false);
-
-            /*Path legacyAccountFile = plugin.workingDirectory().resolve("data").resolve("accounts").resolve(offline_uid.toString().replace("-", "") + ".lldb");
-            if (!Files.exists(legacyAccountFile)) {
-                legacyAccountFile = plugin.workingDirectory().resolve("data").resolve("accounts").resolve(online_uid.toString().replace("-", "") + ".lldb");
-            }*/
 
             if (!session.isCaptchaLogged()) {
                 CaptchaConfiguration settings = configuration.captcha();
@@ -442,7 +430,7 @@ public class JoinHandler implements Listener {
         if (configuration.spawn().enabled()) {
             Location spawn = SpawnLocationStorage.load();
             if (spawn != null) {
-                player.teleport(spawn);
+                player.teleport(spawn, PlayerTeleportEvent.TeleportCause.PLUGIN);
             }
         }
 
@@ -530,7 +518,7 @@ public class JoinHandler implements Listener {
                 allow = client.account().isRegistered();
                 break;
             case REGISTER:
-                allow = !client.account().isRegistered();
+                allow = client.account().id() <= 0 || !client.account().isRegistered();
                 break;
         }
 

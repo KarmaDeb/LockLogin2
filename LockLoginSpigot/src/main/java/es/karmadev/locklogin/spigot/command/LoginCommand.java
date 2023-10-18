@@ -31,6 +31,7 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -196,7 +197,7 @@ public class LoginCommand extends Command {
                 Location location = storage.load();
 
                 if (location != null) {
-                    player.teleport(location);
+                    player.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
                 }
             }
         } else {

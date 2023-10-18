@@ -1,6 +1,7 @@
 package es.karmadev.locklogin.common.api.user.storage.session;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
@@ -8,6 +9,7 @@ import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
 import es.karmadev.locklogin.api.user.session.SessionField;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.common.api.plugin.CacheElement;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -17,7 +19,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CSession implements UserSession {
+public class CSession implements UserSession, Cached {
 
     private final int id;
     private final int session_id;
@@ -26,6 +28,14 @@ public class CSession implements UserSession {
     private boolean valid = false;
 
     private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
+
+    private final CacheElement<String> captcha = new CacheElement<>();
+    private final CacheElement<Boolean> captchaLogged = new CacheElement<>();
+    private final CacheElement<Boolean> passwordLogged = new CacheElement<>();
+    private final CacheElement<Boolean> totpLogged = new CacheElement<>();
+    private final CacheElement<Boolean> pinLogged = new CacheElement<>();
+    private final CacheElement<Boolean> persistent = new CacheElement<>();
+    private final CacheElement<Instant> creation = new CacheElement<>();
 
     /**
      * Initialize the session
@@ -94,25 +104,27 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isCaptchaLogged() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.LOGIN_CAPTCHA)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return captchaLogged.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.LOGIN_CAPTCHA)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -122,6 +134,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void captchaLogin(final boolean status) {
+        if (captchaLogged.isPresent()) {
+            if (captchaLogged.getElement() == status) return; //Do nothing, already our value
+        }
+        captchaLogged.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -145,25 +162,27 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isLogged() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.LOGIN_PASSWORD)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return passwordLogged.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.LOGIN_PASSWORD)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -173,6 +192,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void login(final boolean status) {
+        if (passwordLogged.isPresent()) {
+            if (passwordLogged.getElement() == status) return;
+        }
+        passwordLogged.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -196,25 +220,27 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isPinLogged() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.LOGIN_PIN)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return pinLogged.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.LOGIN_PIN)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -224,6 +250,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void pinLogin(final boolean status) {
+        if (pinLogged.isPresent()) {
+            if (pinLogged.getElement() == status) return;
+        }
+        pinLogged.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -247,25 +278,27 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isTotpLogged() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.LOGIN_TOTP)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return totpLogged.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.LOGIN_TOTP)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -275,6 +308,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void totpLogin(final boolean status) {
+        if (totpLogged.isPresent()) {
+            if (totpLogged.getElement() == status) return;
+        }
+        totpLogged.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -298,6 +336,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void setCaptcha(final String captcha) {
+        if (this.captcha.isPresent()) {
+            if (this.captcha.getElement().equals(captcha)) return;
+        }
+        this.captcha.assign(captcha);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -321,27 +364,29 @@ public class CSession implements UserSession {
      */
     @Override
     public String captcha() {
-        String captcha = null;
+        return captcha.getOrElse(() -> {
+            String captcha = null;
 
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.CAPTCHA)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    captcha = result.getString(1);
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.CAPTCHA)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        captcha = result.getString(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return captcha;
+            return captcha;
+        });
     }
 
     /**
@@ -351,25 +396,27 @@ public class CSession implements UserSession {
      */
     @Override
     public boolean isPersistent() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.PERSISTENT)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    return result.getBoolean(1);
+        return persistent.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.PERSISTENT)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        return result.getBoolean(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return false;
+            return false;
+        });
     }
 
     /**
@@ -379,6 +426,11 @@ public class CSession implements UserSession {
      */
     @Override
     public void persistent(final boolean status) {
+        if (persistent.isPresent()) {
+            if (persistent.getElement() == status) return;
+        }
+        persistent.assign(status);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -449,25 +501,75 @@ public class CSession implements UserSession {
      */
     @Override
     public Instant creation() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SESSION, Row.CREATED_AT)
-                    .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
-                if (result.next()) {
-                    long millis = result.getLong(1);
-                    return Instant.ofEpochMilli(millis);
+        return creation.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SESSION, Row.CREATED_AT)
+                        .where(Row.ID, QueryBuilder.EQUALS, session_id).build())) {
+                    if (result.next()) {
+                        long millis = result.getLong(1);
+                        return Instant.ofEpochMilli(millis);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
+
+            return Instant.now();
+        });
+    }
+
+    /**
+     * Reset the cache, implementations
+     * should interpreter null as "everything"
+     *
+     * @param name the cache name to reset
+     */
+    @Override
+    public void reset(final String name) {
+        if (name == null) {
+            captcha.assign(null);
+            captchaLogged.assign(null);
+            passwordLogged.assign(null);
+            pinLogged.assign(null);
+            totpLogged.assign(null);
+            persistent.assign(null);
+            creation.assign(null);
+
+            return;
         }
 
-        return Instant.now();
+        switch (name) {
+            case "captcha":
+                captcha.assign(null);
+                break;
+            case "captcha_logged":
+                captchaLogged.assign(null);
+                break;
+            case "pass_logged":
+                passwordLogged.assign(null);
+                break;
+            case "pin_logged":
+                pinLogged.assign(null);
+                break;
+            case "totp_logged":
+                totpLogged.assign(null);
+                break;
+            case "persistent":
+                persistent.assign(null);
+                break;
+            case "creation":
+                creation.assign(null);
+                break;
+            default:
+                reset(null);
+                break;
+        }
     }
 }

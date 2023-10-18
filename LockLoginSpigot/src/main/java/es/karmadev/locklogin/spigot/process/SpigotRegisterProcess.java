@@ -21,6 +21,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 /**
  * Spigot register process
  */
+@SuppressWarnings("unused")
 public class SpigotRegisterProcess implements UserAuthProcess {
 
     private static final SpigotRegisterProcess DUMMY = new SpigotRegisterProcess(null);
@@ -82,7 +83,7 @@ public class SpigotRegisterProcess implements UserAuthProcess {
      */
     @Override
     public AuthType getAuthType() {
-        return AuthType.LOGIN;
+        return AuthType.REGISTER;
     }
 
     /**

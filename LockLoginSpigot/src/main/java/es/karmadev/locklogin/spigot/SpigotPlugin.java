@@ -46,10 +46,8 @@ import es.karmadev.locklogin.common.plugin.web.local.CStoredResource;
 import es.karmadev.locklogin.common.plugin.web.manifest.ResourceManifest;
 import es.karmadev.locklogin.common.util.LockLoginJson;
 import es.karmadev.locklogin.spigot.command.helper.CommandHelper;
-import es.karmadev.locklogin.spigot.event.ChatHandler;
-import es.karmadev.locklogin.spigot.event.JoinHandler;
-import es.karmadev.locklogin.spigot.event.MovementHandler;
-import es.karmadev.locklogin.spigot.event.QuitHandler;
+import es.karmadev.locklogin.spigot.event.*;
+import es.karmadev.locklogin.spigot.event.pv.PlayerVersusHandler;
 import es.karmadev.locklogin.spigot.event.ui.InterfaceIOEvent;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
@@ -107,6 +105,10 @@ public class SpigotPlugin extends KarmaPlugin {
     private MovementHandler movementHandler;
     @Getter
     private QuitHandler quitHandler;
+    @Getter
+    private IterationHandler iterationHandler;
+    @Getter
+    private PlayerVersusHandler playerVersusHandler;
 
     @Getter
     private InterfaceIOEvent UI_CloseOpenHandler; //Internal usage, we don't really care the name it has
@@ -133,6 +135,8 @@ public class SpigotPlugin extends KarmaPlugin {
             joinHandler = new JoinHandler(spigot);
             movementHandler = new MovementHandler(spigot);
             quitHandler = new QuitHandler(spigot);
+            iterationHandler = new IterationHandler();
+            playerVersusHandler = new PlayerVersusHandler(spigot);
             UI_CloseOpenHandler = new InterfaceIOEvent(spigot);
 
             PluginManager pluginManager = Bukkit.getPluginManager();
@@ -592,6 +596,8 @@ public class SpigotPlugin extends KarmaPlugin {
         manager.registerEvents(joinHandler, this);
         manager.registerEvents(movementHandler, this);
         manager.registerEvents(quitHandler, this);
+        manager.registerEvents(iterationHandler, this);
+        manager.registerEvents(playerVersusHandler, this);
 
         //PIN inventory events
         if (SpigotPinProcess.createDummy().isEnabled()) {

@@ -2,8 +2,10 @@ package es.karmadev.locklogin.common.api.plugin;
 
 import es.karmadev.locklogin.api.plugin.CacheContainer;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
+@SuppressWarnings("unused")
 public class CacheElement<T> implements CacheContainer<T> {
 
     private T element;
@@ -34,6 +36,44 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getElement() {
+        return element;
+    }
+
+    /**
+     * Get the cached element, or
+     * the default value if not present.
+     * Unlike {@link #getOrElse(Object)}, this
+     * method does not put the default value,
+     * but uses it as an "always-safe" value
+     *
+     * @param other the other element
+     * @return the element
+     */
+    @Override
+    public T getElement(final T other) {
+        if (element == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+            return other;
+        }
+
+        return element;
+    }
+
+    /**
+     * Get the cached element, or
+     * the default value if not present.
+     * Unlike {@link #getOrElse(Supplier)}, this
+     * method does not put the default value,
+     * but uses it as an "always-safe" value
+     *
+     * @param provider the other element
+     * @return the element
+     */
+    @Override
+    public T getElement(final Supplier<T> provider) {
+        if (element == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+            return provider.get();
+        }
+
         return element;
     }
 
@@ -129,5 +169,19 @@ public class CacheElement<T> implements CacheContainer<T> {
     public void assign(final T element) {
         this.element = element;
         lastModification = System.currentTimeMillis();
+    }
+
+    /**
+     * Check if the element matches the
+     * provided element
+     *
+     * @param element the element to check
+     * @return if the element is the same
+     * as the current one
+     */
+    @Override
+    public <A extends T, B extends A> boolean elementEquals(final B element) {
+        if (this.element == null) return element == null;
+        return Objects.equals(this.element, element);
     }
 }

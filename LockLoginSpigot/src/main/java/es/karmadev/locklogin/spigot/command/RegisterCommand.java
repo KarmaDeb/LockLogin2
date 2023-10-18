@@ -27,6 +27,7 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -185,9 +186,6 @@ public class RegisterCommand extends Command {
             account.setPassword(passwordInput);
             client.sendMessage(messages.prefix() + messages.registered());
 
-            /*session.login(true);
-            session._2faLogin(true);
-            session.pinLogin(true);*/
             session.append(CSessionField.newField(Boolean.class, "pass_logged", true));
 
             if (player.hasMetadata("walkSpeed")) {
@@ -209,7 +207,7 @@ public class RegisterCommand extends Command {
                 Location location = storage.load();
 
                 if (location != null) {
-                    player.teleport(location);
+                    player.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
                 }
             }
         } else {
