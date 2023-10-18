@@ -83,6 +83,7 @@ public class JoinHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPreLogin(AsyncPlayerPreLoginEvent e) {
+        //TODO: Split logic in smaller methods
         if (plugin.getRuntime().booting()) {
             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConsoleColor.parse("&cThe server is booting!"));
             return;
@@ -135,6 +136,7 @@ public class JoinHandler implements Listener {
 
                         for (int i = 0; i < captcha.length(); i++) {
                             int random = new Random().nextInt(100);
+                            //TODO: Move random out of the loop, and use SplittableRandom instead
 
                             if (random > 50) {
                                 builder.append(last_color).append("&m").append(captcha.charAt(i)).append("&r");
