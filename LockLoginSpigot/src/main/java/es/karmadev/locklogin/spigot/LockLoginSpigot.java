@@ -76,11 +76,15 @@ import es.karmadev.locklogin.common.api.runtime.CRuntime;
 import es.karmadev.locklogin.common.api.server.CServerFactory;
 import es.karmadev.locklogin.common.api.user.CUserFactory;
 import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
+import es.karmadev.locklogin.common.api.user.session.service.SessionStoreProvider;
 import es.karmadev.locklogin.common.api.user.storage.account.CAccountFactory;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionFactory;
+import es.karmadev.locklogin.common.plugin.internal.PluginPermissionManager;
 import es.karmadev.locklogin.common.plugin.secure.totp.TotpGlobalHandler;
 import es.karmadev.locklogin.common.plugin.web.CMarketPlace;
 import es.karmadev.locklogin.spigot.command.module.SpigotCommandManager;
+import es.karmadev.locklogin.spigot.permission.luckperms.LuckPermsPM;
+import es.karmadev.locklogin.spigot.permission.vault.VaultPM;
 import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
@@ -90,6 +94,7 @@ import es.karmadev.locklogin.spigot.protocol.injector.NMSHelper;
 import es.karmadev.locklogin.spigot.util.converter.SpigotModuleMaker;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -135,6 +140,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Getter
     private final TotpGlobalHandler totpHandler = new TotpGlobalHandler();
 
+    @Getter
+    private PluginPermissionManager<OfflinePlayer, String> permissionManager;
     private CAccountFactory default_account_factory;
     private CSessionFactory default_session_factory;
     private CUserFactory default_user_factory;
@@ -312,6 +319,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
 
         registerService("totp", new CTotpService());
         registerService("mailer", new CMailService());
+        registerService("persistence", new SessionStoreProvider());
 
         driver = new CSQLDriver(configuration.database().driver());
         CurrentPlugin.updateState();
@@ -338,6 +346,12 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                 logInfo("Received: {0}", Arrays.toString(bytes)));
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "ll:test");
         postStartup = Instant.now();
+
+        if (pluginManager.isPluginEnabled("LuckPerms")) {
+            permissionManager = new LuckPermsPM(plugin);
+        } else if (pluginManager.isPluginEnabled("Vault")) {
+            permissionManager = new VaultPM(plugin);
+        }
     }
 
     void installDriver() {

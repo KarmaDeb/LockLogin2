@@ -92,6 +92,16 @@ Tables:
       persistent: "persistence"
       code:       "captcha"
       creation:   "created_at"
+  SessionsStore:
+    Table:        "session_store"
+    Columns:
+      id:         "id"
+      user:       "user_id"
+      address:    "address"
+      login:      "pass_login"
+      pin:        "pin_login"
+      totp:       "totp_login"
+      creation:   "created_at"
   Servers:
     Table:        "server"
     Columns:

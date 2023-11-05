@@ -102,6 +102,17 @@ public final class QueryBuilder {
         return new QueryBuilder(driver);
     }
 
+    public QueryBuilder delete(final Table table) {
+        if (!ObjectUtils.isNullOrEmpty(queryType)) return this;
+        queryType = "drop-column";
+
+        this.table = table;
+        String tableName = databaseSettings.tableName(table);
+
+        rawQuery.append("DELETE FROM `").append(tableName).append("` ");
+        return this;
+    }
+
     /**
      * Create a new table
      *
@@ -452,7 +463,7 @@ public final class QueryBuilder {
     public QueryBuilder where(final Row row, final String operation) {
         if (table == null || !table.hasRow(row)) return this;
         if (queryType.equals("update") && firstRow) return this;
-        if (!queryType.equals("update") && !queryType.equals("fetch")) return this;
+        if (!queryType.equals("update") && !queryType.equals("fetch") && !queryType.equals("drop-column")) return this;
 
         firstRow = false;
 

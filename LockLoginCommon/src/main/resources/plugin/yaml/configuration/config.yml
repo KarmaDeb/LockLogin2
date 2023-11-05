@@ -13,6 +13,10 @@
 #and some plugin messages
 ServerName: ""
 
+#The LockLogin license here, when you purchase
+#LockLogin
+License: ""
+
 #Allow bedrock players to bypass login if
 #they already have an account on LockLogin
 BedrockLogin: false
@@ -88,12 +92,16 @@ BungeeMotd: true
 # TimeOut -> The maximum time the player has
 #            to perform the register
 #
+# RequireMail -> Requires the player to type in
+#                an email address to play
+#
 # Max -> The maximum amount of accounts allowed
 #        TO REGISTER per IP
 Register:
   Boss: true
   Blind: false
   TimeOut: 60
+  RequireMail: false
   Max: 2
 
 #Login options
@@ -241,6 +249,8 @@ Movement:
 # AllowWildcard: If false, and a player had the permission '*'. The plugin will remove from him even after a successful login
 # UnLogged: The permissions to grant to non-logged clients. Those will be removed after a successfull login
 # Logged:  The permission to grant to logged clients. Those will be removed after the client session gets closed
+# If your permissions plugin supports grouping, you can prefix the permission with [group] to add the player
+# to the group, for example [group]default in PostLogin would add the player to the group 'default' after login
 #
 # Why you shouldn't allow OP?
 #   OP is literally pointless when having a permission plugin, unless required, OP shouldn't be granted to
@@ -259,10 +269,10 @@ Permissions:
   AllowWildcard: false
   PreLogin:
     - "my.permission.for.unlogged"
-    - "group.unlogged"
+    - "[group]unlogged"
   PostLogin:
     - "my.permission.for.logged"
-    - "group.default"
+    - "[group]default"
 
 #Password configuration
 #

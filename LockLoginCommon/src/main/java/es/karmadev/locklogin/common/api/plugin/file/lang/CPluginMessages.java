@@ -10,6 +10,7 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.Alias;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PasswordConfiguration;
@@ -18,6 +19,7 @@ import es.karmadev.locklogin.api.security.check.CheckType;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
@@ -221,26 +223,6 @@ public class CPluginMessages implements Messages {
     /**
      * Get a plugin message
      *
-     * @return plugin message
-     */
-    @Override
-    public String infoUsage() {
-        return parser.parse(yaml.getString("PlayerInfoUsage", "&5&oPlease, use /playerinfo <player>"));
-    }
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    @Override
-    public String lookupUsage() {
-        return parser.parse(yaml.getString("LookUpUsage", "&5&oPlease, use /lookup <player>"));
-    }
-
-    /**
-     * Get a plugin message
-     *
      * @param name   message replace
      * @param amount message replace
      * @return plugin message
@@ -370,6 +352,26 @@ public class CPluginMessages implements Messages {
     @Override
     public String sessionDisabled() {
         return parser.parse(yaml.getString("SessionDisabled", "&5&oDisabled persistent session for your account ( &e+security&c )"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String sessionClosed() {
+        return parser.parse(yaml.getString("SessionClosed", "&dYour session has been closed by an administrator. Please login again"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String accountTerminated() {
+        return parser.parse(yaml.getString("AccountTerminated", "&dYour account has been terminated by an administrator. Please register again"));
     }
 
     /**
@@ -524,7 +526,7 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String passwordWarning(final NetworkClient client) {
+    public String passwordWarning(final LocalNetworkClient client) {
         String str = yaml.getString("PasswordWarning", "&5&oThe client {player} is using an unsafe password");
 
         return parser.parse(str.replace("{player}", client.name()));
@@ -1586,8 +1588,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String accountArguments() {
-        return parser.parse(yaml.getString("AccountArguments", "&5&oValid account sub-arguments: &e<change>&7, &e<unlock>&7, &e<close>&7, &e<remove>&7, &e<protect>"));
+    public String staffSetup() {
+        return parser.parse(yaml.getString("StaffSetup", "&5&oStaff mode has not been setup, please use /staff setup [old-password] <password> to setup staff mode"));
     }
 
     /**
@@ -1596,8 +1598,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String change() {
-        return parser.parse(yaml.getString("Change", "&5&oPlease, use /account change <password> <new password>"));
+    public String staffSetupSuccess() {
+        return parser.parse(yaml.getString("StaffSetupSuccess", "&dSuccessfully setup/changed staff mode password"));
     }
 
     /**
@@ -1606,8 +1608,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String changeSame() {
-        return parser.parse(yaml.getString("ChangeSame", "&5&oYour password can't be the same as old!"));
+    public String staffInvalid() {
+        return parser.parse(yaml.getString("StaffInvalid", "&5&oInvalid staff-mode password"));
     }
 
     /**
@@ -1616,64 +1618,42 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String changeDone() {
-        return parser.parse(yaml.getString("ChangeDone", "&dYour password has changed!"));
+    public String staffUsage() {
+        return parser.parse(yaml.getString("StaffUsage", "&5&oValid staff sub-arguments: &e<toggle>&7, &e<register>&7, &e<login>, &e<logout>&7, &e<unregister>&7, &e<lookup>&7, &e<unban>"));
     }
 
     /**
      * Get a plugin message
      *
-     * @return plugin message
-     */
-    @Override
-    public String accountUnLock() {
-        return parser.parse(yaml.getString("AccountUnlock", "&5&oPlease, use /account unlock <player>"));
-    }
-
-    /**
-     * Get a plugin message
-     *
+     * @param issuer message replace
+     * @param action message replace
      * @param target message replace
      * @return plugin message
      */
     @Override
-    public String accountUnLocked(final String target) {
-        String str = yaml.getString("AccountUnlocked", "&dAccount of {player} has been unlocked");
+    public String staffEcho(final NetworkEntity issuer, final String action, final NetworkEntity target) {
+        String str = yaml.getString("StaffEcho", "&dStaff member &7{name}&d issued action&7 {action}&d on&7 {target}");
 
-        return parser.parse(str.replace("{player}", target));
+        return parser.parse(str
+                .replace("{name}", issuer.name())
+                .replace("{action}", action.toUpperCase())
+                .replace("{target}", target.name()));
     }
 
     /**
      * Get a plugin message
      *
-     * @param target message replace
+     * @param issuer message replace
+     * @param action message replace
      * @return plugin message
      */
     @Override
-    public String accountNotLocked(final String target) {
-        String str = yaml.getString("AccountNotLocked", "&5&oAccount of {player} is not locked!");
+    public String staffClientEcho(final LocalNetworkClient issuer, final String action) {
+        String str = yaml.getString("StaffEchoPlayer", "&dPlayer &7{name}&d issued action&7 {action}");
 
-        return parser.parse(str.replace("{player}", target));
-    }
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    @Override
-    public String close() {
-        return parser.parse(yaml.getString("Close", "&5&oPlease, use /account close [player]"));
-    }
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    @Override
-    public String closed() {
-        return parser.parse(yaml.getString("Closed", "&5&oSession closed, re-login now!"));
+        return parser.parse(str
+                .replace("{name}", issuer.name())
+                .replace("{action}", action.toUpperCase()));
     }
 
     /**
@@ -1682,21 +1662,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String forcedClose() {
-        return parser.parse(yaml.getString("ForcedClose", "&5&oYour session have been closed by an admin, login again"));
-    }
-
-    /**
-     * Get a plugin message
-     *
-     * @param target message replace
-     * @return plugin message
-     */
-    @Override
-    public String forcedCloseAdmin(final NetworkEntity target) {
-        String str = yaml.getString("ForcedCloseAdmin", "&dSession of {player} closed");
-
-        return parser.parse(str.replace("{player}", target.name()));
+    public String staffToggleUsage() {
+        return parser.parse(yaml.getString("StaffToggleUsage", "&5&oPlease provide the staff mode password"));
     }
 
     /**
@@ -1705,8 +1672,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String remove() {
-        return parser.parse(yaml.getString("Remove", "&5&oPlease, use /account remove <password|player> [password]"));
+    public String staffToggleSuccess() {
+        return parser.parse(yaml.getString("StaffToggleSuccess", "&dSuccessfully toggled staff mode"));
     }
 
     /**
@@ -1715,8 +1682,8 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String removeAccountMatch() {
-        return parser.parse(yaml.getString("RemoveAccountMatch", "&5&oThe provided passwords does not match"));
+    public String staffToggleFailure() {
+        return parser.parse(yaml.getString("StaffToggleFailure", "&5&oAn error occurred while trying to toggle staff mode"));
     }
 
     /**
@@ -1725,39 +1692,220 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
-    public String accountRemoved() {
-        return parser.parse(yaml.getString("AccountRemoved", "&5&oYour account have been deleted"));
+    public String staffRegisterUsage() {
+        return parser.parse(yaml.getString("StaffRegisterUsage", "&5&oPlease provide a player name and his password"));
     }
 
     /**
      * Get a plugin message
      *
-     * @param administrator message replace
+     * @param client   message replace
+     * @param password message replace
      * @return plugin message
      */
     @Override
-    public String forcedAccountRemoval(final String administrator) {
-        List<String> messages = yaml.getList("ForcedAccountRemoval");
-        StringBuilder builder = new StringBuilder();
+    public String staffRegisterSuccess(final LocalNetworkClient client, final String password) {
+        String str = yaml.getString("StaffRegisterSuccess", "&dSuccessfully registered&7 {player}&d with password: &e{password}");
 
-        for (String str : messages)
-            builder.append(str
-                    .replace("{player}", ConsoleColor.strip(administrator))).append("\n");
-
-        return parser.parse(StringUtils.replaceLast(builder.toString(), "\n", ""));
+        return parser.parse(str
+                .replace("{player}", client.name())
+                .replace("{password}", password));
     }
 
     /**
      * Get a plugin message
      *
-     * @param target message replace
+     * @param client message replace
      * @return plugin message
      */
     @Override
-    public String forcedAccountRemovalAdmin(final String target) {
-        String str = yaml.getString("ForcedAccountRemovalAdmin", "&dAccount of {player} removed, don't forget to run /account unlock {player}!");
+    public String staffRegisterFailure(final String client) {
+        String str = yaml.getString("StaffRegisterFailure", "&5&oAn error occurred while trying to register&7 {player}");
 
-        return parser.parse(str.replace("{player}", target));
+        return parser.parse(str
+                .replace("{player}", client));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String staffLoginUsage() {
+        return parser.parse(yaml.getString("StaffLoginUsage", "&5&oPlease provide a player name"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffLoginSuccess(final NetworkClient client) {
+        String str = yaml.getString("StaffLoginSuccess", "&dSuccessfully logged in&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client.name()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffLoginFailure(final String client) {
+        String str = yaml.getString("StaffLoginFailure", "&5&oFailed to login&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String staffLogoutUsage() {
+        return parser.parse(yaml.getString("StaffLogoutUsage", "&5&oPlease provide a player name"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffLogoutSuccess(final NetworkClient client) {
+        String str = yaml.getString("StaffLogoutSuccess", "&dSuccessfully logged out&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client.name()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffLogoutFailure(final String client) {
+        String str = yaml.getString("StaffLogoutFailure", "&5&oFailed to logout&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String staffUnregisterUsage() {
+        return parser.parse(yaml.getString("StaffUnregisterUsage", "&5&oPlease provide a player name"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffUnregisterSuccess(final LocalNetworkClient client) {
+        String str = yaml.getString("StaffUnregisterSuccess", "&dSuccessfully unregistered&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client.name()));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffUnregisterFailure(final String client) {
+        String str = yaml.getString("StaffUnregisterFailure", "&5&oCouldn't unregister&7 {player}");
+
+        return parser.parse(str
+                .replace("{player}", client));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String staffLookupUsage() {
+        return parser.parse(yaml.getString("StaffLookupUsage", "&5&oPlease provide a player name or UUID"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param filter message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffLookupEmpty(final String filter) {
+        String str = yaml.getString("StaffLookupEmpty", "&5&oNo matching results found for&7 {search}");
+
+        return parser.parse(str
+                .replace("{search}", filter));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
+    public String staffUnbanUsage() {
+        return parser.parse(yaml.getString("StaffUnbanUsage", "&5&oPlease provide an ip address to unban"));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param address message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffUnbanSuccess(final InetAddress address) {
+        String str = yaml.getString("StaffUnbanSuccess", "&dSuccessfully unbanned temporarily blocked IP&7 {ip}");
+
+        String raw = address.getHostAddress();
+        if (raw == null) raw = "INVALID_ADDRESS";
+
+        return parser.parse(str
+                .replace("{ip}", raw));
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @param address message replace
+     * @return plugin message
+     */
+    @Override
+    public String staffUnbanFailure(final InetAddress address) {
+        String str = yaml.getString("StaffUnbanFailure", "&5&oFailed to unban&7 {ip}");
+
+        String raw = address.getHostAddress();
+        if (raw == null) raw = "INVALID_ADDRESS";
+
+        return parser.parse(str
+                .replace("{ip}", raw));
     }
 
     /**

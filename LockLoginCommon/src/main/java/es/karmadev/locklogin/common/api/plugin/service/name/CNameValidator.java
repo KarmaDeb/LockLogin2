@@ -6,8 +6,10 @@ import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CNameValidator implements NameValidator {
 
@@ -53,26 +55,18 @@ public class CNameValidator implements NameValidator {
         LockLogin plugin = CurrentPlugin.getPlugin();
         Configuration configuration = plugin.configuration();
 
-        if (name.length() > 16 || name.length() < 3) valid = false;
+        Pattern pattern = configuration.namePattern();
+        Matcher matcher = pattern.matcher(name);
 
-        int protocol = configuration.checkProtocol();
-        List<Character> invalid = new ArrayList<>();
-        if (protocol == 2) {
-            for (char character : name.toCharArray()) {
-                String str = String.valueOf(character);
-                if (str.matches("^[^a-zA-Z0-9_]+$")) {
-                    valid = false;
-                    invalid.add(character);
-                }
-            }
-        } else {
-            for (char character : name.toCharArray()) {
-                if (!Character.isLetterOrDigit(character) && character != '_') {
-                    valid = false;
-                    invalid.add(character);
-                }
-            }
+        if (matcher.matches()) {
+            valid = true;
+            return;
         }
+
+        String unMatched = matcher.replaceAll("");
+        Set<Character> invalid = new LinkedHashSet<>();
+        for (char character : unMatched.toCharArray())
+            invalid.add(character);
 
         char[] chars = new char[invalid.size()];
         int index = 0;

@@ -4,11 +4,28 @@ import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 
 import java.net.InetSocketAddress;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Network entity
  */
-public interface NetworkEntity {
+public interface NetworkEntity extends NetComponent {
+
+    /**
+     * Get the entity id
+     *
+     * @return the entity id
+     */
+    int id();
+
+    /**
+     * Get the entity unique id
+     *
+     * @return the entity unique id
+     */
+    default UUID uniqueId() {
+        return UUID.randomUUID();
+    }
 
     /**
      * Get the entity name

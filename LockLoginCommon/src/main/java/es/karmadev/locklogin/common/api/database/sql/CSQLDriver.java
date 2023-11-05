@@ -87,7 +87,6 @@ public class CSQLDriver implements SQLDriver {
             source = new HikariDataSource(config);
             plugin.logInfo("Initialized LockLogin sqlite connection successfully");
             connected = true;
-
             Connection connection = null;
             Statement statement = null;
             try {
@@ -116,6 +115,18 @@ public class CSQLDriver implements SQLDriver {
                         .withRow(Row.CAPTCHA, RowType.VARCHAR, QueryModifier.of("(16)"))
                         .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))
                         .withPrimaryKey(Row.ID, true);
+
+                QueryBuilder sessionStoreCreateQuery = QueryBuilder.createQuery(driver)
+                        .createTable(true, Table.SESSION_STORE)
+                        .withRow(Row.ID, RowType.INTEGER, QueryBuilder.NOT_NULL)
+                        .withRow(Row.USER_ID, RowType.INTEGER, QueryBuilder.DEFAULT(QueryBuilder.NULL))
+                        .withRow(Row.ADDRESS, RowType.VARCHAR, QueryModifier.of("(42)"))
+                        .withRow(Row.LOGIN_PASSWORD, RowType.BOOLEAN)
+                        .withRow(Row.LOGIN_TOTP, RowType.BOOLEAN)
+                        .withRow(Row.LOGIN_PIN, RowType.BOOLEAN)
+                        .withRow(Row.CREATED_AT, RowType.TIMESTAMP, QueryBuilder.DEFAULT(QueryBuilder.CURRENT_TIMESTAMP(driver)))
+                        .withPrimaryKey(Row.ID, true)
+                        .withForeign(Row.USER_ID, JoinRow.at(Row.ID, Table.USER), QueryModifier.of(" ON UPDATE CASCADE"), QueryModifier.of(" ON DELETE CASCADE"));
 
                 QueryBuilder serverCreateQuery = QueryBuilder.createQuery(driver)
                         .createTable(true, Table.SERVER)
@@ -174,6 +185,7 @@ public class CSQLDriver implements SQLDriver {
 
                 boolean acc_create = true;
                 boolean sess_create = true;
+                boolean sess_st_create = true;
                 boolean serv_create = true;
                 boolean user_create = true;
                 boolean brute_create = true;
@@ -196,6 +208,15 @@ public class CSQLDriver implements SQLDriver {
                                 } catch (SQLException ex) {
                                     plugin.log(ex, "An error occurred while executing query");
                                     sess_create = false;
+                                }
+                                break;
+                            case SESSION_STORE:
+                                plugin.logInfo("Executing query <code>{0}</code>", sessionStoreCreateQuery.build());
+                                try {
+                                    statement.execute(sessionStoreCreateQuery.build());
+                                } catch (SQLException ex) {
+                                    plugin.log(ex, "An error occurred while executing query");
+                                    sess_st_create = false;
                                 }
                                 break;
                             case SERVER:
@@ -241,6 +262,9 @@ public class CSQLDriver implements SQLDriver {
                     if (!sess_create) {
                         //plugin.err("Failed to create sessions table");
                         plugin.logErr("Couldn't create table: session");
+                    }
+                    if (!sess_st_create) {
+                        plugin.logErr("Couldn't create table session_store");
                     }
                     if (!serv_create) {
                         //plugin.err("Failed to create servers table");
@@ -331,6 +355,15 @@ public class CSQLDriver implements SQLDriver {
      */
     @Override
     public Connection retrieve() throws SQLException {
-        return source.getConnection();
+        Connection connection = source.getConnection();
+
+        if (connection != null && driver.isLocal()) {
+            Statement statement = connection.createStatement();
+
+            statement.execute("PRAGMA synchronous=OFF");
+            statement.execute("PRAGMA read_uncommitted=true");
+        }
+
+        return connection;
     }
 }

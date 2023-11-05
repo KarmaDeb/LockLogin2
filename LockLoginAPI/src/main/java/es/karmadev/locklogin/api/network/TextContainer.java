@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.network;
 
-public interface TextContainer {
+public interface TextContainer extends NetComponent {
 
     /**
      * Send a message to the client

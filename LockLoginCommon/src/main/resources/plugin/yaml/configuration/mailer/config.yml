@@ -21,8 +21,10 @@
 # TLS: While true, the connection will be performed under TLS/SSL
 # User: The username for your SMTP host
 # Password: The user password for your SMTP host
+# HostName: The name to use when sending emails
 Host: ''
 Port: 25
 TLS: true
 User: 'myuser'
 Password: 'mypassword'
+Sender: 'myuser@myserver.com'

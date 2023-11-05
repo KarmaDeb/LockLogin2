@@ -2,6 +2,9 @@ package es.karmadev.locklogin.spigot.event;
 
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
+import es.karmadev.locklogin.api.user.session.service.SessionStoreService;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.user.auth.CProcessFactory;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
@@ -22,7 +25,7 @@ public class QuitHandler implements Listener {
         this.spigot = spigot;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST) @SuppressWarnings("unchecked")
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
         int networkId = UserDataHandler.getNetworkId(player);
@@ -32,6 +35,16 @@ public class QuitHandler implements Listener {
                 CPluginNetwork network = (CPluginNetwork) spigot.network();
                 NetworkClient client = network.getPlayer(networkId);
                 if (client != null) {
+                    PluginService sessionStoreProvider = spigot.getService("persistence");
+                    if (sessionStoreProvider instanceof ServiceProvider) {
+                        ServiceProvider<SessionStoreService> provider = (ServiceProvider<SessionStoreService>) sessionStoreProvider;
+                        SessionStoreService service = provider.serve(spigot.driver());
+
+                        if (service != null) {
+                            service.saveSession(client);
+                        }
+                    }
+
                     client.getSessionChecker().cancel();
                     network.disconnectClient(client);
 

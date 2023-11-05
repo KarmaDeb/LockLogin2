@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.spigot.util.ui;
+package es.karmadev.locklogin.spigot.util.window;
 class ConstantUtils {
     
     public static String getValue(final int number) {

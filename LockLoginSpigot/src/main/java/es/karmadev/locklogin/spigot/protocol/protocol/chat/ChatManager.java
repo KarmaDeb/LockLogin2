@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 
 public class ChatManager {
 
-    public static boolean clearProtocolChat(final Player player) {
+    public static void clearProtocolChat(final Player player) {
         LockLogin plugin = CurrentPlugin.getPlugin();
 
         ProtocolManager manager = ProtocolLibrary.getProtocolManager();
@@ -21,11 +21,8 @@ public class ChatManager {
 
         try {
             manager.sendServerPacket(player, packet);
-            return true;
         } catch (Throwable error) {
             plugin.log(error, "Failed to clear player chat. Using simple method");
         }
-
-        return false;
     }
 }

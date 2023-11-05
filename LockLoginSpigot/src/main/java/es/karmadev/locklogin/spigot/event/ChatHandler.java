@@ -23,7 +23,7 @@ import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.common.plugin.secure.CommandWhitelist;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import es.karmadev.locklogin.spigot.util.ui.PinInventory;
+import es.karmadev.locklogin.spigot.util.window.PinInventory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -328,6 +328,7 @@ public class ChatHandler implements Listener {
                 if (resources.isEmpty()) {
                     if (category.equals(Category.EMAIL_TEMPLATE)) {
                         client.sendMessage("&cYou don't have any resource [" + category.prettyName() + "] installed");
+                        runningLRM = false;
                         return;
                     }
 
@@ -501,6 +502,7 @@ public class ChatHandler implements Listener {
                             client.sendMessage("");
                             client.sendMessage("&7Run lrm get &b" + resource.getId() + "&7 to install the resource");
                         }
+
                         runningLRM = false;
                     });
                 } catch (NumberFormatException ex) {
@@ -586,8 +588,15 @@ public class ChatHandler implements Listener {
 
                         ResourceDownload download = existing.getDownload();
                         download.download().whenComplete((success) -> {
-                            if (success == null || !success) {
+                            StoredResource sr = manager.getResources().stream().filter((rs) -> rs.getId() == resourceId).findAny().orElse(null);
+                            if (sr == null) {
                                 client.sendMessage("&cFailed to download resource with id&7 " + resourceId + "&c. Probably it is not download-able");
+                                runningLRM = false;
+                                return;
+                            }
+                            if (success == null || !success) {
+                                client.sendMessage("&eSuccessfully downloaded resource with id&7 " + resourceId + "&e but failed to enable.&c Is it compatible?");
+                                runningLRM = false;
                                 return;
                             }
 

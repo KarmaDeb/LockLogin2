@@ -4,8 +4,10 @@ import es.karmadev.locklogin.api.network.NetworkEntity;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.Alias;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.security.check.CheckResult;
 
+import java.net.InetAddress;
 import java.util.List;
 
 /**
@@ -127,20 +129,6 @@ public interface Messages {
     /**
      * Get a plugin message
      *
-     * @return plugin message
-     */
-    String infoUsage();
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    String lookupUsage();
-
-    /**
-     * Get a plugin message
-     *
      * @param name   message replace
      * @param amount message replace
      * @return plugin message
@@ -209,6 +197,20 @@ public interface Messages {
     /**
      * Get a plugin message
      *
+     * @return plugin message
+     */
+    String sessionClosed();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String accountTerminated();
+
+    /**
+     * Get a plugin message
+     *
      * @param code message replace
      * @return plugin message
      */
@@ -258,7 +260,7 @@ public interface Messages {
      * @param client message replace
      * @return plugin message
      */
-    String passwordWarning(final NetworkClient client);
+    String passwordWarning(final LocalNetworkClient client);
 
     /**
      * Get a plugin message
@@ -756,117 +758,199 @@ public interface Messages {
      *
      * @return plugin message
      */
-    String accountArguments();
+    String staffSetup();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String change();
+    String staffSetupSuccess();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String changeSame();
+    String staffInvalid();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String changeDone();
+    String staffUsage();
 
     /**
      * Get a plugin message
      *
-     * @return plugin message
-     */
-    String accountUnLock();
-
-    /**
-     * Get a plugin message
-     *
+     * @param issuer message replace
+     * @param action message replace
      * @param target message replace
      * @return plugin message
      */
-    String accountUnLocked(final String target);
+    String staffEcho(final NetworkEntity issuer, final String action, final NetworkEntity target);
 
     /**
      * Get a plugin message
      *
-     * @param target message replace
+     * @param issuer message replace
+     * @param action message replace
      * @return plugin message
      */
-    String accountNotLocked(final String target);
-
-    /**
-     * Get a plugin message
-     *
-     * @return plugin message
-     */
-    String close();
+    String staffClientEcho(final LocalNetworkClient issuer, final String action);
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String closed();
+    String staffToggleUsage();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String forcedClose();
-
-    /**
-     * Get a plugin message
-     *
-     * @param target message replace
-     * @return plugin message
-     */
-    String forcedCloseAdmin(final NetworkEntity target);
+    String staffToggleSuccess();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String remove();
+    String staffToggleFailure();
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String removeAccountMatch();
+    String staffRegisterUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @param password message replace
+     * @return plugin message
+     */
+    String staffRegisterSuccess(final LocalNetworkClient client, final String password);
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    String staffRegisterFailure(final String client);
 
     /**
      * Get a plugin message
      *
      * @return plugin message
      */
-    String accountRemoved();
+    String staffLoginUsage();
 
     /**
      * Get a plugin message
      *
-     * @param administrator message replace
+     * @param client message replace
      * @return plugin message
      */
-    String forcedAccountRemoval(final String administrator);
+    String staffLoginSuccess(final NetworkClient client);
 
     /**
      * Get a plugin message
      *
-     * @param target message replace
+     * @param client message replace
      * @return plugin message
      */
-    String forcedAccountRemovalAdmin(final String target);
+    String staffLoginFailure(final String client);
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String staffLogoutUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    String staffLogoutSuccess(final NetworkClient client);
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    String staffLogoutFailure(final String client);
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String staffUnregisterUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    String staffUnregisterSuccess(final LocalNetworkClient client);
+
+    /**
+     * Get a plugin message
+     *
+     * @param client message replace
+     * @return plugin message
+     */
+    String staffUnregisterFailure(final String client);
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String staffLookupUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @param filter message replace
+     * @return plugin message
+     */
+    String staffLookupEmpty(final String filter);
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    String staffUnbanUsage();
+
+    /**
+     * Get a plugin message
+     *
+     * @param address message replace
+     * @return plugin message
+     */
+    String staffUnbanSuccess(final InetAddress address);
+
+    /**
+     * Get a plugin message
+     *
+     * @param address message replace
+     * @return plugin message
+     */
+    String staffUnbanFailure(final InetAddress address);
 
     /**
      * Get a plugin message

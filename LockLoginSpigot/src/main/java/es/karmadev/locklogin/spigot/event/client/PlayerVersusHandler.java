@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.spigot.event.pv;
+package es.karmadev.locklogin.spigot.event.client;
 
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;

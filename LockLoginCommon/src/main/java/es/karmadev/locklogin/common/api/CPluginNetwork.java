@@ -102,34 +102,32 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public LocalNetworkClient getEntity(final int id) {
-        if (offline_cache.stream().anyMatch((offline) -> offline.id() == id)) {
-            return offline_cache.stream().filter((offline) -> offline.id() == id).findFirst().orElse(null);
-        }
+        return offline_cache.stream().filter((offline) -> offline.id() == id).findFirst().orElseGet(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.ID).where(Row.ID, "=", id);
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.ID).where(Row.ID, "=", id);
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        CLocalClient cl = new CLocalClient(id, engine);
+                        offline_cache.add(cl);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    CLocalClient cl = new CLocalClient(id, engine);
-                    offline_cache.add(cl);
-
-                    return cl;
+                        return cl;
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -140,41 +138,81 @@ public class CPluginNetwork implements PluginNetwork {
      */
     @Override
     public LocalNetworkClient getOfflinePlayer(final UUID uniqueId) {
-        if (offline_cache.stream().anyMatch((offline) -> uniqueId.equals(offline.uniqueId()) || uniqueId.equals(offline.onlineId()))) {
-            return offline_cache.stream().filter(
-                    (offline) -> offline != null && (uniqueId.equals(offline.uniqueId()) || uniqueId.equals(offline.onlineId())))
-                    .findAny()
-                    .orElse(null);
-        }
+        return offline_cache.stream().filter(
+                        (offline) -> offline != null && (uniqueId.equals(offline.uniqueId()) || uniqueId.equals(offline.onlineId())))
+                .findAny()
+                .orElseGet(() -> {
+                    Connection connection = null;
+                    Statement statement = null;
+                    try {
+                        connection = engine.retrieve();
+                        statement = connection.createStatement();
 
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+                        QueryBuilder builder = QueryBuilder.createQuery()
+                                .select(Table.USER, Row.ID)
+                                .where(Row.UUID, "=", uniqueId).or()
+                                .where(Row.PREMIUM_UUID, "=", uniqueId);
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.ID)
-                    .where(Row.UUID, "=", uniqueId).or()
-                    .where(Row.PREMIUM_UUID, "=", uniqueId);
+                        try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                            if (result.next()) {
+                                int id = result.getInt(1);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    int id = result.getInt(1);
+                                CLocalClient cl = new CLocalClient(id, engine);
+                                offline_cache.add(cl);
 
-                    CLocalClient cl = new CLocalClient(id, engine);
-                    offline_cache.add(cl);
+                                return cl;
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        engine.close(connection, statement);
+                    }
 
-                    return cl;
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
+                    return null;
+                });
+    }
 
-        return null;
+    /**
+     * Get an offline client
+     *
+     * @param id the client id
+     * @return the client
+     */
+    @Override
+    public LocalNetworkClient getOfflinePlayer(final int id) {
+        return offline_cache.stream().filter(
+                        (offline) -> offline != null && (offline.id() == id))
+                .findAny()
+                .orElseGet(() -> {
+                    Connection connection = null;
+                    Statement statement = null;
+                    try {
+                        connection = engine.retrieve();
+                        statement = connection.createStatement();
+
+                        QueryBuilder builder = QueryBuilder.createQuery()
+                                .select(Table.USER, Row.ID)
+                                .where(Row.ID, "=", id);
+
+                        try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                            if (result.next()) {
+                                int rsId = result.getInt(1);
+
+                                CLocalClient cl = new CLocalClient(rsId, engine);
+                                offline_cache.add(cl);
+
+                                return cl;
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        engine.close(connection, statement);
+                    }
+
+                    return null;
+                });
     }
 
     /**

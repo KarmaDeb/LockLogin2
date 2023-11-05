@@ -15,6 +15,10 @@ public enum Table {
      */
     SESSION("Sessions", Row.LOGIN_CAPTCHA, Row.LOGIN_PASSWORD, Row.LOGIN_PIN, Row.LOGIN_TOTP, Row.PERSISTENT, Row.CAPTCHA, Row.CREATED_AT),
     /**
+     * Sessions store table
+     */
+    SESSION_STORE("SessionsStore", Row.USER_ID, Row.ADDRESS, Row.LOGIN_PASSWORD, Row.LOGIN_PIN, Row.LOGIN_TOTP, Row.CREATED_AT),
+    /**
      * Servers table
      */
     SERVER("Servers", Row.NAME, Row.ADDRESS, Row.PORT, Row.CREATED_AT),

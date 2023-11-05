@@ -5,6 +5,7 @@ import es.karmadev.api.strings.StringUtils;
 import es.karmadev.api.web.WebDownloader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.runtime.LockLoginRuntime;
 import lombok.Getter;
 

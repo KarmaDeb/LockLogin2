@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
 import es.karmadev.locklogin.api.plugin.service.mail.EmailService;
+import es.karmadev.locklogin.api.plugin.service.mail.MailMessage;
 import es.karmadev.locklogin.common.api.plugin.service.mail.CMailMessage;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
@@ -12,6 +13,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @PluginCommand(command = "testmail")
 public class TestMail extends Command {
@@ -49,20 +53,43 @@ public class TestMail extends Command {
                 }
             }
 
-            String message = messageBuilder.toString();
+            Configuration configuration = plugin.configuration();
+            String senderName = configuration.mailer().getSendAs();
+
+            String message = messageBuilder
+                    .append("<br>\n<br>\nThis was a test email from LockLogin, requested by ")
+                    .append(sender.getName())
+                    .append("<br>\n<br>\n")
+                    .append("LockLogin and its developers does not take responsibility over this email or the contents it might have").toString();
+            MailMessage mailMessage = CMailMessage.builder().origin(senderName).subject(subject).message(message).build();
+
+            Path template = plugin.workingDirectory().resolve("templates").resolve("mailer").resolve("forgot_password.html");
+            if (!Files.exists(template)) {
+                plugin.plugin().export("plugin/html/forgot_password.html", template);
+            }
+
+            if (args[2].equalsIgnoreCase("template")) {
+                sender.sendMessage(ColorComponent.parse("&dSending forgot password template mail"));
+
+                mailMessage = CMailMessage.builder(template.toFile())
+                        .origin("noreply@karmadev.es")
+                        .subject("Your password recovery code")
+                        .applyPlaceholder("player", sender.getName())
+                        .applyPlaceholder("code", "TEST")
+                        .build();
+            }
 
             PluginService service = plugin.getService("mailer");
             if (service instanceof EmailService) {
                 EmailService mailer = (EmailService) service;
-                Configuration configuration = plugin.configuration();
 
                 if (!configuration.mailer().isEnabled()) {
                     sender.sendMessage(ColorComponent.parse("&5&oMailer service is not enabled, please configure it"));
                     return false;
                 }
 
-                sender.sendMessage(ColorComponent.parse("&dTrying to send test email to " + target + " as noreply@karmadev.es"));
-                mailer.send(target, CMailMessage.builder().origin("noreply@karmadev.es").subject(subject).message(message).build());
+                sender.sendMessage(ColorComponent.parse("&dTrying to send test email to " + target + " as " + senderName));
+                mailer.send(target, mailMessage);
                 return false;
             }
 

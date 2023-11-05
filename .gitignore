@@ -54,3 +54,7 @@ deprecated.txt
 /LockLoginSpigot/v2.0.0-SNAPSHOT/
 /v2.0.0-SNAPSHOT/
 /junit/
+/LockLoginSpigot/src/test/
+/LockLoginCommon/src/test/
+/LockLoginBungee/src/test/
+/LockLoginAPI/src/test/

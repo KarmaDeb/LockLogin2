@@ -88,6 +88,10 @@ public enum Row {
     /**
      * LockLogin row
      */
+    USER_ID("user", RowType.INTEGER),
+    /**
+     * LockLogin row
+     */
     ACCOUNT_ID("account", RowType.INTEGER),
     /**
      * LockLogin row

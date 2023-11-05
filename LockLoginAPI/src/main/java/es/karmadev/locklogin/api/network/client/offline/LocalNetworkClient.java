@@ -20,13 +20,6 @@ import java.util.UUID;
 public interface LocalNetworkClient extends NetworkEntity, Cached {
 
     /**
-     * Get the entity id
-     *
-     * @return the entity id
-     */
-    int id();
-
-    /**
      * Update the connection address
      *
      * @param address the connection address

@@ -19,7 +19,61 @@ public final class LockLoginPermission {
      * LockLogin administrators permission
      * <p>locklogin.administrator</p>
      */
-    final static PermissionObject LOCKLOGIN = new DummyPermission("locklogin.administrator", true);
+    public final static PermissionObject PERMISSION_ADMINISTRATOR = new DummyPermission("locklogin.administrator", true);
+
+    /**
+     * LockLogin staff mode toggle permission
+     * <p>locklogin.administrator.toggle</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_TOGGLE = DummyPermission.of("locklogin.administrator.toggle", true);
+
+    /**
+     * LockLogin staff mode setup permission
+     * <p>locklogin.administrator.setup</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_SETUP = DummyPermission.of("locklogin.administrator.setup", true);
+
+    /**
+     * LockLogin staff mode force register permission
+     * <p>locklogin.administrator.register</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_REGISTER = DummyPermission.of("locklogin.administrator.register", true);
+
+    /**
+     * LockLogin staff mode force login permission
+     * <p>locklogin.administrator.login</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_LOGIN = DummyPermission.of("locklogin.administrator.login", true);
+
+    /**
+     * LockLogin staff mode force logout permission
+     * <p>locklogin.administrator.logout</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_LOGOUT = DummyPermission.of("locklogin.administrator.logout", true);
+
+    /**
+     * LockLogin staff mode force unregister permission
+     * <p>locklogin.administrator.unregister</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_UNREGISTER = DummyPermission.of("locklogin.administrator.unregister", true);
+
+    /**
+     * LockLogin staff mode user lookup permission
+     * <p>locklogin.administrator.lookup</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_LOOKUP = DummyPermission.of("locklogin.administrator.lookup", true);
+
+    /**
+     * LockLogin staff mode ip unban permission
+     * <p>locklogin.administrator.unban</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_UNBAN = DummyPermission.of("locklogin.administrator.unban", true);
+
+    /**
+     * LockLogin staff mode listen staff actions permission
+     * <p>locklogin.administrator.echo</p>
+     */
+    public final static PermissionObject PERMISSION_STAFF_ECHO = DummyPermission.of("locklogin.administrator.echo", true);
 
     /**
      * LockLogin reload permission
@@ -135,48 +189,6 @@ public final class LockLoginPermission {
     public final static PermissionObject PERMISSION_INFO_ALT_ALERT = DummyPermission.of("locklogin.info.alt.alert", false);
 
     /**
-     * LockLogin client account management permission
-     * <p>locklogin.account</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT = DummyPermission.of("locklogin.account", true);
-
-    /**
-     * LockLogin client session close permission
-     * <p>locklogin.account.close</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_CLOSE = DummyPermission.of("locklogin.account.close", false);
-
-    /**
-     * LockLogin client account removal permission
-     * <p>locklogin.account.remove</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_REMOVE = DummyPermission.of("locklogin.account.remove", false);
-
-    /**
-     * LockLogin client account password management permission
-     * <p>locklogin.account.password</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_PASSWORD = DummyPermission.of("locklogin.account.password", false);
-
-    /**
-     * LockLogin client account pin management permission
-     * <p>locklogin.account.pin</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_PIN = DummyPermission.of("locklogin.account.pin", false);
-
-    /**
-     * LockLogin client account totp management permission
-     * <p>locklogin.account.totp</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_TOTP = DummyPermission.of("locklogin.account.totp", false);
-
-    /**
-     * LockLogin client account creation permission
-     * <p>locklogin.account.create</p>
-     */
-    public final static PermissionObject PERMISSION_ACCOUNT_CREATE = DummyPermission.of("locklogin.account.create", false);
-
-    /**
      * LockLogin force totp status permission
      * <p>locklogin.forcetotp</p>
      */
@@ -276,6 +288,15 @@ public final class LockLoginPermission {
     private final static Map<String, PermissionObject> official_node_map = new LinkedHashMap<>();
 
     static {
+        PERMISSION_STAFF_TOGGLE.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_SETUP.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_REGISTER.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_LOGIN.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_LOGOUT.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_UNREGISTER.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_LOOKUP.addParent(PERMISSION_ADMINISTRATOR);
+        PERMISSION_STAFF_UNBAN.addParent(PERMISSION_ADMINISTRATOR);
+
         PERMISSION_LOCATION.addChildren(
                 PERMISSION_LOCATION_SPAWN.addParent(PERMISSION_LOCATION),
                 PERMISSION_LOCATION_CLIENT.addParent(PERMISSION_LOCATION)
@@ -287,14 +308,14 @@ public final class LockLoginPermission {
                 PERMISSION_INFO_ALT_ALERT.addParent(PERMISSION_INFO, PERMISSION_INFO_ALT)
         );
 
-        PERMISSION_ACCOUNT.addChildren(
+        /*PERMISSION_ACCOUNT.addChildren(
                 PERMISSION_ACCOUNT_CLOSE.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_REMOVE.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_PASSWORD.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_PIN.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_TOTP.addParent(PERMISSION_ACCOUNT),
                 PERMISSION_ACCOUNT_CREATE.addParent(PERMISSION_ACCOUNT)
-        );
+        );*/
 
         PERMISSION_VERSION.addChildren(
                 PERMISSION_VERSION_CHANGELOG.addParent(PERMISSION_VERSION),
@@ -333,8 +354,8 @@ public final class LockLoginPermission {
             if (field.getType().equals(PermissionObject.class)) {
                 try {
                     PermissionObject permission = (PermissionObject) field.get(LockLoginPermission.class);
-                    if (!permission.equals(LOCKLOGIN)) {
-                        LOCKLOGIN.addChildren(permission.addParent(LOCKLOGIN));
+                    if (!permission.equals(PERMISSION_ADMINISTRATOR)) {
+                        PERMISSION_ADMINISTRATOR.addChildren(permission.addParent(PERMISSION_ADMINISTRATOR));
                     }
 
                     official_node_map.put(permission.node(), permission);
@@ -374,7 +395,7 @@ public final class LockLoginPermission {
 
             if (module == null || !module.isEnabled()) return false;
 
-            module_node_map.put(permission.node(), new ModulePermission(module, permission.addParent(LOCKLOGIN.addChildren(permission))));
+            module_node_map.put(permission.node(), new ModulePermission(module, permission.addParent(PERMISSION_ADMINISTRATOR.addChildren(permission))));
             return true;
         }
 

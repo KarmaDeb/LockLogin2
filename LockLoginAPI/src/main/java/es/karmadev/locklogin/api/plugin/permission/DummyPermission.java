@@ -152,7 +152,7 @@ public class DummyPermission implements PermissionObject {
      */
     public static DummyPermission of(final String node, final boolean inheritance) {
         DummyPermission n = new DummyPermission(node, inheritance);
-        n.topLevel = LockLoginPermission.LOCKLOGIN;
+        n.topLevel = LockLoginPermission.PERMISSION_ADMINISTRATOR;
 
         return n;
     }

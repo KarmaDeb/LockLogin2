@@ -32,6 +32,8 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CPluginConfiguration implements Configuration {
 
@@ -598,13 +600,18 @@ public class CPluginConfiguration implements Configuration {
     }
 
     /**
-     * Get the plugin name check protocol
+     * Get the plugin name check regex
      *
-     * @return the plugin name check protocl
+     * @return the allowed name regex
      */
     @Override
-    public int checkProtocol() {
-        return yaml.getInteger("NameCheckProtocol", 2);
+    public Pattern namePattern() {
+        String pattern = yaml.getString("NameCheckRegex", "^[A-Za-z-0-9_-]{3,16}$");
+        try {
+            return Pattern.compile(pattern);
+        } catch (PatternSyntaxException ex) {
+            return Pattern.compile("^[A-Za-z-0-9_-]{3,16}$");
+        }
     }
 
     /**

@@ -21,23 +21,24 @@ public class CommandMask {
     private final static String[] filter = new String[]{
             "register",
             "login",
-            "account",
-            "panic",
             "pin",
-            "2fa"
+            "totp",
+            "staff"
     };
 
     private final static String[] subArguments = new String[]{
             "change",
-            "unlock",
-            "close",
             "remove",
-            "delete",
-            "alts",
-            "session",
-            "protect",
             "setup",
-            "change"
+            "enable",
+            "disable",
+            "toggle",
+            "register",
+            "login",
+            "logout",
+            "unregister",
+            "unban",
+            "lookup"
     };
 
     private final static Map<UUID, String[]> args = new ConcurrentHashMap<>();

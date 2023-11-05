@@ -74,4 +74,12 @@ public interface MailConfiguration {
      * @return the mail password
      */
     String getPassword();
+
+    /**
+     * Get the name to use when
+     * sending emails
+     *
+     * @return the name to use
+     */
+    String getSendAs();
 }

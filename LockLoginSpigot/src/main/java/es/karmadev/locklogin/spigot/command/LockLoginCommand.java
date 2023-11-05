@@ -17,6 +17,7 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
 import es.karmadev.locklogin.common.plugin.InternalMessage;
+import es.karmadev.locklogin.common.plugin.web.License;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
@@ -126,6 +127,11 @@ public class LockLoginCommand extends Command {
                                 }
 
                                 spigot.languagePackManager().setLang(configuration.language());
+
+                                License.preCache();
+                                if (License.isLicensed()) {
+                                    spigot.info("Thanks {0} for supporting Locklogin. As a compensation, you will be eligible for a 100% discount on a product of us!", License.getBuyer());
+                                }
                             } else {
                                 sender.sendMessage(ColorComponent.parse(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload configuration", null)));

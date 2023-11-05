@@ -15,17 +15,11 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.event.entity.client.*;
 import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
-import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
+import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
-import es.karmadev.locklogin.api.plugin.file.section.CaptchaConfiguration;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
-import es.karmadev.locklogin.api.plugin.service.PluginService;
-import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
-import es.karmadev.locklogin.api.plugin.service.floodgate.FloodGateService;
-import es.karmadev.locklogin.api.plugin.service.name.NameValidator;
-import es.karmadev.locklogin.api.security.brute.BruteForceService;
 import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.api.user.auth.ProcessFactory;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
@@ -36,7 +30,9 @@ import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
+import es.karmadev.locklogin.common.plugin.internal.PluginPermissionManager;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
+import es.karmadev.locklogin.spigot.event.helper.EventHelper;
 import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
@@ -46,6 +42,7 @@ import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -54,10 +51,9 @@ import org.bukkit.event.player.*;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +79,6 @@ public class JoinHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPreLogin(AsyncPlayerPreLoginEvent e) {
-        //TODO: Split logic in smaller methods
         if (plugin.getRuntime().booting()) {
             e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ConsoleColor.parse("&cThe server is booting!"));
             return;
@@ -116,190 +111,14 @@ public class JoinHandler implements Listener {
                 plugin.moduleManager().fireEvent(event);
             }
         }
+
         UserSession session = offline.session();
 
-        session.login(false);
-        session.totpLogin(false);
-        session.pinLogin(false);
+        //session.login(false);
+        //session.totpLogin(false);
+        //session.pinLogin(false);
 
-        if (!session.isCaptchaLogged()) {
-            CaptchaConfiguration settings = configuration.captcha();
-            if (settings.enable()) {
-                int size = settings.length();
-                String captcha = StringUtils.generateString(size);
-
-                //String captcha = string.create();
-                if (settings.strikethrough()) {
-                    if (settings.randomStrike()) {
-                        String last_color = ConsoleColor.lastColor(captcha);
-                        StringBuilder builder = new StringBuilder();
-
-                        for (int i = 0; i < captcha.length(); i++) {
-                            int random = new Random().nextInt(100);
-                            //TODO: Move random out of the loop, and use SplittableRandom instead
-
-                            if (random > 50) {
-                                builder.append(last_color).append("&m").append(captcha.charAt(i)).append("&r");
-                            } else {
-                                builder.append(last_color).append(captcha.charAt(i)).append("&r");
-                            }
-                        }
-
-                        captcha = builder.toString();
-                    } else {
-                        captcha = "&m" + captcha;
-                    }
-                }
-
-                session.setCaptcha(captcha);
-            } else {
-                session.captchaLogin(true);
-            }
-        }
-
-        UUID use_uid = offline_uid;
-        if (online_uid != null) {
-            PremiumConfiguration premiumConfig = configuration.premium();
-            if (premiumConfig.enable() || plugin.onlineMode()) {
-                if (plugin.onlineMode()) {
-                    use_uid = online_uid;
-                } else {
-                    if ((configuration.premium().auto() || offline.connection().equals(ConnectionType.ONLINE)) && !premiumConfig.forceOfflineId()) {
-                        use_uid = online_uid;
-                    }
-                }
-            }
-        }
-
-        InetAddress address = e.getAddress();
-        boolean result = invalidIP(address);
-
-        EntityValidationEvent ip_validation_event = new EntityValidationEvent(offline);
-        ip_validation_event.setCancelled(result, (result ? "IP address is not valid" : null));
-        plugin.moduleManager().fireEvent(ip_validation_event);
-
-        if (ip_validation_event.isCancelled()) {
-            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.ipProxyError() + "\n\n" + ip_validation_event.cancelReason()));
-            plugin.logInfo("Denied access of player {0} for {1}", name, ip_validation_event.cancelReason());
-
-            return;
-        }
-
-        if (plugin.bungeeMode()) {
-            session.invalidate();
-        } else {
-            session.validate();
-
-            MultiAccountManager multi = plugin.accountManager();
-            if (multi == null || multi.allow(address, configuration.register().maxAccounts())) {
-                if (multi != null) {
-                    multi.assign(offline, address);
-
-                    int amount = multi.getAccounts(address).size();
-                    int max = configuration.register().maxAccounts();
-                    if (amount >= max && max > 1) { //We only want to send a warning if the maximum amount of accounts is over 1
-                        for (NetworkClient client : plugin.network().getOnlinePlayers()) {
-                            if (client.hasPermission(LockLoginPermission.PERMISSION_INFO_ALT_ALERT)) {
-                                client.sendMessage(messages.prefix() + messages.altFound(name, amount));
-                            }
-                        }
-                    }
-                }
-            } else {
-                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_FULL, ColorComponent.parse(messages.maxRegisters()));
-                return;
-            }
-
-            PluginService bf_service = plugin.getService("bruteforce");
-            if (bf_service instanceof BruteForceService) {
-                BruteForceService bruteforce = (BruteForceService) bf_service;
-
-                if (bruteforce.isBlocked(address)) {
-                    long timeLeft = bruteforce.banTimeLeft(address);
-
-                    //BFAP = Brute Force Attack Protector
-                    plugin.logWarn("[BFAP] Address {0} tried to access the server but was blocked for brute force attack. Ban time ramining: {1}", address.getHostAddress(), TimeUnit.MILLISECONDS.toSeconds(timeLeft));
-
-                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.ipBlocked(timeLeft)));
-                    return;
-                }
-            }
-
-            if (configuration.verifyUniqueIDs()) {
-                if (!provided_id.equals(use_uid)) {
-                    boolean deny = true;
-
-                    PluginService fg_service = plugin.getService("floodgate");
-                    if (fg_service instanceof FloodGateService) {
-                        FloodGateService floodgate = (FloodGateService) fg_service;
-                        if (floodgate.isBedrock(provided_id)) {
-                            deny = false;
-                            use_uid = provided_id;
-                        }
-                    }
-
-                    if (deny) {
-                        //USP = UUID Spoofer Protector
-                        plugin.logWarn("[USP] Denied connection from {0} because its UUID ({1}) doesn't match with generated one ({2})", name, use_uid, provided_id);
-
-                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.uuidFetchError()));
-                        return;
-                    }
-                }
-            }
-
-            PluginService name_service = plugin.getService("name");
-            if (name_service instanceof ServiceProvider) {
-                ServiceProvider<? extends PluginService> provider = (ServiceProvider<?>) name_service;
-                PluginService service = provider.serve(name);
-
-                if (service instanceof NameValidator) {
-                    NameValidator validator = (NameValidator) service;
-                    validator.validate();
-
-                    if (validator.isValid()) {
-                        plugin.logInfo("Successfully validated username of {0}", name);
-                    } else {
-                        boolean deny = true;
-
-                        PluginService fg_service = plugin.getService("floodgate");
-                        if (fg_service instanceof FloodGateService) {
-                            FloodGateService floodgate = (FloodGateService) fg_service;
-                            if (floodgate.isBedrock(provided_id)) {
-                                deny = false;
-                                plugin.info("Connected bedrock client {0}", name);
-                            }
-                        }
-
-                        if (deny) {
-                            plugin.logWarn("[NVP] Denied connection from {0} because its name was not valid ({1})", name, ConsoleColor.strip(validator.invalidCharacters()));
-                            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, ColorComponent.parse(messages.illegalName(validator.invalidCharacters())));
-                            return;
-                        }
-                    }
-                }
-            }
-
-            Player online = Bukkit.getServer().getPlayer(offline_uid);
-            if (online == null && online_uid != null) online = Bukkit.getServer().getPlayer(online_uid);
-            if (online != null && online.isOnline() && configuration.allowSameIp()) {
-                InetSocketAddress online_address = online.getAddress();
-                if (online_address != null && online_address.getAddress() != null) {
-                    InetAddress online_inet = online_address.getAddress();
-                    if (!Arrays.equals(online_inet.getAddress(), address.getAddress())) {
-                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, ColorComponent.parse(messages.alreadyPlaying()));
-                        return;
-                    }
-                }
-            }
-
-            EntityPreConnectEvent event = new EntityPreConnectEvent(offline);
-            plugin.moduleManager().fireEvent(event);
-
-            if (event.isCancelled()) {
-                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ColorComponent.parse(event.cancelReason()));
-            }
-        }
+        validateUser(e, offline, offline_uid, online_uid);
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -398,10 +217,21 @@ public class JoinHandler implements Listener {
         NetworkClient online = plugin.network().getPlayer(UserDataHandler.getNetworkId(player));
         Messages messages = plugin.messages();
 
-        startAuthProcess(online, null);
         if (configuration.clearChat()) {
             ProtocolAssistant.clearChat(player);
         }
+
+        UserSession session = online.session();
+        PluginPermissionManager<OfflinePlayer, String> manager = plugin.getPermissionManager();
+        if (manager != null) {
+            if (!session.isLogged())
+                manager.removeAllPermission(player);
+
+            manager.applyGrants(player);
+        }
+
+        if (!session.isLogged())
+            startAuthProcess(online, null);
 
         if (online.hasPermission(LockLoginPermission.PERMISSION_JOIN_SILENT)) return;
         String customMessage = messages.join(online);
@@ -445,6 +275,13 @@ public class JoinHandler implements Listener {
             client.session().login(true);
             client.session().totpLogin(true);
             client.session().pinLogin(true);
+
+            PluginPermissionManager<OfflinePlayer, String> manager = plugin.getPermissionManager();
+            Player player = UserDataHandler.getPlayer(client);
+            if (player != null && manager != null) {
+                manager.restorePermissions(player);
+                manager.applyGrants(player);
+            }
 
             return;
         }
@@ -524,6 +361,65 @@ public class JoinHandler implements Listener {
             });
         } else {
             startAuthProcess(client, previous); //Go directly to the next process
+        }
+    }
+
+    private void validateUser(final AsyncPlayerPreLoginEvent e, final LocalNetworkClient client,
+                              final UUID offline_uid,
+                              final UUID online_uid) {
+        String name = e.getName();
+        UUID provided_id = e.getUniqueId();
+
+        UserSession session = client.session();
+        Messages messages = plugin.messages();
+
+        EventHelper.generateCaptcha(session);
+
+        AtomicReference<UUID> use_uid = new AtomicReference<>(offline_uid);
+        if (online_uid != null) {
+            PremiumConfiguration premiumConfig = configuration.premium();
+            if (premiumConfig.enable() || plugin.onlineMode()) {
+                if (plugin.onlineMode()) {
+                    use_uid.set(online_uid);
+                } else {
+                    if ((configuration.premium().auto() || client.connection().equals(ConnectionType.ONLINE)) && !premiumConfig.forceOfflineId()) {
+                        use_uid.set(online_uid);
+                    }
+                }
+            }
+        }
+
+        InetAddress address = e.getAddress();
+        boolean result = invalidIP(address);
+
+        EntityValidationEvent ip_validation_event = new EntityValidationEvent(client);
+        ip_validation_event.setCancelled(result, (result ? "IP address is not valid" : null));
+        plugin.moduleManager().fireEvent(ip_validation_event);
+
+        if (ip_validation_event.isCancelled()) {
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.ipProxyError() + "\n\n" + ip_validation_event.cancelReason()));
+            plugin.logInfo("Denied access of player {0} for {1}", name, ip_validation_event.cancelReason());
+
+            return;
+        }
+
+        if (plugin.bungeeMode()) {
+            session.invalidate();
+        } else {
+            session.validate();
+
+            if (EventHelper.checkMultiAccounts(e, name, address, client, messages)) return;
+            if (EventHelper.checkBan(e, address, messages)) return;
+            if (EventHelper.checkUUID(e, use_uid, messages)) return;
+            if (EventHelper.checkName(e, messages)) return;
+            if (EventHelper.checkOnline(e, use_uid, address, messages)) return;
+
+            EntityPreConnectEvent event = new EntityPreConnectEvent(client);
+            plugin.moduleManager().fireEvent(event);
+
+            if (event.isCancelled()) {
+                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ColorComponent.parse(event.cancelReason()));
+            }
         }
     }
 }

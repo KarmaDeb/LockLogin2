@@ -39,20 +39,22 @@ import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.protection.type.*;
 import es.karmadev.locklogin.common.api.user.storage.account.transiction.CTransitional;
+import es.karmadev.locklogin.common.plugin.internal.PluginPermissionManager;
 import es.karmadev.locklogin.common.plugin.secure.logger.JavaLogger;
 import es.karmadev.locklogin.common.plugin.secure.logger.Log4Logger;
 import es.karmadev.locklogin.common.plugin.web.CMarketPlace;
+import es.karmadev.locklogin.common.plugin.web.License;
 import es.karmadev.locklogin.common.plugin.web.local.CStoredResource;
 import es.karmadev.locklogin.common.plugin.web.manifest.ResourceManifest;
 import es.karmadev.locklogin.common.util.LockLoginJson;
 import es.karmadev.locklogin.spigot.command.helper.CommandHelper;
 import es.karmadev.locklogin.spigot.event.*;
-import es.karmadev.locklogin.spigot.event.pv.PlayerVersusHandler;
-import es.karmadev.locklogin.spigot.event.ui.InterfaceIOEvent;
+import es.karmadev.locklogin.spigot.event.helper.EventHelper;
+import es.karmadev.locklogin.spigot.event.client.PlayerVersusHandler;
+import es.karmadev.locklogin.spigot.event.window.InterfaceIOEvent;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
-import es.karmadev.locklogin.spigot.vault.VaultPermissionManager;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -138,6 +140,7 @@ public class SpigotPlugin extends KarmaPlugin {
             iterationHandler = new IterationHandler();
             playerVersusHandler = new PlayerVersusHandler(spigot);
             UI_CloseOpenHandler = new InterfaceIOEvent(spigot);
+            EventHelper.setInstance(spigot);
 
             PluginManager pluginManager = Bukkit.getPluginManager();
             spigot.installDriver();
@@ -148,7 +151,7 @@ public class SpigotPlugin extends KarmaPlugin {
             logger().send(LogLevel.SUCCESS, "LockLogin has been booted");
 
             //Set up the clients
-            setupClients(pluginManager);
+            setupClients();
 
             //Reorganize legacy directories with the new ones
             reorganizeDirectories();
@@ -237,122 +240,8 @@ public class SpigotPlugin extends KarmaPlugin {
             //Load LockLogin modules
             loadModules();
 
-            Path legacyUserDirectory = spigot.workingDirectory().resolve("data").resolve("accounts");
-            if (Files.exists(legacyUserDirectory) && Files.isDirectory(legacyUserDirectory)) {
-                logger().log(LogLevel.INFO, "Found legacy accounts folder, preparing to migrate existing data");
-
-                try(Stream<Path> files = Files.list(legacyUserDirectory).filter((file) ->
-                        !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("lldb"))) {
-
-                    Pattern namePattern = Pattern.compile("'player' -> [\"'].*[\"']");
-                    Pattern passPattern = Pattern.compile("'password' -> [\"'].*[\"']");
-                    Pattern tokenPattern = Pattern.compile("'token' -> [\"'].*[\"']");
-                    Pattern pinPattern = Pattern.compile("'pin' -> [\"'].*[\"']");
-                    Pattern gAuthPattern = Pattern.compile("'2fa' -> [true-false]");
-                    Pattern panicPattern = Pattern.compile("'panic' -> [\"'].*[\"']");
-
-                    Path migratedDirectory = spigot.workingDirectory().resolve("cache").resolve("migrations");
-                    PathUtilities.createDirectory(migratedDirectory);
-
-                    files.forEachOrdered((file) -> {
-                        String fileName = PathUtilities.getName(file, true);
-
-                        Path migrationFile = migratedDirectory.resolve(fileName);
-                        List<String> lines = PathUtilities.readAllLines(file);
-
-                        String name = null;
-                        String legacyPassword = null;
-                        String gAuth = null;
-                        String legacyPin = null;
-                        boolean gAuthStatus = false;
-                        String legacyPanic = null;
-
-                        for (String line : lines) {
-                            Matcher nameMatcher = namePattern.matcher(line);
-                            Matcher passMatcher = passPattern.matcher(line);
-                            Matcher tokenMatcher = tokenPattern.matcher(line);
-                            Matcher pinMatcher = pinPattern.matcher(line);
-                            Matcher authMatcher = gAuthPattern.matcher(line);
-                            Matcher panicMatcher = panicPattern.matcher(line);
-
-                            final int ending = line.length() - 1;
-                            if (nameMatcher.find()) {
-                                int being = nameMatcher.start() + "'player' -> '".length();
-                                name = line.substring(being, ending);
-
-                                continue;
-                            }
-                            if (passMatcher.find()) {
-                                int being = passMatcher.start() + "'password' -> '".length();
-                                legacyPassword = line.substring(being, ending);
-
-                                continue;
-                            }
-                            if (tokenMatcher.find()) {
-                                int being = tokenMatcher.start() + "'token' -> '".length();
-                                gAuth = line.substring(being, ending);
-
-                                continue;
-                            }
-                            if (pinMatcher.find()) {
-                                int being = pinMatcher.start() + "'pin' -> '".length();
-                                legacyPin = line.substring(being, ending);
-
-                                continue;
-                            }
-                            if (authMatcher.find()) {
-                                int being = authMatcher.start() + "'2fa' -> ".length();
-                                String rawValue = line.substring(being, ending + 1);
-
-                                gAuthStatus = Boolean.parseBoolean(rawValue);
-                                continue;
-                            }
-                            if (panicMatcher.find()) {
-                                int being = panicMatcher.start() + "'panic' -> '".length();
-                                legacyPanic = line.substring(being, ending);
-                            }
-                        }
-
-                        if (name == null || legacyPassword == null ||
-                                gAuth == null || legacyPin == null || legacyPanic == null) {
-
-                            logger().log(LogLevel.WARNING, "Ignoring migration of {0} because there's missing data [{1}]",
-                                    (name != null ? name : PathUtilities.getName(file, false)));
-                            return;
-                        }
-
-                        UUID uniqueId = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
-                        Transitional legacy = CTransitional.fromLegacy(
-                                name,
-                                uniqueId,
-                                legacyPassword,
-                                legacyPin,
-                                gAuth,
-                                legacyPanic,
-                                gAuthStatus
-                        );
-
-                        UserFactory<? extends LocalNetworkClient> userFactory = spigot.getUserFactory(true);
-                        LocalNetworkClient client = userFactory.create(name, uniqueId);
-
-                        AccountFactory<? extends UserAccount> factory = spigot.getAccountFactory(true);
-                        AccountMigrator<? extends UserAccount> migrator = factory.migrator();
-
-                        UserAccount migrated = migrator.migrate(client, legacy, AccountField.EMAIL);
-                        if (migrated != null) {
-                            logger().log(LogLevel.SUCCESS, "Successfully migrated account of {0}", name);
-                            try {
-                                Files.move(file, migrationFile, StandardCopyOption.REPLACE_EXISTING);
-                            } catch (IOException ex) {
-                                logger().log(ex, "Failed to move legacy player {0} file into migrations folder {1}, account might be processed and migrated on the next server boot unless moved manually",
-                                        PathUtilities.pathString(file, '/'), PathUtilities.pathString(migrationFile, '/'));
-                            }
-                        }
-                    });
-                } catch (IOException ex) {
-                    logger().log(ex, "Failed to migrate legacy accounts");
-                }
-            }
+            //Migrate from legacy found data
+            migrateLegacyData();
 
             Configuration configuration = spigot.configuration();
             UpdaterSection updater = configuration.updater();
@@ -385,88 +274,216 @@ public class SpigotPlugin extends KarmaPlugin {
                 }
             }
 
-            Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
-            try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
-                logger().log(LogLevel.INFO, "Preparing to load marketplace resources");
-                Gson gson = new GsonBuilder().create();
+            //Load marketplace resources
+            arrangeMarketplace(marketPlace);
 
-                Pattern idPattern = Pattern.compile("id=[0-9]*");
-                Pattern categoryPattern = Pattern.compile("category=[A-Z]*");
-                Pattern namePattern = Pattern.compile("name=.*");
-                Pattern descriptionPattern = Pattern.compile("description=.*");
-                Pattern publisherPattern = Pattern.compile("publisher=[a-zA-Z0-9_-]{3,16}");
-                Pattern versionPattern = Pattern.compile("version=.*");
-                Pattern downloadPattern = Pattern.compile("download=[0-9]*");
+            spigot.configuration().reload(); //Perform a silent reload in order to apply changes from resources
+            spigot.languagePackManager().setLang(spigot.configuration().language());
 
-                files.forEach((directory) -> {
-                    Path resourceMeta = directory.resolve("resource.meta");
-                    Path manifest = directory.resolve("manifest.json");
+            spigot.messages().reload();
+            SpawnLocationStorage.load(); //Precache spawn location, regardless if it's enabled or not
 
-                    if (!Files.exists(resourceMeta) || !Files.exists(manifest)) return;
-                    if (Files.isDirectory(resourceMeta) || Files.isDirectory(manifest)) return;
+            long end = System.currentTimeMillis();
+            long diff = end - start;
+            long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
 
-                    JsonElement element = gson.fromJson(PathUtilities.read(manifest), JsonElement.class);
-
-                    ResourceManifest rm = new ResourceManifest();
-                    if (rm.read(spigot, element)) {
-                        List<String> rawData = PathUtilities.readAllLines(resourceMeta);
-                        int id = -1;
-                        Category category = null;
-                        String name = null;
-                        String description = null;
-                        String publisher = null;
-                        String rsVersion = null;
-                        Instant download = null;
-
-                        for (String line : rawData) {
-                            Matcher matcher = idPattern.matcher(line);
-                            if (matcher.matches()) {
-                                id = Integer.parseInt(matcher.group().split("=")[1]);
-                            } else if (categoryPattern.matcher(line).matches()) {
-                                try {
-                                    category = Category.valueOf(line.split("=")[1]);
-                                } catch (IllegalArgumentException ignored) {}
-                            } else if (namePattern.matcher(line).matches()) {
-                                name = line.split("=")[1];
-                            } else if (descriptionPattern.matcher(line).matches()) {
-                                description = line.split("=")[1];
-                            } else if (publisherPattern.matcher(line).matches()) {
-                                publisher = line.split("=")[1];
-                            } else if (versionPattern.matcher(line).matches()) {
-                                rsVersion = line.split("=")[1];
-                            } else if (downloadPattern.matcher(line).matches()) {
-                                download = Instant.ofEpochMilli(Long.parseLong(line.split("=")[1]));
-                            }
-                        }
-
-                        if (id > 0 && !ObjectUtils.areNullOrEmpty(false, category, name, description,
-                                publisher, rsVersion, download)) {
-                            CStoredResource resource = CStoredResource.of(
-                                id, false, category, name, description, publisher, rsVersion, download, rm
-                            );
-                            resource.load();
-                            marketPlace.getManager().getResourceSet().add(resource);
-                        }
-                    }
-                });
-
-                spigot.configuration().reload(); //Perform a silent reload in order to apply changes from resources
-                spigot.languagePackManager().setLang(spigot.configuration().language());
-
-                spigot.messages().reload();
-                SpawnLocationStorage.load(); //Precache spawn location, regardless if it's enabled or not
-
-                long end = System.currentTimeMillis();
-                long diff = end - start;
-                long diff2 = spigot.getPostStartup().toEpochMilli() - spigot.getStartup().toEpochMilli();
-
-                long rs = diff + diff2;
-                logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
-            } catch (IOException ex) {
-                logger().log(ex, "Failed to load resources");
+            long rs = diff + diff2;
+            logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
+            if (License.isLicensed()) {
+                spigot.info("Thanks {0} for supporting Locklogin", License.getBuyer());
             }
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");
+        }
+    }
+
+    private void arrangeMarketplace(final CMarketPlace marketPlace) {
+        Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
+        try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
+            logger().log(LogLevel.INFO, "Preparing to load marketplace resources");
+            Gson gson = new GsonBuilder().create();
+
+            Pattern idPattern = Pattern.compile("id=[0-9]*");
+            Pattern categoryPattern = Pattern.compile("category=[A-Z]*");
+            Pattern namePattern = Pattern.compile("name=.*");
+            Pattern descriptionPattern = Pattern.compile("description=.*");
+            Pattern publisherPattern = Pattern.compile("publisher=[a-zA-Z0-9_-]{3,16}");
+            Pattern versionPattern = Pattern.compile("version=.*");
+            Pattern downloadPattern = Pattern.compile("download=[0-9]*");
+
+            files.forEach((directory) -> {
+                Path resourceMeta = directory.resolve("resource.meta");
+                Path manifest = directory.resolve("manifest.json");
+
+                if (!Files.exists(resourceMeta) || !Files.exists(manifest)) return;
+                if (Files.isDirectory(resourceMeta) || Files.isDirectory(manifest)) return;
+
+                JsonElement element = gson.fromJson(PathUtilities.read(manifest), JsonElement.class);
+
+                ResourceManifest rm = new ResourceManifest();
+                if (rm.read(spigot, element)) {
+                    List<String> rawData = PathUtilities.readAllLines(resourceMeta);
+                    int id = -1;
+                    Category category = null;
+                    String name = null;
+                    String description = null;
+                    String publisher = null;
+                    String rsVersion = null;
+                    Instant download = null;
+
+                    for (String line : rawData) {
+                        Matcher matcher = idPattern.matcher(line);
+                        if (matcher.matches()) {
+                            id = Integer.parseInt(matcher.group().split("=")[1]);
+                        } else if (categoryPattern.matcher(line).matches()) {
+                            try {
+                                category = Category.valueOf(line.split("=")[1]);
+                            } catch (IllegalArgumentException ignored) {}
+                        } else if (namePattern.matcher(line).matches()) {
+                            name = line.split("=")[1];
+                        } else if (descriptionPattern.matcher(line).matches()) {
+                            description = line.split("=")[1];
+                        } else if (publisherPattern.matcher(line).matches()) {
+                            publisher = line.split("=")[1];
+                        } else if (versionPattern.matcher(line).matches()) {
+                            rsVersion = line.split("=")[1];
+                        } else if (downloadPattern.matcher(line).matches()) {
+                            download = Instant.ofEpochMilli(Long.parseLong(line.split("=")[1]));
+                        }
+                    }
+
+                    if (id > 0 && !ObjectUtils.areNullOrEmpty(false, category, name, description,
+                            publisher, rsVersion, download)) {
+                        CStoredResource resource = CStoredResource.of(
+                                id, false, category, name, description, publisher, rsVersion, download, rm
+                        );
+
+                        marketPlace.getManager().getResourceSet().add(resource);
+                        resource.load();
+                    }
+                }
+            });
+        } catch (IOException ex) {
+            logger().log(ex, "Failed to load resources");
+        }
+    }
+
+    private void migrateLegacyData() {
+        Path legacyUserDirectory = spigot.workingDirectory().resolve("data").resolve("accounts");
+        if (Files.exists(legacyUserDirectory) && Files.isDirectory(legacyUserDirectory)) {
+            logger().log(LogLevel.INFO, "Found legacy accounts folder, preparing to migrate existing data");
+
+            try(Stream<Path> files = Files.list(legacyUserDirectory).filter((file) ->
+                    !Files.isDirectory(file) && PathUtilities.getExtension(file).equals("lldb"))) {
+
+                Pattern namePattern = Pattern.compile("'player' -> [\"'].*[\"']");
+                Pattern passPattern = Pattern.compile("'password' -> [\"'].*[\"']");
+                Pattern tokenPattern = Pattern.compile("'token' -> [\"'].*[\"']");
+                Pattern pinPattern = Pattern.compile("'pin' -> [\"'].*[\"']");
+                Pattern gAuthPattern = Pattern.compile("'2fa' -> [true-false]");
+                Pattern panicPattern = Pattern.compile("'panic' -> [\"'].*[\"']");
+
+                Path migratedDirectory = spigot.workingDirectory().resolve("cache").resolve("migrations");
+                PathUtilities.createDirectory(migratedDirectory);
+
+                files.forEachOrdered((file) -> {
+                    String fileName = PathUtilities.getName(file, true);
+
+                    Path migrationFile = migratedDirectory.resolve(fileName);
+                    List<String> lines = PathUtilities.readAllLines(file);
+
+                    String name = null;
+                    String legacyPassword = null;
+                    String gAuth = null;
+                    String legacyPin = null;
+                    boolean gAuthStatus = false;
+                    String legacyPanic = null;
+
+                    for (String line : lines) {
+                        Matcher nameMatcher = namePattern.matcher(line);
+                        Matcher passMatcher = passPattern.matcher(line);
+                        Matcher tokenMatcher = tokenPattern.matcher(line);
+                        Matcher pinMatcher = pinPattern.matcher(line);
+                        Matcher authMatcher = gAuthPattern.matcher(line);
+                        Matcher panicMatcher = panicPattern.matcher(line);
+
+                        final int ending = line.length() - 1;
+                        if (nameMatcher.find()) {
+                            int being = nameMatcher.start() + "'player' -> '".length();
+                            name = line.substring(being, ending);
+
+                            continue;
+                        }
+                        if (passMatcher.find()) {
+                            int being = passMatcher.start() + "'password' -> '".length();
+                            legacyPassword = line.substring(being, ending);
+
+                            continue;
+                        }
+                        if (tokenMatcher.find()) {
+                            int being = tokenMatcher.start() + "'token' -> '".length();
+                            gAuth = line.substring(being, ending);
+
+                            continue;
+                        }
+                        if (pinMatcher.find()) {
+                            int being = pinMatcher.start() + "'pin' -> '".length();
+                            legacyPin = line.substring(being, ending);
+
+                            continue;
+                        }
+                        if (authMatcher.find()) {
+                            int being = authMatcher.start() + "'2fa' -> ".length();
+                            String rawValue = line.substring(being, ending + 1);
+
+                            gAuthStatus = Boolean.parseBoolean(rawValue);
+                            continue;
+                        }
+                        if (panicMatcher.find()) {
+                            int being = panicMatcher.start() + "'panic' -> '".length();
+                            legacyPanic = line.substring(being, ending);
+                        }
+                    }
+
+                    if (name == null || legacyPassword == null ||
+                            gAuth == null || legacyPin == null || legacyPanic == null) {
+
+                        logger().log(LogLevel.WARNING, "Ignoring migration of {0} because there's missing data [{1}]",
+                                (name != null ? name : PathUtilities.getName(file, false)));
+                        return;
+                    }
+
+                    UUID uniqueId = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes());
+                    Transitional legacy = CTransitional.fromLegacy(
+                            name,
+                            uniqueId,
+                            legacyPassword,
+                            legacyPin,
+                            gAuth,
+                            legacyPanic,
+                            gAuthStatus
+                    );
+
+                    UserFactory<? extends LocalNetworkClient> userFactory = spigot.getUserFactory(true);
+                    LocalNetworkClient client = userFactory.create(name, uniqueId);
+
+                    AccountFactory<? extends UserAccount> factory = spigot.getAccountFactory(true);
+                    AccountMigrator<? extends UserAccount> migrator = factory.migrator();
+
+                    UserAccount migrated = migrator.migrate(client, legacy, AccountField.EMAIL);
+                    if (migrated != null) {
+                        logger().log(LogLevel.SUCCESS, "Successfully migrated account of {0}", name);
+                        try {
+                            Files.move(file, migrationFile, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException ex) {
+                            logger().log(ex, "Failed to move legacy player {0} file into migrations folder {1}, account might be processed and migrated on the next server boot unless moved manually",
+                                    PathUtilities.pathString(file, '/'), PathUtilities.pathString(migrationFile, '/'));
+                        }
+                    }
+                });
+            } catch (IOException ex) {
+                logger().log(ex, "Failed to migrate legacy accounts");
+            }
         }
     }
 
@@ -533,16 +550,10 @@ public class SpigotPlugin extends KarmaPlugin {
         }
     }
 
-    private void setupClients(final PluginManager manager) {
+    private void setupClients() {
         PremiumDataStore store = spigot.premiumStore();
-        VaultPermissionManager vaultTmpManager = null;
-        if (manager.isPluginEnabled("Vault")) {
-            try {
-                vaultTmpManager = new VaultPermissionManager(this);
-            } catch (IllegalStateException ignored) {}
-        }
+        PluginPermissionManager<OfflinePlayer, String> permissionManager = spigot.getPermissionManager();
 
-        VaultPermissionManager vaultManager = vaultTmpManager;
         for (LocalNetworkClient local : spigot.network().getPlayers()) {
             if (local instanceof CLocalClient) {
                 CLocalClient offline = (CLocalClient) local;
@@ -554,13 +565,13 @@ public class SpigotPlugin extends KarmaPlugin {
                     }
 
                     OfflinePlayer offlinePlayer = getServer().getOfflinePlayer(uniqueId);
-                    if (vaultManager != null) {
-                        return vaultManager.hasPermission(offlinePlayer, permissionObject);
-                    } else {
-                        if (offlinePlayer.isOnline()) {
-                            Player player = offlinePlayer.getPlayer();
-                            return player != null && player.hasPermission(permissionObject);
-                        }
+                    if (permissionManager != null) {
+                        return permissionManager.hasPermission(offlinePlayer, permissionObject);
+                    }
+
+                    if (offlinePlayer.isOnline()) {
+                        Player player = offlinePlayer.getPlayer();
+                        return player != null && player.hasPermission(permissionObject);
                     }
 
                     return false;

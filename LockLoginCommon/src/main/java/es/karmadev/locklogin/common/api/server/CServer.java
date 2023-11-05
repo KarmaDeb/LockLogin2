@@ -1,5 +1,6 @@
 package es.karmadev.locklogin.common.api.server;
 
+import es.karmadev.locklogin.api.network.Cached;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -11,6 +12,7 @@ import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
 import es.karmadev.locklogin.api.plugin.database.schema.Table;
+import es.karmadev.locklogin.common.api.plugin.CacheElement;
 import es.karmadev.locklogin.common.api.server.channel.SChannel;
 import es.karmadev.locklogin.common.util.ActionListener;
 import es.karmadev.locklogin.common.util.action.ServerEntityAction;
@@ -22,16 +24,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @AllArgsConstructor @SuppressWarnings("unused")
-public class CServer implements NetworkServer {
+public class CServer implements NetworkServer, Cached {
 
     private final int id;
     private final SQLDriver engine;
@@ -70,6 +69,10 @@ public class CServer implements NetworkServer {
                 filtered.collect(Collectors.toList()).forEach(offline_clients::remove);
             }).build();
 
+    private final CacheElement<String> name = new CacheElement<>();
+    private final CacheElement<InetSocketAddress> address = new CacheElement<>();
+    private final CacheElement<Instant> creation = new CacheElement<>();
+
     /**
      * Get the entity name
      *
@@ -77,27 +80,29 @@ public class CServer implements NetworkServer {
      */
     @Override
     public String name() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(
-                    QueryBuilder.createQuery()
-                            .select(Table.SERVER, Row.NAME)
-                            .where(Row.ID, QueryBuilder.EQUALS, id).build()
-            )) {
-                if (result.next()) {
-                    return result.getString(1);
-                }
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
+        return name.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(
+                        QueryBuilder.createQuery()
+                                .select(Table.SERVER, Row.NAME)
+                                .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
 
-        return null;
+                    if (result.next()) {
+                        return result.getString(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
+            }
+
+            return null;
+        });
     }
 
     /**
@@ -107,30 +112,32 @@ public class CServer implements NetworkServer {
      */
     @Override
     public InetSocketAddress address() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SERVER, Row.ADDRESS, Row.PORT)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    String address = result.getString(1);
-                    int port = result.getInt(2);
-                    if (!result.wasNull()) {
-                        if (address == null) address = "127.0.0.1";
-                        return InetSocketAddress.createUnresolved(address, port);
+        return address.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SERVER, Row.ADDRESS, Row.PORT)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        String address = result.getString(1);
+                        int port = result.getInt(2);
+                        if (!result.wasNull()) {
+                            if (address == null) address = "127.0.0.1";
+                            return InetSocketAddress.createUnresolved(address, port);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
+            return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
+        });
     }
 
     /**
@@ -140,26 +147,28 @@ public class CServer implements NetworkServer {
      */
     @Override
     public Instant creation() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.SERVER, Row.CREATED_AT)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
-                if (result.next()) {
-                    long millis = result.getLong(1);
-                    return Instant.ofEpochMilli(millis);
+        return creation.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.SERVER, Row.CREATED_AT)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+                    if (result.next()) {
+                        long millis = result.getLong(1);
+                        return Instant.ofEpochMilli(millis);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return Instant.now();
+            return Instant.now();
+        });
     }
 
     /**
@@ -190,6 +199,11 @@ public class CServer implements NetworkServer {
      */
     @Override
     public void setName(final String name) {
+        if (this.name.isPresent()) {
+            if (this.name.getElement().equals(name)) return;
+        }
+
+        this.name.assign(name);
         Connection connection = null;
         Statement statement = null;
         try {
@@ -213,6 +227,11 @@ public class CServer implements NetworkServer {
      */
     @Override
     public void setAddress(final InetSocketAddress address) {
+        if (this.address.isPresent()) {
+            if (this.address.getElement().equals(address)) return;
+        }
+
+        this.address.assign(address);
         Connection connection = null;
         Statement statement = null;
         try {
@@ -314,6 +333,17 @@ public class CServer implements NetworkServer {
      */
     @Override
     public void sendTitle(String title, String subtitle, int fadeIn, int showTime, int fadeOut) {
+
+    }
+
+    /**
+     * Reset the cache, implementations
+     * should interpreter null as "everything"
+     *
+     * @param name the cache name to reset
+     */
+    @Override
+    public void reset(final String name) {
 
     }
 }

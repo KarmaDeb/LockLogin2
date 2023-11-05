@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.spigot.util.ui;
+package es.karmadev.locklogin.spigot.util.window;
 
 import es.karmadev.api.minecraft.color.ColorComponent;
 import es.karmadev.api.spigot.reflection.skull.SkullBuilder;

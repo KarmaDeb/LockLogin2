@@ -6,6 +6,8 @@ import es.karmadev.locklogin.api.plugin.file.section.*;
 import es.karmadev.locklogin.api.plugin.file.spawn.SpawnConfiguration;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.util.regex.Pattern;
+
 /**
  * LockLogin configuration
  */
@@ -275,11 +277,11 @@ public interface Configuration {
     boolean validateNames();
 
     /**
-     * Get the plugin name check protocol
+     * Get the plugin name check regex
      *
-     * @return the plugin name check protocl
+     * @return the allowed name regex
      */
-    int checkProtocol();
+    Pattern namePattern();
 
     /**
      * Get the plugin language

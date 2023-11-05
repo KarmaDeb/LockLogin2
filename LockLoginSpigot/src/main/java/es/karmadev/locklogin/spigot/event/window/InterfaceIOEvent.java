@@ -1,10 +1,10 @@
-package es.karmadev.locklogin.spigot.event.ui;
+package es.karmadev.locklogin.spigot.event.window;
 
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import es.karmadev.locklogin.spigot.util.ui.PinButton;
-import es.karmadev.locklogin.spigot.util.ui.PinInventory;
+import es.karmadev.locklogin.spigot.util.window.PinButton;
+import es.karmadev.locklogin.spigot.util.window.PinInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;

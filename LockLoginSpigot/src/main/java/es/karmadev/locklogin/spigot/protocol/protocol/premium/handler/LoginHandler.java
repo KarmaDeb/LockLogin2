@@ -145,6 +145,10 @@ public final class LoginHandler implements Runnable {
                         ClientKey key = start.key();
                         session = new LoginSession(username, verify, key);
                         cracked = false;
+
+                        offline.session().login(true);
+                        offline.session().totpLogin(true);
+                        offline.session().pinLogin(true);
                     } else {
                         session = new LoginSession(username, null, null);
                     }

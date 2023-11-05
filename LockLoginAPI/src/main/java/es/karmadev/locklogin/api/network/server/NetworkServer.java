@@ -18,13 +18,6 @@ import java.util.Collection;
 public interface NetworkServer extends NetworkEntity, TextContainer {
 
     /**
-     * Get the server id
-     *
-     * @return the server id
-     */
-    int id();
-
-    /**
      * Update the server name
      *
      * @param name the server name

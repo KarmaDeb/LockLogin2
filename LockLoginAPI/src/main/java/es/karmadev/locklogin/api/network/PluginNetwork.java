@@ -55,6 +55,14 @@ public interface PluginNetwork {
     LocalNetworkClient getOfflinePlayer(final UUID uniqueId);
 
     /**
+     * Get an offline client
+     *
+     * @param id the client id
+     * @return the client
+     */
+    LocalNetworkClient getOfflinePlayer(final int id);
+
+    /**
      * Get a server
      *
      * @param id the server id

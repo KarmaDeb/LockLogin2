@@ -254,6 +254,7 @@ public class DownloadHandle implements ResourceDownload {
                         is not keep in system
                          */
                     }
+
                     return storedResource.isLoaded();
                 }
 

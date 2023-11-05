@@ -9,7 +9,7 @@ import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.common.api.user.auth.CAuthProcess;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import es.karmadev.locklogin.spigot.util.ui.PinInventory;
+import es.karmadev.locklogin.spigot.util.window.PinInventory;
 import org.bukkit.entity.Player;
 
 /**

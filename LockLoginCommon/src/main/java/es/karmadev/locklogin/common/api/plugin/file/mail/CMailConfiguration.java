@@ -4,6 +4,7 @@ import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.file.yaml.handler.YamlReader;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.plugin.file.mail.MailConfiguration;
 
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class CMailConfiguration implements MailConfiguration {
 
@@ -112,5 +114,38 @@ public class CMailConfiguration implements MailConfiguration {
     @Override
     public String getPassword() {
         return yaml.getString("Password", "mypassword");
+    }
+
+    /**
+     * Get the name to use when
+     * sending emails
+     *
+     * @return the name to use
+     * @throws IllegalStateException if the settings are not valid
+     */
+    @Override
+    public String getSendAs() throws IllegalStateException {
+        String sender = yaml.getString("Sender", "myuser@myserver.com");
+        if (ObjectUtils.isNullOrEmpty(sender)) {
+            String name = getUser();
+            String host = getHost();
+            if (ObjectUtils.areNullOrEmpty(false, name, host)) {
+                throw new IllegalStateException("Cannot determine sender, please provide valid \"User\" and \"Host\" values in mailer.yml");
+            }
+
+            if (!host.matches("\\.[a-z]*$")) {
+                throw new IllegalStateException("Cannot determine sender, please provide a valid \"Sender\" value in mailer.yml");
+            }
+
+            sender = String.format("%s@%s", name, host);
+        }
+
+        //Pattern to validate that an email address is a valid email address
+        Pattern emailPattern = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+        if (emailPattern.matcher(sender).matches()) {
+            return sender;
+        }
+
+        throw new IllegalStateException("Cannot determine sender, invalid sender value provided (" + sender + "). Must be a valid email address");
     }
 }
