@@ -1,3 +1,5 @@
+[![Build Status](https://jenkins.karmadev.es/job/LockLogin/badge/icon)](https://jenkins.karmadev.es/job/LockLogin/)
+
 # LockLogin2
 LockLogin2 is the new version of LockLogin. With a better API and more stability
 <br>
