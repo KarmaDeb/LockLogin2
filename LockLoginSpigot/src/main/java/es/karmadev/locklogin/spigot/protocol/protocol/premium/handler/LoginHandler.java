@@ -36,7 +36,11 @@ import es.karmadev.locklogin.api.network.client.ConnectionType;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
+import es.karmadev.locklogin.api.user.session.service.SessionCache;
+import es.karmadev.locklogin.api.user.session.service.SessionStoreService;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.LoginSession;
 import es.karmadev.locklogin.spigot.protocol.protocol.premium.ProtocolListener;
@@ -149,6 +153,8 @@ public final class LoginHandler implements Runnable {
                         offline.session().login(true);
                         offline.session().totpLogin(true);
                         offline.session().pinLogin(true);
+
+                        plugin.info("Authenticated {0} as a premium user", username);
                     } else {
                         session = new LoginSession(username, null, null);
                     }

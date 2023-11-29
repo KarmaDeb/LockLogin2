@@ -35,13 +35,15 @@ public class QuitHandler implements Listener {
                 CPluginNetwork network = (CPluginNetwork) spigot.network();
                 NetworkClient client = network.getPlayer(networkId);
                 if (client != null) {
-                    PluginService sessionStoreProvider = spigot.getService("persistence");
-                    if (sessionStoreProvider instanceof ServiceProvider) {
-                        ServiceProvider<SessionStoreService> provider = (ServiceProvider<SessionStoreService>) sessionStoreProvider;
-                        SessionStoreService service = provider.serve(spigot.driver());
+                    if (client.session().isPersistent()) {
+                        PluginService sessionStoreProvider = spigot.getService("persistence");
+                        if (sessionStoreProvider instanceof ServiceProvider) {
+                            ServiceProvider<SessionStoreService> provider = (ServiceProvider<SessionStoreService>) sessionStoreProvider;
+                            SessionStoreService service = provider.serve(spigot.driver());
 
-                        if (service != null) {
-                            service.saveSession(client);
+                            if (service != null) {
+                                service.saveSession(client);
+                            }
                         }
                     }
 

@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.minecraft.uuid.UUIDFetcher;
 import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -69,13 +69,13 @@ public class StaffCommand extends Command {
             int networkId = UserDataHandler.getNetworkId(player);
 
             if (networkId <= 0) {
-                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(Colorize.colorize(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
                 return false;
             }
 
             NetworkClient issuer = spigot.network().getPlayer(networkId);
             if (issuer == null) {
-                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(Colorize.colorize(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
                 return false;
             }
 

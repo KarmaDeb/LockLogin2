@@ -1,5 +1,5 @@
 package es.karmadev.locklogin.spigot.util.window;
-class ConstantUtils {
+public class ConstantUtils {
     
     public static String getValue(final int number) {
         switch (number) {

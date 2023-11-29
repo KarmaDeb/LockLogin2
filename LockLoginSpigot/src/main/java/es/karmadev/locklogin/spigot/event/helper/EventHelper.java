@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.spigot.event.helper;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
@@ -101,7 +101,7 @@ public class EventHelper {
                 }
             }
         } else {
-            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_FULL, ColorComponent.parse(messages.maxRegisters()));
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_FULL, Colorize.colorize(messages.maxRegisters()));
             return true;
         }
 
@@ -119,7 +119,7 @@ public class EventHelper {
                 //BFAP = Brute Force Attack Protector
                 spigot.logWarn("[BFAP] Address {0} tried to access the server but was blocked for brute force attack. Ban time remaining: {1}", address.getHostAddress(), TimeUnit.MILLISECONDS.toSeconds(timeLeft));
 
-                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.ipBlocked(timeLeft)));
+                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, Colorize.colorize(messages.ipBlocked(timeLeft)));
                 return true;
             }
         }
@@ -149,7 +149,7 @@ public class EventHelper {
                     //USP = UUID Spoofer Protector
                     spigot.logWarn("[USP] Denied connection from {0} because its UUID ({1}) doesn't match with generated one ({2})", name, use_uid, provided_id);
 
-                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.uuidFetchError()));
+                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, Colorize.colorize(messages.uuidFetchError()));
                     return true;
                 }
             }
@@ -187,7 +187,7 @@ public class EventHelper {
 
                     if (deny) {
                         spigot.logWarn("[NVP] Denied connection from {0} because its name was not valid ({1})", name, ConsoleColor.strip(validator.invalidCharacters()));
-                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, ColorComponent.parse(messages.illegalName(validator.invalidCharacters())));
+                        e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, Colorize.colorize(messages.illegalName(validator.invalidCharacters())));
                         return true;
                     }
                 }
@@ -206,7 +206,7 @@ public class EventHelper {
             if (online_address != null && online_address.getAddress() != null) {
                 InetAddress online_inet = online_address.getAddress();
                 if (!Arrays.equals(online_inet.getAddress(), address.getAddress())) {
-                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, ColorComponent.parse(messages.alreadyPlaying()));
+                    e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, Colorize.colorize(messages.alreadyPlaying()));
                     return true;
                 }
             }

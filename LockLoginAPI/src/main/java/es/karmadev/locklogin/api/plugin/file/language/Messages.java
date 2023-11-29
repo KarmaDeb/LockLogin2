@@ -80,6 +80,13 @@ public interface Messages {
      *
      * @return plugin message
      */
+    String settingsTitle();
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
     String altTitle();
 
     /**

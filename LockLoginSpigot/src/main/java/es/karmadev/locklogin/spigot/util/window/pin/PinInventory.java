@@ -1,6 +1,6 @@
-package es.karmadev.locklogin.spigot.util.window;
+package es.karmadev.locklogin.spigot.util.window.pin;
 
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.spigot.core.scheduler.SpigotTask;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -51,7 +51,7 @@ public class PinInventory {
 
         if (stored == null) {
             Messages messages = plugin.messages();
-            String title = ColorComponent.parse(messages.pinTitle());
+            String title = Colorize.colorize(messages.pinTitle());
 
             if (title.length() > 32) title = title.substring(0, 32);
 
@@ -60,7 +60,7 @@ public class PinInventory {
             ItemMeta meta = inputDisplay.getItemMeta();
             assert meta != null;
 
-            meta.setDisplayName(ColorComponent.parse("&7____"));
+            meta.setDisplayName(Colorize.colorize("&7____"));
             meta.addItemFlags(ItemFlag.values());
 
             inputDisplay.setItemMeta(meta);
@@ -73,6 +73,7 @@ public class PinInventory {
 
             inventory = stored.inventory;
             inputDisplay = stored.inputDisplay;
+            onSuccess = stored.onSuccess;
         }
     }
 
@@ -171,7 +172,7 @@ public class PinInventory {
         ItemMeta displayMeta = inputDisplay.getItemMeta();
         assert displayMeta != null;
 
-        displayMeta.setDisplayName(ColorComponent.parse("&7{0}", inputBuilder));
+        displayMeta.setDisplayName(Colorize.colorize("&7{0}", inputBuilder));
         inputDisplay.setItemMeta(displayMeta);
         inventory.setItem(25, inputDisplay);
     }

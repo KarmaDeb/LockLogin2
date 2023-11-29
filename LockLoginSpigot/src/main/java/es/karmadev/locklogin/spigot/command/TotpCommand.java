@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
@@ -128,7 +128,7 @@ public class TotpCommand extends Command {
                                 ));
                             }
 
-                            TextComponent component = new TextComponent(ColorComponent.parse(messages.gAuthLink()));
+                            TextComponent component = new TextComponent(Colorize.colorize(messages.gAuthLink()));
                             component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("§7This will redirect you to:\n§b" + totpURL)));
                             component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, totpURL.toString()));
                             player.spigot().sendMessage(component);
@@ -253,7 +253,7 @@ public class TotpCommand extends Command {
 
             } else {
                 //Unlike in LockLogin legacy v2, this invalid-session message is real, and LockLogin cannot proceed without a valid session
-                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(Colorize.colorize(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
             plugin.info("This command is for players only!");

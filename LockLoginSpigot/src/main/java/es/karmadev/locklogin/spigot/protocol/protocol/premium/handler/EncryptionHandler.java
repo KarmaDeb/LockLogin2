@@ -35,14 +35,12 @@ import com.comphenix.protocol.reflect.accessors.Accessors;
 import com.comphenix.protocol.reflect.accessors.ConstructorAccessor;
 import com.comphenix.protocol.reflect.accessors.FieldAccessor;
 import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.BukkitConverters;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
-import com.comphenix.protocol.wrappers.WrappedGameProfile;
-import com.comphenix.protocol.wrappers.WrappedProfilePublicKey;
+import com.comphenix.protocol.wrappers.*;
 import com.github.games647.craftapi.model.auth.Verification;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.resolver.MojangResolver;
 import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.minecraft.MinecraftVersion;
 import es.karmadev.api.minecraft.uuid.UUIDFetcher;
 import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.api.spigot.server.SpigotServer;
@@ -202,17 +200,23 @@ public final class EncryptionHandler implements Runnable {
                         }
 
                         PacketContainer start;
-                        if (SpigotServer.isOver(SpigotServer.v1_19_X)) {
+                        if (SpigotServer.isOver(MinecraftVersion.v1_19_X)) {
                             start = new PacketContainer(START);
                             start.getStrings().write(0, name);
 
-                            ClientKey cl_key = session.getKey();
-                            EquivalentConverter<WrappedProfilePublicKey.WrappedProfileKeyData> converter = BukkitConverters.getWrappedPublicKeyDataConverter();
-                            Optional<WrappedProfilePublicKey.WrappedProfileKeyData> wrapped = Optional.ofNullable(cl_key).map(key ->
-                                    new WrappedProfilePublicKey.WrappedProfileKeyData(cl_key.expiration(), cl_key.key(), cl_key.sign())
-                            );
+                            if (SpigotServer.atOrOver(MinecraftVersion.v1_20_2)) {
+                                start.getUUIDs().write(0, session.getId());
+                            } else if (SpigotServer.atOrOver(MinecraftVersion.v1_19_3)) {
+                                start.getOptionals(Converters.passthrough(UUID.class)).write(0, Optional.of(session.getId()));
+                            } else {
+                                ClientKey cl_key = session.getKey();
+                                EquivalentConverter<WrappedProfilePublicKey.WrappedProfileKeyData> converter = BukkitConverters.getWrappedPublicKeyDataConverter();
+                                Optional<WrappedProfilePublicKey.WrappedProfileKeyData> wrapped = Optional.ofNullable(cl_key).map(key ->
+                                        new WrappedProfilePublicKey.WrappedProfileKeyData(cl_key.expiration(), cl_key.key(), cl_key.sign())
+                                );
 
-                            start.getOptionals(converter).write(0, wrapped);
+                                start.getOptionals(converter).write(0, wrapped);
+                            }
                         } else {
                             WrappedGameProfile fake = new WrappedGameProfile(UUID.randomUUID(), name);
 

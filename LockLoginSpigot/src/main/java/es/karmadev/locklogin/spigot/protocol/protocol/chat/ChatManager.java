@@ -9,6 +9,10 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import org.bukkit.entity.Player;
 
+/**
+ * @deprecated does not work
+ */
+@Deprecated
 public class ChatManager {
 
     public static void clearProtocolChat(final Player player) {

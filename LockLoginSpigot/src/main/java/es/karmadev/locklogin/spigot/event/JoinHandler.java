@@ -1,14 +1,13 @@
 package es.karmadev.locklogin.spigot.event;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
-import es.karmadev.api.minecraft.color.ColorComponent;
-import es.karmadev.api.minecraft.text.Component;
-import es.karmadev.api.minecraft.text.component.TextComponent;
+import es.karmadev.api.minecraft.text.Colorize;
+import es.karmadev.api.minecraft.text.component.Component;
+import es.karmadev.api.minecraft.text.component.title.Times;
 import es.karmadev.api.minecraft.uuid.UUIDFetcher;
 import es.karmadev.api.minecraft.uuid.UUIDType;
 import es.karmadev.api.object.ObjectUtils;
-import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
-import es.karmadev.api.spigot.reflection.title.SpigotTitle;
+import es.karmadev.api.spigot.reflection.packet.MessagePacket;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -20,12 +19,16 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.plugin.file.section.PremiumConfiguration;
 import es.karmadev.locklogin.api.plugin.permission.LockLoginPermission;
+import es.karmadev.locklogin.api.plugin.service.PluginService;
+import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
 import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.api.user.auth.ProcessFactory;
 import es.karmadev.locklogin.api.user.auth.process.UserAuthProcess;
 import es.karmadev.locklogin.api.user.auth.process.response.AuthProcess;
 import es.karmadev.locklogin.api.user.premium.PremiumDataStore;
 import es.karmadev.locklogin.api.user.session.UserSession;
+import es.karmadev.locklogin.api.user.session.service.SessionCache;
+import es.karmadev.locklogin.api.user.session.service.SessionStoreService;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
 import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
@@ -133,7 +136,7 @@ public class JoinHandler implements Listener {
         COnlineClient online = ((COnlineClient) offline.client())
                 .onMessageRequest((msg) -> {
                     if (!player.isOnline()) return;
-                    player.sendMessage(ColorComponent.parse(msg)
+                    player.sendMessage(Colorize.colorize(msg)
                             .replace("{player}", player.getName())
                             .replace("{server}", configuration.server())
                             .replace("{ServerName}", configuration.server()));
@@ -141,29 +144,37 @@ public class JoinHandler implements Listener {
                 .onActionBarRequest((msg) -> {
                     if (!player.isOnline()) return;
 
-                    SpigotActionbar bar = new SpigotActionbar(msg.replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())
-                            .replace("{ServerName}", configuration.server()));
-                    bar.send(player);
+                    Component[] component = Component.builder()
+                            .actionbar(msg.replace("{player}", player.getName()
+                                            .replace("{server}", configuration.server())
+                                            .replace("{ServerName}", configuration.server()))).build();
+                    MessagePacket message = new MessagePacket(component);
+                    message.send(player);
                 })
                 .onTitleRequest((msg) -> {
                     if (!player.isOnline()) return;
 
-                    TextComponent titleMsg = Component.simple().text(msg.title()
-                            .replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())).build();
-                    TextComponent subtitleMsg = Component.simple().text(msg.subtitle()
-                            .replace("{player}", player.getName())
-                            .replace("{server}", configuration.server())).build();
+                    Component[] components = Component.builder()
+                            .fadeIn(Times.exact(msg.fadeIn()))
+                            .show(Times.exact(msg.show()))
+                            .fadeOut(Times.exact(msg.fadeOut()))
+                            .title(msg.title()
+                                    .replace("{player}", player.getName())
+                                    .replace("{server}", configuration.server()))
+                            .subtitle(msg.subtitle()
+                                    .replace("{player}", player.getName())
+                                    .replace("{server}", configuration.server()))
+                            .build();
 
-                    SpigotTitle title = new SpigotTitle(titleMsg, subtitleMsg);
-                    title.send(player, msg.fadeIn(), msg.show(), msg.fadeOut());
+                    MessagePacket message = new MessagePacket(components);
+                    message.send(player);
                 })
                 .onKickRequest((msg) -> {
                     if (!player.isOnline()) return;
 
                     List<String> reasons = Arrays.asList(msg);
-                    String reason = StringUtils.listToString(ColorComponent.parse(reasons, ArrayList::new), ListSpacer.NEW_LINE).replace("{player}", player.getName())
+                    String reason = StringUtils.listToString(Colorize.colorize(reasons, ArrayList::new),
+                                    ListSpacer.NEW_LINE).replace("{player}", player.getName())
                             .replace("{server}", configuration.server())
                             .replace("{ServerName}", configuration.server());
 
@@ -193,9 +204,9 @@ public class JoinHandler implements Listener {
         boolean auth = false;
         //TODO: Logic to auto-login if needed
 
-        online.session().append(CSessionField.newField(Boolean.class, "pass_logged", auth));
-        online.session().append(CSessionField.newField(Boolean.class, "pin_logged", auth));
-        online.session().append(CSessionField.newField(Boolean.class, "totp_logged", auth));
+        online.session().append(CSessionField.newField(Boolean.class, "pass_logged", false));
+        online.session().append(CSessionField.newField(Boolean.class, "pin_logged", false));
+        online.session().append(CSessionField.newField(Boolean.class, "totp_logged", false));
 
         player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
 
@@ -222,6 +233,27 @@ public class JoinHandler implements Listener {
         }
 
         UserSession session = online.session();
+        session.reset("pass_logged");
+        session.reset("pin_logged");
+        session.reset("totp_logged");
+
+        if (session.isPersistent()) {
+            PluginService sessionStoreProvider = plugin.getService("persistence");
+            if (sessionStoreProvider instanceof ServiceProvider) {
+                ServiceProvider<SessionStoreService> provider = (ServiceProvider<SessionStoreService>) sessionStoreProvider;
+                SessionStoreService service = provider.serve(plugin.driver());
+
+                if (service != null) {
+                    SessionCache cache = service.getSession(player.getAddress());
+                    if (cache != null && cache.getClient().id() == online.id()) {
+                        session.login(cache.isLogged());
+                        session.pinLogin(cache.isPinLogged());
+                        session.totpLogin(cache.isTotpLogged());
+                    }
+                }
+            }
+        }
+
         PluginPermissionManager<OfflinePlayer, String> manager = plugin.getPermissionManager();
         if (manager != null) {
             if (!session.isLogged())
@@ -238,10 +270,10 @@ public class JoinHandler implements Listener {
         String joinMessage = e.getJoinMessage();
 
         if (!ObjectUtils.isNullOrEmpty(customMessage)) {
-            Bukkit.broadcastMessage(ColorComponent.parse(customMessage));
+            Bukkit.broadcastMessage(Colorize.colorize(customMessage));
         } else {
             if (!ObjectUtils.isNullOrEmpty(joinMessage)) {
-                Bukkit.broadcastMessage(ColorComponent.parse(joinMessage));
+                Bukkit.broadcastMessage(Colorize.colorize(joinMessage));
             }
         }
     }
@@ -259,7 +291,7 @@ public class JoinHandler implements Listener {
         return false;
     }
 
-    private void startAuthProcess(final NetworkClient client, final AuthProcess previous) {
+    public void startAuthProcess(final NetworkClient client, final AuthProcess previous) {
         ProcessFactory factory = plugin.getProcessFactory();
         UserAuthProcess process = factory.nextProcess(client).orElse(null);
         if (process == null && !passedProcess.contains(client.uniqueId())) {
@@ -397,7 +429,7 @@ public class JoinHandler implements Listener {
         plugin.moduleManager().fireEvent(ip_validation_event);
 
         if (ip_validation_event.isCancelled()) {
-            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, ColorComponent.parse(messages.ipProxyError() + "\n\n" + ip_validation_event.cancelReason()));
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, Colorize.colorize(messages.ipProxyError() + "\n\n" + ip_validation_event.cancelReason()));
             plugin.logInfo("Denied access of player {0} for {1}", name, ip_validation_event.cancelReason());
 
             return;
@@ -418,7 +450,7 @@ public class JoinHandler implements Listener {
             plugin.moduleManager().fireEvent(event);
 
             if (event.isCancelled()) {
-                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, ColorComponent.parse(event.cancelReason()));
+                e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Colorize.colorize(event.cancelReason()));
             }
         }
     }

@@ -23,7 +23,7 @@ import es.karmadev.locklogin.common.plugin.secure.CommandMask;
 import es.karmadev.locklogin.common.plugin.secure.CommandWhitelist;
 import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
-import es.karmadev.locklogin.spigot.util.window.PinInventory;
+import es.karmadev.locklogin.spigot.util.window.pin.PinInventory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

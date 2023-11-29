@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -186,7 +186,7 @@ public class PinCommand extends Command {
                 }
             } else {
                 //Unlike in LockLogin legacy v2, this invalid-session message is real, and LockLogin cannot proceed without a valid session
-                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(Colorize.colorize(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
             plugin.info("This command is for players only!");

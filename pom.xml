@@ -668,11 +668,11 @@
     <distributionManagement>
         <repository>
             <id>karmadev_releases</id>
-            <url>https://nexus.karmadev.es/repository/maven-releases/</url>
+            <url>${TARGET_RELEASES}</url>
         </repository>
         <snapshotRepository>
             <id>karmadev_snapshots</id>
-            <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
+            <url>${TARGET_SNAPSHOTS}</url>
         </snapshotRepository>
     </distributionManagement>
 

@@ -1,9 +1,10 @@
-package es.karmadev.locklogin.spigot.util.window;
+package es.karmadev.locklogin.spigot.util.window.pin;
 
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.spigot.reflection.skull.SkullBuilder;
 import es.karmadev.locklogin.api.plugin.CacheContainer;
 import es.karmadev.locklogin.common.api.plugin.CacheElement;
+import es.karmadev.locklogin.spigot.util.window.ConstantUtils;
 import lombok.Getter;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -133,12 +134,12 @@ public enum PinButton {
         return itemCache.getOrElse(() -> SkullBuilder.createSkull(value, signature, (meta) -> {
             if (meta == null) return null;
             if (number == Integer.MIN_VALUE) {
-                meta.setDisplayName(ColorComponent.parse("&cRemove"));
+                meta.setDisplayName(Colorize.colorize("&cRemove"));
             } else {
                 if (number == Integer.MAX_VALUE) {
-                    meta.setDisplayName(ColorComponent.parse("&aConfirm"));
+                    meta.setDisplayName(Colorize.colorize("&aConfirm"));
                 } else {
-                    meta.setDisplayName(ColorComponent.parse("&e" + number));
+                    meta.setDisplayName(Colorize.colorize("&e" + number));
                 }
             }
 

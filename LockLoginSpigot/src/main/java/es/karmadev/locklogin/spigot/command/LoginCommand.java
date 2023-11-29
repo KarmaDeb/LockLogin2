@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.logger.log.console.ConsoleColor;
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -143,7 +143,7 @@ public class LoginCommand extends Command {
                 }
             } else {
                 //Unlike in LockLogin legacy v2, this invalid-session message is real, and LockLogin cannot proceed without a valid session
-                player.sendMessage(ColorComponent.parse(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
+                player.sendMessage(Colorize.colorize(messages.prefix() + "&cYour session is not valid, reconnect the server!"));
             }
         } else {
             plugin.info("This command is for players only!");
@@ -228,15 +228,15 @@ public class LoginCommand extends Command {
                         client.getSessionChecker().pause();
 
                         client.sendMessage(messages.prefix() + messages.loginForgot());
-                        TextComponent yes = new TextComponent(ColorComponent.parse(messages.loginForgotYes()));
-                        TextComponent no = new TextComponent(ColorComponent.parse(messages.loginForgotNo()));
+                        TextComponent yes = new TextComponent(Colorize.colorize(messages.loginForgotYes()));
+                        TextComponent no = new TextComponent(Colorize.colorize(messages.loginForgotNo()));
                         TextComponent appender = new TextComponent();
                         appender.addExtra(yes);
-                        appender.addExtra(ColorComponent.parse(" &8&l| "));
+                        appender.addExtra(Colorize.colorize(" &8&l| "));
                         appender.addExtra(no);
 
-                        yes.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(ColorComponent.parse("&bWe will mail you a recovery code"))));
-                        no.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(ColorComponent.parse("&cWe won't send you any recovery mail"))));
+                        yes.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(Colorize.colorize("&bWe will mail you a recovery code"))));
+                        no.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(Colorize.colorize("&cWe won't send you any recovery mail"))));
 
                         String mailCode = StringUtils.generateString(16);
                         String kickCode = StringUtils.generateString(16);

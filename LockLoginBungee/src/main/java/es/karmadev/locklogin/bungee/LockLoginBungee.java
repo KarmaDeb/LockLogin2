@@ -13,7 +13,7 @@ import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.logger.log.console.LogLevel;
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
@@ -1167,7 +1167,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
        
 
         for (ProxiedPlayer online : ProxyServer.getInstance().getPlayers()) {
-            online.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ColorComponent.parse(actionbar)));
+            online.sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(Colorize.colorize(actionbar)));
         }
     }
 
@@ -1186,8 +1186,8 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
         for (ProxiedPlayer online : ProxyServer.getInstance().getPlayers()) {
             BungeeTitle bungeeTitle = new BungeeTitle();
-            bungeeTitle.title(TextComponent.fromLegacyText(ColorComponent.parse(title)));
-            bungeeTitle.subTitle(TextComponent.fromLegacyText(ColorComponent.parse(subtitle)));
+            bungeeTitle.title(TextComponent.fromLegacyText(Colorize.colorize(title)));
+            bungeeTitle.subTitle(TextComponent.fromLegacyText(Colorize.colorize(subtitle)));
             bungeeTitle.fadeIn(fadeIn);
             bungeeTitle.stay(showTime);
             bungeeTitle.fadeOut(fadeOut);

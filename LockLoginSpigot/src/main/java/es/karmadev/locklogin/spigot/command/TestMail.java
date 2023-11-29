@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.service.PluginService;
@@ -37,7 +37,7 @@ public class TestMail extends Command {
     @Override
     public boolean execute(final @NotNull CommandSender sender, final @NotNull String label, @NotNull String[] args) {
         if (sender instanceof Player) {
-            sender.sendMessage(ColorComponent.parse("&5&oThis command is exclusive for console"));
+            sender.sendMessage(Colorize.colorize("&5&oThis command is exclusive for console"));
             return false;
         }
 
@@ -69,7 +69,7 @@ public class TestMail extends Command {
             }
 
             if (args[2].equalsIgnoreCase("template")) {
-                sender.sendMessage(ColorComponent.parse("&dSending forgot password template mail"));
+                sender.sendMessage(Colorize.colorize("&dSending forgot password template mail"));
 
                 mailMessage = CMailMessage.builder(template.toFile())
                         .origin("noreply@karmadev.es")
@@ -84,20 +84,20 @@ public class TestMail extends Command {
                 EmailService mailer = (EmailService) service;
 
                 if (!configuration.mailer().isEnabled()) {
-                    sender.sendMessage(ColorComponent.parse("&5&oMailer service is not enabled, please configure it"));
+                    sender.sendMessage(Colorize.colorize("&5&oMailer service is not enabled, please configure it"));
                     return false;
                 }
 
-                sender.sendMessage(ColorComponent.parse("&dTrying to send test email to " + target + " as " + senderName));
+                sender.sendMessage(Colorize.colorize("&dTrying to send test email to " + target + " as " + senderName));
                 mailer.send(target, mailMessage);
                 return false;
             }
 
-            sender.sendMessage(ColorComponent.parse("&5&oFailed to fetch mailer service"));
+            sender.sendMessage(Colorize.colorize("&5&oFailed to fetch mailer service"));
             return false;
         }
 
-        sender.sendMessage(ColorComponent.parse("&5&oPlease, specify a target, a subject and the mail message"));
+        sender.sendMessage(Colorize.colorize("&5&oPlease, specify a target, a subject and the mail message"));
         return false;
     }
 }

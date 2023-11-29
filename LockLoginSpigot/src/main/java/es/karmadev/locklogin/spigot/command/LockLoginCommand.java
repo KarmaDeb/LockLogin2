@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.file.util.PathUtilities;
-import es.karmadev.api.minecraft.color.ColorComponent;
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.strings.ListSpacer;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.api.version.BuildStatus;
@@ -90,14 +90,14 @@ public class LockLoginCommand extends Command {
 
                             String postLanguage = configuration.language();
                             if (!preLanguage.equals(postLanguage)) {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload lang", null)));
 
                                 InternalMessage.update();
                             }
 
                             if (cfgReloaded) {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload configuration", null)));
 
                                 SpigotRegisterProcess.setStatus(configuration.authSettings().register());
@@ -133,22 +133,22 @@ public class LockLoginCommand extends Command {
                                     spigot.info("Thanks {0} for supporting Locklogin. As a compensation, you will be eligible for a 100% discount on a product of us!", License.getBuyer());
                                 }
                             } else {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload configuration", null)));
                             }
 
                             if (msgReloaded) {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload messages", null)));
                             } else {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload messages", null)));
                             }
                             if (mailReload) {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_SUCCESS("locklogin", "reload mailer", null)));
                             } else {
-                                sender.sendMessage(ColorComponent.parse(messages.prefix() +
+                                sender.sendMessage(Colorize.colorize(messages.prefix() +
                                         InternalMessage.RESPONSE_FAIL("locklogin", "reload mailer", null)));
                             }
                         } else{
@@ -165,10 +165,10 @@ public class LockLoginCommand extends Command {
                             case 1:
                                 if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
                                     //Whe just want to get the current version
-                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString())));
-                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
+                                    sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString())));
+                                    sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
                                 } else {
-                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                    sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
                                 }
                                 break;
                             case 2:
@@ -178,30 +178,30 @@ public class LockLoginCommand extends Command {
                                         if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
                                             //Whe just want to get the current version
                                             //sender.sendMessage(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString()));
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version current", current.toString())));
                                         } else {
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
                                         }
                                         break;
                                     case "latest":
                                         if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
                                             //Whe just want to get the current version
                                             //sender.sendMessage(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", latest.toString()));
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", current.toString())));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "version latest", current.toString())));
                                         } else {
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_VIEW)));
                                         }
                                         break;
                                     case "changelog":
                                         if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_CHANGELOG)) {
                                             if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
-                                                sender.sendMessage(ColorComponent.parse("&bVersion: &3{0}&7:", latest));
+                                                sender.sendMessage(Colorize.colorize("&bVersion: &3{0}&7:", latest));
                                             }
 
                                             String[] changelog = checker.getChangelog();
-                                            for (String line : changelog) sender.sendMessage(ColorComponent.parse(line));
+                                            for (String line : changelog) sender.sendMessage(Colorize.colorize(line));
                                         } else {
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
                                         }
                                         break;
                                     case "history":
@@ -221,64 +221,64 @@ public class LockLoginCommand extends Command {
                                                 if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
                                                     switch (current.compareTo(version)) {
                                                         case 1: //Current version over version
-                                                            sender.sendMessage(ColorComponent.parse("&e(UP TO DATE) &bVersion: &7{0}", version));
+                                                            sender.sendMessage(Colorize.colorize("&e(UP TO DATE) &bVersion: &7{0}", version));
                                                             break;
                                                         case 0: //Current version is version
-                                                            sender.sendMessage(ColorComponent.parse("&a(CURRENT) &bVersion: &7{0}", version));
+                                                            sender.sendMessage(Colorize.colorize("&a(CURRENT) &bVersion: &7{0}", version));
                                                             break;
                                                         case -1: //Current version is under version
-                                                            sender.sendMessage(ColorComponent.parse("&c(OVER YOU) &bVersion: &7{0}", version));
+                                                            sender.sendMessage(Colorize.colorize("&c(OVER YOU) &bVersion: &7{0}", version));
                                                             break;
                                                     }
                                                 } else {
-                                                    sender.sendMessage(ColorComponent.parse("&bVersion: &7{0}", version));
+                                                    sender.sendMessage(Colorize.colorize("&bVersion: &7{0}", version));
                                                 }
                                             }
 
                                             if (hasPermission(sender, LockLoginPermission.PERMISSION_VERSION_VIEW)) {
                                                 if (behind != 0) {
-                                                    sender.sendMessage(ColorComponent.parse("&cYou are (&7{0}&c) versions behind", behind));
+                                                    sender.sendMessage(Colorize.colorize("&cYou are (&7{0}&c) versions behind", behind));
                                                 } else {
-                                                    sender.sendMessage(ColorComponent.parse("&aYou are using the latest version", behind));
+                                                    sender.sendMessage(Colorize.colorize("&aYou are using the latest version", behind));
                                                 }
                                             }
                                         } else {
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_VERSION_CHANGELOG)));
                                         }
                                         break;
                                     case "check":
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + "&dChecking for updates..."));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + "&dChecking for updates..."));
                                         checker.check().onComplete(() -> {
                                             if (checker.getStatus().equals(BuildStatus.OUTDATED)) {
-                                                sender.sendMessage(ColorComponent.parse("&cLockLogin has found a new version!"));
+                                                sender.sendMessage(Colorize.colorize("&cLockLogin has found a new version!"));
                                                 sender.sendMessage("");
-                                                sender.sendMessage(ColorComponent.parse("&7Current version is:&e {0}", current));
-                                                sender.sendMessage(ColorComponent.parse("&7Latest version is:&e {0}", checker.getVersion()));
+                                                sender.sendMessage(Colorize.colorize("&7Current version is:&e {0}", current));
+                                                sender.sendMessage(Colorize.colorize("&7Latest version is:&e {0}", checker.getVersion()));
                                                 sender.sendMessage("");
 
-                                                sender.sendMessage(ColorComponent.parse("&7Download latest version from:"));
+                                                sender.sendMessage(Colorize.colorize("&7Download latest version from:"));
                                                 for (URL url : checker.getUpdateURLs()) {
-                                                    sender.sendMessage(ColorComponent.parse("&b- &7{0}", url));
+                                                    sender.sendMessage(Colorize.colorize("&b- &7{0}", url));
                                                 }
 
                                                 sender.sendMessage("");
-                                                sender.sendMessage(ColorComponent.parse("&b------ &7Version history&b ------"));
+                                                sender.sendMessage(Colorize.colorize("&b------ &7Version history&b ------"));
                                                 for (Version version : checker.getVersionHistory()) {
                                                     String[] changelog = checker.getChangelog(version);
                                                     if (current.compareTo(version) == 0) {
-                                                        sender.sendMessage(ColorComponent.parse("&bVersion: &a(current) &3{0}&7:", version));
+                                                        sender.sendMessage(Colorize.colorize("&bVersion: &a(current) &3{0}&7:", version));
                                                     } else {
-                                                        sender.sendMessage(ColorComponent.parse("&bVersion: &3{0}&7:", version));
+                                                        sender.sendMessage(Colorize.colorize("&bVersion: &3{0}&7:", version));
                                                     }
 
                                                     for (String line : changelog) {
-                                                        sender.sendMessage(ColorComponent.parse(line));
+                                                        sender.sendMessage(Colorize.colorize(line));
                                                     }
                                                 }
                                             } else {
-                                                sender.sendMessage(ColorComponent.parse("&aLockLogin did not found any update, you are up-to date"));
-                                                sender.sendMessage(ColorComponent.parse("&aCurrent version is:&7 {0}", current));
-                                                sender.sendMessage(ColorComponent.parse("&aLatest version is:&7 {0}", checker.getVersion()));
+                                                sender.sendMessage(Colorize.colorize("&aLockLogin did not found any update, you are up-to date"));
+                                                sender.sendMessage(Colorize.colorize("&aCurrent version is:&7 {0}", current));
+                                                sender.sendMessage(Colorize.colorize("&aLatest version is:&7 {0}", checker.getVersion()));
                                             }
                                         });
                                         break;
@@ -311,15 +311,15 @@ public class LockLoginCommand extends Command {
                                                     PluginModule<JavaPlugin> plugin = (PluginModule<JavaPlugin>) module;
 
                                                     JavaPlugin javaPlugin = plugin.getPlugin();
-                                                    sender.sendMessage(ColorComponent.parse("&7Plugin module: &d{0}", javaPlugin.getName()));
-                                                    sender.sendMessage(ColorComponent.parse("&7Version: &d{0}", javaPlugin.getDescription().getVersion()));
-                                                    sender.sendMessage(ColorComponent.parse("&7Authors: &d{0}", StringUtils.listToString(javaPlugin.getDescription().getAuthors(), ListSpacer.COMMA)));
+                                                    sender.sendMessage(Colorize.colorize("&7Plugin module: &d{0}", javaPlugin.getName()));
+                                                    sender.sendMessage(Colorize.colorize("&7Version: &d{0}", javaPlugin.getDescription().getVersion()));
+                                                    sender.sendMessage(Colorize.colorize("&7Authors: &d{0}", StringUtils.listToString(javaPlugin.getDescription().getAuthors(), ListSpacer.COMMA)));
                                                     continue;
                                                 }
 
-                                                sender.sendMessage(ColorComponent.parse("&7Module: &d{0}", module.getName()));
-                                                sender.sendMessage(ColorComponent.parse("&7Version: &d{0}", module.getVersion()));
-                                                sender.sendMessage(ColorComponent.parse("&7Author(s): &d{0}", module.getDescription().getAuthor()));
+                                                sender.sendMessage(Colorize.colorize("&7Module: &d{0}", module.getName()));
+                                                sender.sendMessage(Colorize.colorize("&7Version: &d{0}", module.getVersion()));
+                                                sender.sendMessage(Colorize.colorize("&7Author(s): &d{0}", module.getDescription().getAuthor()));
                                             }
                                         } else {
                                             String modName = args[2];
@@ -330,32 +330,32 @@ public class LockLoginCommand extends Command {
                                                     PluginModule<JavaPlugin> plugin = (PluginModule<JavaPlugin>) module;
 
                                                     JavaPlugin javaPlugin = plugin.getPlugin();
-                                                    sender.sendMessage(ColorComponent.parse("&7Plugin module: &d{0}", javaPlugin.getName()));
-                                                    sender.sendMessage(ColorComponent.parse("&7Version: &d{0}", javaPlugin.getDescription().getVersion()));
-                                                    sender.sendMessage(ColorComponent.parse("&7Authors: &d{0}", StringUtils.listToString(javaPlugin.getDescription().getAuthors(), ListSpacer.COMMA)));
+                                                    sender.sendMessage(Colorize.colorize("&7Plugin module: &d{0}", javaPlugin.getName()));
+                                                    sender.sendMessage(Colorize.colorize("&7Version: &d{0}", javaPlugin.getDescription().getVersion()));
+                                                    sender.sendMessage(Colorize.colorize("&7Authors: &d{0}", StringUtils.listToString(javaPlugin.getDescription().getAuthors(), ListSpacer.COMMA)));
                                                     return;
                                                 }
 
-                                                sender.sendMessage(ColorComponent.parse("&7Module: &d{0}", module.getName()));
-                                                sender.sendMessage(ColorComponent.parse("&7Version: &d{0}", module.getVersion()));
-                                                sender.sendMessage(ColorComponent.parse("&7Author(s): &d{0}", module.getDescription().getAuthor()));
+                                                sender.sendMessage(Colorize.colorize("&7Module: &d{0}", module.getName()));
+                                                sender.sendMessage(Colorize.colorize("&7Version: &d{0}", module.getVersion()));
+                                                sender.sendMessage(Colorize.colorize("&7Author(s): &d{0}", module.getDescription().getAuthor()));
                                                 if (module.isFromMarketplace()) {
                                                     sender.sendMessage("");
-                                                    sender.sendMessage(ColorComponent.parse("&8(&eThis resource has been installed through the marketplace manager&8)"));
+                                                    sender.sendMessage(Colorize.colorize("&8(&eThis resource has been installed through the marketplace manager&8)"));
                                                 }
                                             } else {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules info", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules info", modName)));
                                             }
                                         }
                                     } else {
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
                                     }
                                     break;
                                 case "list":
                                     if (hasPermission(sender, LockLoginPermission.PERMISSION_MODULE_LIST)) {
                                         listModules(sender);
                                     } else {
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LIST)));
                                     }
                                     break;
                                 case "load":
@@ -365,14 +365,14 @@ public class LockLoginCommand extends Command {
                                             Module module = findModule(modName, loader);
 
                                             if (module == null || module.isEnabled()) {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
                                                 return;
                                             }
 
                                             if (loader.enable(module)) {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules load", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules load", modName)));
                                             } else {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules load", modName)));
                                             }
                                         } else {
                                             for (String str : usage) {
@@ -380,7 +380,7 @@ public class LockLoginCommand extends Command {
                                             }
                                         }
                                     } else {
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LOAD)));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_LOAD)));
                                     }
                                     break;
                                 case "unload":
@@ -391,7 +391,7 @@ public class LockLoginCommand extends Command {
                                             Module module = loader.getModule(modName);
 
                                             if (module == null || !module.isEnabled()) {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
                                                 return;
                                             }
 
@@ -401,7 +401,7 @@ public class LockLoginCommand extends Command {
 
                                             if (action.equalsIgnoreCase("--hard") || action.equalsIgnoreCase("-h")) {
                                                 if (module.isFromMarketplace()) {
-                                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
+                                                    sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules unload", modName)));
                                                     return;
                                                 }
 
@@ -410,14 +410,14 @@ public class LockLoginCommand extends Command {
                                                 loader.disable(module);
                                             }
 
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules unload", modName)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules unload", modName)));
                                         } else {
                                             for (String str : usage) {
                                                 sender.sendMessage(str);
                                             }
                                         }
                                     } else {
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_UNLOAD)));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_UNLOAD)));
                                     }
                                     break;
                                 case "reload":
@@ -427,7 +427,7 @@ public class LockLoginCommand extends Command {
                                             Module module = loader.getModule(modName);
 
                                             if (module == null || !module.isEnabled()) {
-                                                sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
+                                                sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
                                                 return;
                                             }
 
@@ -436,19 +436,19 @@ public class LockLoginCommand extends Command {
                                             try {
                                                 Module newModule = loader.load(file);
                                                 if (loader.enable(newModule)) {
-                                                    sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules reload", modName)));
+                                                    sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_SUCCESS("locklogin", "modules reload", modName)));
                                                     return;
                                                 }
                                             } catch (InvalidModuleException ignored) {}
 
-                                            sender.sendMessage(ColorComponent.parse(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
+                                            sender.sendMessage(Colorize.colorize(messages.prefix() + InternalMessage.RESPONSE_FAIL("locklogin", "modules reload", modName)));
                                         } else {
                                             for (String str : usage) {
                                                 sender.sendMessage(str);
                                             }
                                         }
                                     } else {
-                                        sender.sendMessage(ColorComponent.parse(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_RELOAD)));
+                                        sender.sendMessage(Colorize.colorize(messages.prefix() + messages.permissionError(LockLoginPermission.PERMISSION_MODULE_RELOAD)));
                                     }
                                     break;
                                 default:
@@ -520,7 +520,7 @@ public class LockLoginCommand extends Command {
             }
         }
 
-        sender.sendMessage(ColorComponent.parse("&dModules &8&l(&e" + modules.length + "&8&l)&7:" + modList));
+        sender.sendMessage(Colorize.colorize("&dModules &8&l(&e" + modules.length + "&8&l)&7:" + modList));
     }
 
     private Module findModule(final String name, final ModuleLoader loader) {
