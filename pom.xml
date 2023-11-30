@@ -29,7 +29,7 @@
     <licenses>
         <license>
             <name>RedDo GPL 1.2</name>
-            <url>https://locklogin.eu/license</url>
+            <url>https://karmadev.es/license</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -37,7 +37,7 @@
     <developers>
         <developer>
             <name>Karma Dev</name>
-            <email>karmaconfigs@gmail.com</email>
+            <email>admin@karmadev.es</email>
             <organization>RedDo</organization>
             <organizationUrl>https://discord.gg/jRFfsdxnJR</organizationUrl>
         </developer>
@@ -344,6 +344,7 @@
             <url>https://repository.ow2.org/nexus/content/repositories/public/</url>
         </repository>
 
+        <!--
         <repository>
             <id>karmadev_releases</id>
             <url>https://nexus.karmadev.es/repository/maven-releases/</url>
@@ -352,8 +353,10 @@
             <id>karmadev_snapshots</id>
             <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
         </repository>
+        -->
     </repositories>
 
+    <!--
     <pluginRepositories>
         <pluginRepository>
             <id>karmadev_releases</id>
@@ -378,6 +381,7 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+    -->
 
     <dependencyManagement>
         <dependencies>
@@ -652,19 +656,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <!--
-    <distributionManagement>
-        <repository>
-            <id>local_repository</id>
-            <url>file:${project.basedir}/v${project.version}/release</url>
-        </repository>
-        <snapshotRepository>
-            <id>local_snapshot</id>
-            <url>file:${project.basedir}/v${project.version}/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-    -->
-
     <distributionManagement>
         <repository>
             <id>karmadev_releases</id>
@@ -675,17 +666,4 @@
             <url>${TARGET_SNAPSHOTS}</url>
         </snapshotRepository>
     </distributionManagement>
-
-    <!--
-    <distributionManagement>
-        <repository>
-            <id>local_repository</id>
-            <url>file:${project.basedir}/v${project.version}/release</url>
-        </repository>
-        <snapshotRepository>
-            <id>local_snapshot</id>
-            <url>file:${project.basedir}/v${project.version}/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-    -->
 </project>
