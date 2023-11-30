@@ -13,9 +13,11 @@ official authors, LockLogin is a community plugin with no real owner who has aut
 over it. Any change can be voted in [RedDo discord](https://discord.gg/77p8KZNfqE).
 <br>
 LockLogin has also multi-language support, so you can search on the official
-[plugin repository](https://reddo.es/panel/locklogin/?tag=lang) (in construction) for any language you need or even you can
-search for [community modules](https://reddo.es/panel/locklogin/?tag=module) and [official modules](https://reddo.es/panel/locklogin/modules) to extend the plugin functionalities
+[official resources](https://forum.karmadev.es/resources/categories/official.2/) for any official language or module you need or even you can
+search for [community modules](https://forum.karmadev.es/resources/categories/module.12/) and [community translations](https://forum.karmadev.es/resources/categories/translation.11/) to extend the plugin functionalities
 and security.
+
+<small>* Every community resource can be installed from game by using the LockLogin resource-manager command (lrm)</small>
 
 # API
 LockLogin API was made to avoid external plugins access it, for security reasons, so no external plugin is
@@ -26,8 +28,8 @@ The LockLogin Modules are an essential part of the LockLogin API as they are the
 plugin API, and the best is that everything that the module does gets logged, in case there's a security breach
 it will be easier to determine which module (if any) caused that breach.
 
-You can learn on how to create a module for LockLogin in the [LockLogin wiki](https://reddo.es/karmadev/wiki) or
-If you need more help when developing the module, you can have a look at the [LockLogin docs](https://reddo.es/karmadev/locklogin/docs/)
+You can learn on how to create a module for LockLogin in the [LockLogin wiki]()[Under construction] or
+If you need more help when developing the module, you can have a look at the [LockLogin docs]()[Under construction]
 
 You can also have a look on the [module examples](https://github.com/KarmaDeb/LockLogin2Examples/tree/master).
 <details> 
