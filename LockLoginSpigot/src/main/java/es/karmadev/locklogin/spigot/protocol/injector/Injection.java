@@ -9,9 +9,11 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.frame.FrameBuilder;
 import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
+import es.karmadev.locklogin.api.network.communication.packet.listener.event.PacketReceiveEvent;
 import es.karmadev.locklogin.common.api.packet.CInPacket;
 import es.karmadev.locklogin.common.api.packet.COutPacket;
 import es.karmadev.locklogin.common.api.packet.frame.CFrameBuilder;
@@ -150,7 +152,15 @@ public class Injection extends ChannelDuplexHandler {
                             raw = gson.toJson(outBuild);
 
                             IncomingPacket converted = new CInPacket(raw);
-                            plugin.onReceive(converted);
+                            NetworkChannel ch = plugin.getChannel(identifier);
+
+                            if (ch == null) {
+                                throw new IllegalStateException("Received a packet from unregistered channel: " + identifier);
+                            }
+
+                            ch.handle(
+                                    new PacketReceiveEvent(ch, converted)
+                            );
                         }
 
                         if (comPacket instanceof IncomingPacket) {
@@ -165,7 +175,16 @@ public class Injection extends ChannelDuplexHandler {
                             String rawJson = gson.toJson(obj);
                             incoming = new CInPacket(rawJson);
 
-                            plugin.onReceive(incoming);
+                            //plugin.onReceive(incoming);
+                            NetworkChannel ch = plugin.getChannel(identifier);
+
+                            if (ch == null) {
+                                throw new IllegalStateException("Received a packet from unregistered channel: " + identifier);
+                            }
+
+                            ch.handle(
+                                    new PacketReceiveEvent(ch, incoming)
+                            );
                         }
                     } catch (InvalidPacketDataException ex) {
                         plugin.log(ex, "Failed to handle packet under tag {0}", identifier);
@@ -191,7 +210,16 @@ public class Injection extends ChannelDuplexHandler {
                     String raw = gson.toJson(outBuild);
 
                     IncomingPacket converted = new CInPacket(raw);
-                    plugin.onReceive(converted);
+                    NetworkChannel ch = plugin.getChannel(identifier);
+
+                    if (ch == null) {
+                        throw new IllegalStateException("Received a packet from unregistered channel: " + identifier);
+                    }
+
+                    ch.handle(
+                            new PacketReceiveEvent(ch, converted)
+                    );
+                    //plugin.onReceive(converted);
                 }
             }
         }

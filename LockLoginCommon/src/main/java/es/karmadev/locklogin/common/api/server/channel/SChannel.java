@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.server.channel;
 
-import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
+import es.karmadev.locklogin.api.network.server.packet.NetworkChannelQue;
 import es.karmadev.locklogin.api.network.server.packet.NetworkPacket;
 
-public class SChannel implements NetworkChannel {
+public class SChannel implements NetworkChannelQue {
 
     /**
      * Append a packet

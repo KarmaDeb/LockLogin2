@@ -143,7 +143,11 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void appendPacket(final Module sender, final int priority, final byte... data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
+        if (sender == null) throw new SecurityException("Packet sender cannot be null");
+        if (!sender.isEnabled()) throw new SecurityException("Packet sender must be enabled");
+
+        if (server != null) server.getChannel("module").getProcessingQue()
+                .appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**
@@ -156,7 +160,10 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void appendPacket(final Module sender, final int priority, final String data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
+        if (sender == null) throw new SecurityException("Packet sender cannot be null");
+        if (!sender.isEnabled()) throw new SecurityException("Packet sender must be enabled");
+
+        if (server != null) server.getChannel("module").getProcessingQue().appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**
@@ -169,7 +176,10 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      */
     @Override
     public void appendPacket(final Module sender, final int priority, final JsonElement data) throws SecurityException {
-        if (server != null) server.channel().appendPacket(new SPacket(sender, data).priority(priority));
+        if (sender == null) throw new SecurityException("Packet sender cannot be null");
+        if (!sender.isEnabled()) throw new SecurityException("Packet sender must be enabled");
+
+        if (server != null) server.getChannel("module").getProcessingQue().appendPacket(new SPacket(sender, data).priority(priority));
     }
 
     /**

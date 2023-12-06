@@ -9,9 +9,11 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.frame.FrameBuilder;
 import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
+import es.karmadev.locklogin.api.network.communication.packet.listener.event.PacketReceiveEvent;
 import es.karmadev.locklogin.bungee.LockLoginBungee;
 import es.karmadev.locklogin.common.api.packet.CInPacket;
 import es.karmadev.locklogin.common.api.packet.frame.CFrameBuilder;
@@ -122,7 +124,15 @@ public class CustomPacket {
                                     String rawJson = gson.toJson(object);
 
                                     IncomingPacket incoming = new CInPacket(rawJson);
-                                    plugin.onReceive(incoming);
+                                    NetworkChannel channel = plugin.getChannel(tag);
+
+                                    if (channel == null) {
+                                        throw new IllegalStateException("Received a packet from unregistered channel: " + tag);
+                                    }
+
+                                    channel.handle(
+                                            new PacketReceiveEvent(channel, incoming)
+                                    );
                                 }
                             }
                         } catch (InvalidPacketDataException ex) {

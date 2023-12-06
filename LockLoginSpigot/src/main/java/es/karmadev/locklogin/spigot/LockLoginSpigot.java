@@ -13,9 +13,11 @@ import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.logger.log.console.LogLevel;
-import es.karmadev.api.minecraft.text.Component;
-import es.karmadev.api.spigot.reflection.actionbar.SpigotActionbar;
-import es.karmadev.api.spigot.reflection.title.SpigotTitle;
+import es.karmadev.api.minecraft.text.Colorize;
+import es.karmadev.api.minecraft.text.component.Component;
+import es.karmadev.api.minecraft.text.component.ComponentBuilder;
+import es.karmadev.api.minecraft.text.component.title.Times;
+import es.karmadev.api.spigot.reflection.packet.MessagePacket;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
@@ -29,10 +31,10 @@ import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
-import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
@@ -1111,7 +1113,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @return all the connected clients
      */
     @Override
-    public Collection<NetworkClient> connected() {
+    public Collection<NetworkClient> getConnected() {
         return network.getOnlinePlayers();
     }
 
@@ -1122,18 +1124,29 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      * @return all the offline clients
      */
     @Override
-    public Collection<LocalNetworkClient> offlineClients() {
+    public Collection<LocalNetworkClient> getOfflineClients() {
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
     /**
-     * Get the server packet queue
+     * Get a channel name
      *
-     * @return the server packet queue
+     * @param name the channel name
+     * @return the channel name
      */
     @Override
-    public NetworkChannel channel() {
+    public NetworkChannel getChannel(final String name) {
         return null;
+    }
+
+    /**
+     * Register a network channel
+     *
+     * @param channel the channel
+     */
+    @Override
+    public void registerChannel(final NetworkChannel channel) {
+
     }
 
     /**
@@ -1141,7 +1154,6 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      *
      * @param packet the packet
      */
-    @Override
     public void onReceive(final IncomingPacket packet) {
         final String identifier = packet.getSequence("identifier");
 
@@ -1206,7 +1218,6 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
      *
      * @param packet the packet to send
      */
-    @Override
     public void onSend(final OutgoingPacket packet) {
 
     }
@@ -1229,8 +1240,11 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void sendActionBar(final String actionbar) {
         for (Player online : Bukkit.getOnlinePlayers()) {
-            SpigotActionbar sBar = new SpigotActionbar(actionbar);
-            sBar.send(online);
+            Component[] components = ComponentBuilder.builder()
+                    .actionbar(Colorize.colorize(actionbar)).build();
+
+            MessagePacket packet = new MessagePacket(components);
+            packet.send(online);
         }
     }
 
@@ -1246,9 +1260,20 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     @Override
     public void sendTitle(final String title, final String subtitle, final int fadeIn, final int showTime, final int fadeOut) {
         for (Player online : Bukkit.getOnlinePlayers()) {
-            SpigotTitle sTitle = new SpigotTitle(Component.simple().text(title).build(),
-                    Component.simple().text(subtitle).build());
-            sTitle.send(online, fadeIn, showTime, fadeOut);
+            ComponentBuilder builder = Component.builder();
+            if (title != null) {
+                builder.title(Colorize.colorize(title));
+            }
+            if (subtitle != null) {
+                builder.subtitle(Colorize.colorize(subtitle));
+            }
+
+            builder.fadeIn(Times.exact(fadeIn))
+                    .show(Times.exact(showTime))
+                    .fadeOut(Times.exact(fadeOut));
+
+            MessagePacket packet = new MessagePacket(builder.build());
+            packet.send(online);
         }
     }
 

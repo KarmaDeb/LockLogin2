@@ -39,6 +39,49 @@ of making your plugin have module-required files or implementing the LockLogin m
 a LockLogin method which asks your plugin as parameter in order to extend your plugin into a module virtually
 </details>
 
+# Plugin API
+In LockLogin2 the API now allows a plugin to be extended into a module in runtime. This is possible by generating a virtual
+module instance by using your plugin information. That way you can extend your existing plugin into a module without having
+to do changes. All you need to do is call a simple method
+
+```java
+public class Main extends JavaPlugin {
+    
+    public void onEnable() {
+        LockLogin locklogin = CurrentPlugin.getPlugin();
+        ModuleConverter<JavaPlugin> converter = locklogin.getConverter();
+
+        converter.extend(this);
+        /*
+        You can use the static onEnable and onDisable methods
+        in order to catch when the module is ready to handle
+        the LockLogin stuff (recommended) or take a risk and
+        use directly the return value of ModuleConverter#extend, 
+        which always return a Module (nullable)
+         */
+    }
+
+    /**
+     * Virtual module enable logic
+     * 
+     * @param module the current module instance
+     */
+    public static void onEnable(final Module module) {
+        getLogger().info("Successfully hooked with LockLogin");
+    }
+
+    /**
+     * Virtual module disable logic
+     * 
+     * @param module the current module instance
+     */
+    public static void onDisable(final Module module) {
+        //TODO: Disable logic
+    }
+}
+
+```
+
 # Migrating from LockLoginReborn (Legacy v2) (>1.1.0.9)
 [LockLoginReborn](https://github.com/KarmaDeb/LockLoginReborn) is the previous version to this version of LockLogin. Any version under LockLogin v2.0.0 will be
 marked as legacy since this version releases officially. Which means that no more support will be provided for those

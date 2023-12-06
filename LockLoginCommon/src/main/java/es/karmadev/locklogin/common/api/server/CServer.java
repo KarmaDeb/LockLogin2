@@ -7,7 +7,7 @@ import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
-import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
+import es.karmadev.locklogin.api.network.server.packet.NetworkChannelQue;
 import es.karmadev.locklogin.api.plugin.database.driver.engine.SQLDriver;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
@@ -257,7 +257,7 @@ public class CServer implements NetworkServer, Cached {
      * @return all the connected clients
      */
     @Override
-    public Collection<NetworkClient> connected() {
+    public Collection<NetworkClient> getConnected() {
         return null;
     }
 
@@ -268,7 +268,7 @@ public class CServer implements NetworkServer, Cached {
      * @return all the offline clients
      */
     @Override
-    public Collection<LocalNetworkClient> offlineClients() {
+    public Collection<LocalNetworkClient> getOfflineClients() {
         return null;
     }
 
@@ -278,7 +278,7 @@ public class CServer implements NetworkServer, Cached {
      * @return the server packet queue
      */
     @Override
-    public NetworkChannel channel() {
+    public NetworkChannelQue channel() {
         return channel;
     }
 

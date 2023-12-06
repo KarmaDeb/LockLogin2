@@ -27,10 +27,10 @@ import es.karmadev.locklogin.api.network.client.data.MultiAccountManager;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.ServerFactory;
-import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 import es.karmadev.locklogin.api.plugin.ServerHash;
 import es.karmadev.locklogin.api.plugin.database.query.QueryBuilder;
 import es.karmadev.locklogin.api.plugin.database.schema.Row;
@@ -832,8 +832,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void registerService(final String name, final PluginService service) throws UnsupportedOperationException {
-       
-
         if (service_provider.containsKey(name)) {
             plugin.logger().log(LogLevel.WARNING, "Tried to register duplicated service name {0}", name);
             throw new UnsupportedOperationException("Cannot register service " + name + " because it's already defined by another service");
@@ -864,8 +862,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void unregisterService(final String name) throws UnsupportedOperationException, NullPointerException {
-       
-
         PluginService service = service_provider.getOrDefault(name, null);
         if (service == null) throw new NullPointerException("Cannot unregister service " + name + " because it does not exist");
         //if (service instanceof CLocalBackup) throw new UnsupportedOperationException("Cannot unregister plugin internal service: " + name);
@@ -1070,7 +1066,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      * @return all the connected clients
      */
     @Override
-    public Collection<NetworkClient> connected() {
+    public Collection<NetworkClient> getConnected() {
         return network.getOnlinePlayers();
     }
 
@@ -1081,18 +1077,29 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      * @return all the offline clients
      */
     @Override
-    public Collection<LocalNetworkClient> offlineClients() {
+    public Collection<LocalNetworkClient> getOfflineClients() {
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
     /**
-     * Get the server packet queue
+     * Get a channel name
      *
-     * @return the server packet queue
+     * @param name the channel name
+     * @return the channel name
      */
     @Override
-    public NetworkChannel channel() {
+    public NetworkChannel getChannel(final String name) {
         return null;
+    }
+
+    /**
+     * Register a network channel
+     *
+     * @param channel the channel
+     */
+    @Override
+    public void registerChannel(final NetworkChannel channel) {
+
     }
 
     /**
@@ -1100,7 +1107,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      *
      * @param packet the packet
      */
-    @Override
     public void onReceive(final IncomingPacket packet) {
         //final String identifier = packet.getSequence("identifier");
 
@@ -1142,7 +1148,6 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      *
      * @param packet the packet to send
      */
-    @Override
     public void onSend(final OutgoingPacket packet) {
 
     }

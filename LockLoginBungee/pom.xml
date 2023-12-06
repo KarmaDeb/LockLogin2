@@ -56,11 +56,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>es.karmadev</groupId>
             <artifactId>LockLoginAPI</artifactId>
             <scope>compile</scope>

@@ -13,6 +13,7 @@
         <module>LockLoginCommon</module>
         <module>LockLoginSpigot</module>
         <module>LockLoginBungee</module>
+        <module>LockLoginRedis</module>
     </modules>
 
     <name>LockLogin</name>
@@ -383,6 +384,21 @@
     </pluginRepositories>
     -->
 
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>23.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
             <!-- Spigot and BungeeCord -->
@@ -407,24 +423,16 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- Project internal -->
-            <dependency>
-                <groupId>org.jetbrains</groupId>
-                <artifactId>annotations</artifactId>
-                <version>23.0.0</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>1.18.26</version>
-                <scope>provided</scope>
-            </dependency>
-
             <!-- KarmaAPI -->
             <dependency>
                 <groupId>es.karmadev</groupId>
                 <artifactId>KarmaAPI-Core</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Collect</artifactId>
                 <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
             </dependency>
@@ -651,6 +659,13 @@
                 <groupId>net.luckperms</groupId>
                 <artifactId>api</artifactId>
                 <version>5.4</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>4.3.1</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

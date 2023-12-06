@@ -3,7 +3,7 @@ package es.karmadev.locklogin.api.network.server.packet;
 /**
  * Packet processing queue
  */
-public interface NetworkChannel {
+public interface NetworkChannelQue {
 
     /**
      * Append a packet

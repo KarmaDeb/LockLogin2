@@ -34,6 +34,7 @@ import com.comphenix.protocol.wrappers.*;
 import com.github.games647.craftapi.model.skin.SkinProperty;
 import com.github.games647.craftapi.model.skin.Textures;
 import es.karmadev.api.logger.log.console.ConsoleColor;
+import es.karmadev.api.minecraft.MinecraftVersion;
 import es.karmadev.api.spigot.server.SpigotServer;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.file.Configuration;
@@ -111,7 +112,7 @@ public class ProtocolListener extends PacketAdapter {
             String name = getUsername(container);
 
             Optional<ClientKey> client = Optional.empty();
-            if (SpigotServer.isUnder(SpigotServer.v1_19_3)) {
+            if (SpigotServer.isUnder(MinecraftVersion.v1_19_3)) {
                 try {
                     Optional<Optional<WrappedProfilePublicKey.WrappedProfileKeyData>> profile = container.getOptionals(BukkitConverters.getWrappedPublicKeyDataConverter()).optionRead(0);
                     client = profile.flatMap(Function.identity()).flatMap((data) -> {
@@ -161,7 +162,7 @@ public class ProtocolListener extends PacketAdapter {
                                 ClientKey clientPublicKey, byte[] expectedToken) {
         if (keyPair == null) return false;
 
-        if (SpigotServer.isBetween(SpigotServer.v1_19_X, SpigotServer.v1_19_3)) {
+        if (SpigotServer.isBetween(MinecraftVersion.v1_19_X, MinecraftVersion.v1_19_3)) {
             Either<byte[], ?> either = packet.getSpecificModifier(Either.class).read(0);
             if (clientPublicKey == null) {
                 Optional<byte[]> left = either.left();

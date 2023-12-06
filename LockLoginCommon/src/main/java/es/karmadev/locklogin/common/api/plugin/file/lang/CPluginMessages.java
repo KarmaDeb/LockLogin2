@@ -150,6 +150,16 @@ public class CPluginMessages implements Messages {
      * @return plugin message
      */
     @Override
+    public String settingsTitle() {
+        return null;
+    }
+
+    /**
+     * Get a plugin message
+     *
+     * @return plugin message
+     */
+    @Override
     public String altTitle() {
         return parser.parse(yaml.getString("AltTitle", "&8&lAlt accounts lookup"));
     }

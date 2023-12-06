@@ -5,8 +5,8 @@ import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
-import es.karmadev.locklogin.api.network.server.packet.NetworkChannel;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -37,7 +37,7 @@ public interface NetworkServer extends NetworkEntity, TextContainer {
      *
      * @return all the connected clients
      */
-    Collection<NetworkClient> connected();
+    Collection<NetworkClient> getConnected();
 
     /**
      * Get all the offline clients that
@@ -45,26 +45,20 @@ public interface NetworkServer extends NetworkEntity, TextContainer {
      *
      * @return all the offline clients
      */
-    Collection<LocalNetworkClient> offlineClients();
+    Collection<LocalNetworkClient> getOfflineClients();
 
     /**
-     * Get the server packet queue
+     * Get a channel name
      *
-     * @return the server packet queue
+     * @param name the channel name
+     * @return the channel name
      */
-    NetworkChannel channel();
+    NetworkChannel getChannel(final String name);
 
     /**
-     * When a packet is received
+     * Register a network channel
      *
-     * @param packet the packet
+     * @param channel the channel
      */
-    void onReceive(final IncomingPacket packet);
-
-    /**
-     * When a packet is sent
-     *
-     * @param packet the packet to send
-     */
-    void onSend(final OutgoingPacket packet);
+    void registerChannel(final NetworkChannel channel);
 }
