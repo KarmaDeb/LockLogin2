@@ -9,13 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class CInPacket implements IncomingPacket {
 
-    //private final static LockLogin plugin = CurrentPlugin.getPlugin();
-    private final Map<Integer, String> byteMap = new ConcurrentHashMap<>();
+    private final byte[] data;
     private transient JsonObject json;
     private final int id;
     private final DataType type;
@@ -28,13 +25,7 @@ public class CInPacket implements IncomingPacket {
      * @throws InvalidPacketDataException if the raw packet data is not valid
      */
     public CInPacket(final String raw) throws InvalidPacketDataException {
-        byte[] data = raw.getBytes(StandardCharsets.UTF_8);
-        for (int i = 0; i < data.length; i++) {
-            String encoded = Byte.toString(data[i]);
-            byteMap.put(i, encoded);
-
-            //plugin.info("[InPacket] Encoded {0} to {1}({2})", i, encoded, data[i]);
-        }
+        this.data = raw.getBytes();
 
         try {
             Gson gson = new GsonBuilder().create();
@@ -130,16 +121,7 @@ public class CInPacket implements IncomingPacket {
      */
     @Override
     public byte[] getData() {
-        byte[] byteCreator = new byte[byteMap.size()];
-        for (int i = 0; i < byteMap.size(); i++) {
-            String encoded = byteMap.get(i);
-            byte decoded = Byte.parseByte(encoded);
-            byteCreator[i] = decoded;
-
-            //plugin.info("[InPacket] Decoded {0} to {1}({2})", i, encoded, decoded);
-        }
-
-        return byteCreator;
+        return data.clone();
     }
 
     /**
@@ -399,16 +381,33 @@ public class CInPacket implements IncomingPacket {
     private void ensureJson() {
         if (json == null) {
             Gson gson = new GsonBuilder().create();
-            byte[] byteCreator = new byte[byteMap.size()];
-            for (int i = 0; i < byteMap.size(); i++) {
-                String encoded = byteMap.get(i);
-                byte decoded = Byte.parseByte(encoded);
-                byteCreator[i] = decoded;
-
-                //plugin.info("[InPacket] Decoded {0} to {1}({2})", i, encoded, decoded);
-            }
-
-            json = gson.fromJson(new String(byteCreator, StandardCharsets.UTF_8), JsonObject.class);
+            json = gson.fromJson(new String(data, StandardCharsets.UTF_8), JsonObject.class);
         }
+    }
+
+    /**
+     * Returns a string representation of the object. In general, the
+     * {@code toString} method returns a string that
+     * "textually represents" this object. The result should
+     * be a concise but informative representation that is easy for a
+     * person to read.
+     * It is recommended that all subclasses override this method.
+     * <p>
+     * The {@code toString} method for class {@code Object}
+     * returns a string consisting of the name of the class of which the
+     * object is an instance, the at-sign character `{@code @}', and
+     * the unsigned hexadecimal representation of the hash code of the
+     * object. In other words, this method returns a string equal to the
+     * value of:
+     * <blockquote>
+     * <pre>
+     * getClass().getName() + '@' + Integer.toHexString(hashCode())
+     * </pre></blockquote>
+     *
+     * @return a string representation of the object.
+     */
+    @Override
+    public String toString() {
+        return json.toString();
     }
 }

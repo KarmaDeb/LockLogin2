@@ -1,10 +1,11 @@
-package es.karmadev.locklogin.redis.options;
+package es.karmadev.locklogin.redis.api.options;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.HostAndPort;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,6 +40,8 @@ public class RedisClusterOptions {
         }
 
         public RedisClusterOptionsBuilder withCluster(final HostAndPort hostAndPort) {
+            if (this.clusters == null) this.clusters = new ArrayList<>();
+
             this.clusters.add(hostAndPort);
             return this;
         }

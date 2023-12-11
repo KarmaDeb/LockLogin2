@@ -8,6 +8,8 @@ import es.karmadev.api.database.DatabaseManager;
 import es.karmadev.api.database.model.JsonDatabase;
 import es.karmadev.api.database.model.json.JsonConnection;
 import es.karmadev.api.web.url.URLUtilities;
+import es.karmadev.auth.key.TOTPKey;
+import es.karmadev.auth.totp.TOTP;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -16,8 +18,6 @@ import es.karmadev.locklogin.api.plugin.file.Configuration;
 import es.karmadev.locklogin.api.plugin.file.language.Messages;
 import es.karmadev.locklogin.api.security.totp.TotpService;
 import es.karmadev.locklogin.common.api.protection.type.SHA512Hash;
-import es.karmadev.totp.TOTP;
-import es.karmadev.totp.TOTPKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

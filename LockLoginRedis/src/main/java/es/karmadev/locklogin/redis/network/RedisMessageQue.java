@@ -12,13 +12,19 @@ import es.karmadev.locklogin.common.api.packet.CInPacket;
 import redis.clients.jedis.BinaryJedisPubSub;
 import redis.clients.jedis.JedisCluster;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Represents a redis message que
  */
 public class RedisMessageQue implements NetworkChannelQue {
 
+    private final int queId = ThreadLocalRandom.current().nextInt();
+    private final JedisCluster cluster;
     private final NetworkChannel channel;
 
     private final PriorityCollection<NetworkPacket> packets = new PriorityArray<>(NetworkPacket.class);
@@ -26,23 +32,33 @@ public class RedisMessageQue implements NetworkChannelQue {
     private NetworkPacket current;
 
     public RedisMessageQue(final JedisCluster cluster, final NetworkChannel channel) {
+        this.cluster = cluster;
         this.channel = channel;
 
-        cluster.subscribe(new BinaryJedisPubSub() {
-            @Override
-            public void onMessage(final byte[] channel, final byte[] message) {
-                String rawMessage = new String(message);
+        CompletableFuture.runAsync(() -> {
+            cluster.subscribe(new BinaryJedisPubSub() {
+                @Override
+                public void onMessage(final byte[] channel, final byte[] message) {
+                    byte[] formatted = Arrays.copyOfRange(message, 0, message.length - 4);
+                    byte[] intBytes = Arrays.copyOfRange(message, message.length - 4, message.length);
 
-                try {
-                    CInPacket packet = new CInPacket(rawMessage);
-                    PacketReceiveEvent event = new PacketReceiveEvent(RedisMessageQue.this.channel, packet);
+                    Integer id = bytesToInt(intBytes);
+                    if (id == null || id == queId) return;
 
-                    RedisMessageQue.this.channel.handle(event);
-                } catch (InvalidPacketDataException ex) {
-                    throw new RuntimeException(ex);
+                    byte[] decoded = Base64.getDecoder().decode(formatted);
+
+                    String rawMessage = new String(decoded);
+                    try {
+                        CInPacket packet = new CInPacket(rawMessage);
+                        PacketReceiveEvent event = new PacketReceiveEvent(RedisMessageQue.this.channel, packet);
+
+                        RedisMessageQue.this.channel.handle(event);
+                    } catch (InvalidPacketDataException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
-            }
-        }, channel.getChannel().getBytes(StandardCharsets.UTF_8));
+            }, channel.getChannel().getBytes());
+        });
     }
 
     /**
@@ -127,5 +143,46 @@ public class RedisMessageQue implements NetworkChannelQue {
     @Override
     public void cancelPacket() {
         current = null;
+    }
+
+    /**
+     * Flushes the current
+     * packet
+     */
+    public boolean flushPacket() {
+        if (current != null) {
+            byte[] data = current.message();
+            ByteBuffer buffer = ByteBuffer.allocate(data.length + 4);
+            buffer.clear();
+            buffer.put(data);
+            buffer.putInt(queId);
+            buffer.flip();
+
+            byte[] finalData = buffer.array();
+            cluster.publish(channel.getChannel().getBytes(), finalData);
+
+            if (packets.consume()) {
+                current = null;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Parse a byte array into its
+     * integer value
+     *
+     * @param bytes the integer bytes
+     * @return the integer value
+     */
+    private Integer bytesToInt(final byte[] bytes) {
+        if (bytes.length != 4) return null;
+
+        return (bytes[0] & 0xFF) << 24 | //Digit on #4 position
+                (bytes[1] & 0xFF) << 16 | //Digit on #3 position
+                (bytes[2] & 0xFF) << 8 | //Digit on #2 position
+                (bytes[3] & 0xFF);
     }
 }

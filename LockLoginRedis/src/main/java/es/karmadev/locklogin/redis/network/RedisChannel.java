@@ -152,14 +152,3 @@ public class RedisChannel implements NetworkChannel {
     }
 }
 
-@Value(staticConstructor = "of")
-@Getter
-class ListenerMetaData {
-
-    NetworkListener listener;
-    Map<Class<? extends NetworkEvent>, Set<MethodHandle>> invokers = new HashMap<>();
-
-    public MethodHandle[] getHandlers(final NetworkEvent event) {
-        return invokers.getOrDefault(event.getClass(), Collections.emptySet()).toArray(new MethodHandle[0]);
-    }
-}

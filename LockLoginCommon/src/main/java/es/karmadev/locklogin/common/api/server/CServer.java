@@ -5,6 +5,7 @@ import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannelQue;
@@ -273,11 +274,31 @@ public class CServer implements NetworkServer, Cached {
     }
 
     /**
+     * Get a channel name
+     *
+     * @param name the channel name
+     * @return the channel name
+     */
+    @Override
+    public NetworkChannel getChannel(String name) {
+        return null;
+    }
+
+    /**
+     * Register a network channel
+     *
+     * @param channel the channel
+     */
+    @Override
+    public void registerChannel(NetworkChannel channel) {
+
+    }
+
+    /**
      * Get the server packet queue
      *
      * @return the server packet queue
      */
-    @Override
     public NetworkChannelQue channel() {
         return channel;
     }
@@ -287,7 +308,6 @@ public class CServer implements NetworkServer, Cached {
      *
      * @param packet the packet
      */
-    @Override
     public void onReceive(IncomingPacket packet) {
 
     }
@@ -297,7 +317,6 @@ public class CServer implements NetworkServer, Cached {
      *
      * @param packet the packet to send
      */
-    @Override
     public void onSend(OutgoingPacket packet) {
 
     }
