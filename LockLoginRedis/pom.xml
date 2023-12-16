@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>es.karmadev</groupId>
-            <artifactId>KarmaAPI-Collect</artifactId>
+            <artifactId>Collect</artifactId>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

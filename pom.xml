@@ -430,8 +430,8 @@
             </dependency>
             <dependency>
                 <groupId>es.karmadev</groupId>
-                <artifactId>KarmaAPI-Collect</artifactId>
-                <version>${locklogin.karmaapi.version}</version>
+                <artifactId>Collect</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
