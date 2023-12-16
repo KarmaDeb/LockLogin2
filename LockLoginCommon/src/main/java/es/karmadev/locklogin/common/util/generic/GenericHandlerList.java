@@ -59,7 +59,7 @@ public final class GenericHandlerList {
      *
      * @param flags the flags
      */
-    public GenericHandlerList(final int flags) {
+    public GenericHandlerList(final byte flags) {
         this.flags = flags;
     }
 
