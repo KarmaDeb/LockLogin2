@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.redis.api.options;
+package es.karmadev.locklogin.redis.options;
 
 import lombok.Builder;
 import lombok.Getter;
