@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.redis.network;
+package es.karmadev.locklogin.bungee.network;
 
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
@@ -6,19 +6,22 @@ import es.karmadev.locklogin.api.network.communication.packet.listener.NetworkLi
 import es.karmadev.locklogin.api.network.communication.packet.listener.event.NetworkEvent;
 import es.karmadev.locklogin.api.network.server.packet.NetworkChannelQue;
 import es.karmadev.locklogin.common.util.generic.GenericHandlerList;
-import redis.clients.jedis.JedisCluster;
+import lombok.RequiredArgsConstructor;
 
-public class RedisChannel implements NetworkChannel {
+/**
+ * Represents a BungeeCord channel. The BungeeCord channel
+ * is the default implementation which allows communication
+ * between plugin instances. The implementation is potentially
+ * compatible with multi-bungee instances, but it's recommended
+ * to use Redis or Channels instead.
+ */
+@RequiredArgsConstructor
+public class BungeeChannel implements NetworkChannel {
 
     private final String channel;
-    private final RedisMessageQue que;
+    private final BungeeMessagingQue que = new BungeeMessagingQue();
 
     private final GenericHandlerList handlerList = new GenericHandlerList();
-
-    public RedisChannel(final JedisCluster cluster, final String channel) {
-        this.channel = channel;
-        this.que = new RedisMessageQue(cluster, this);
-    }
 
     /**
      * Get the channel name this
@@ -59,7 +62,7 @@ public class RedisChannel implements NetworkChannel {
      */
     @Override
     public void addListener(final Module module, final NetworkListener listener) {
-        this.handlerList.addListeners(module, listener);
+        handlerList.addListeners(module, listener);
     }
 
     /**
@@ -69,7 +72,7 @@ public class RedisChannel implements NetworkChannel {
      */
     @Override
     public void removeListener(final NetworkListener listener) {
-        this.handlerList.removeListener(listener);
+        handlerList.removeListener(listener);
     }
 
     /**
@@ -81,7 +84,6 @@ public class RedisChannel implements NetworkChannel {
      */
     @Override
     public void removeListeners(final Module module) {
-        this.handlerList.removeListeners(module);
+        handlerList.removeListeners(module);
     }
 }
-

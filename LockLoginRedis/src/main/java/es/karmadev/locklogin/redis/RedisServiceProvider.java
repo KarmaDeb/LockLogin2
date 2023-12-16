@@ -1,15 +1,14 @@
 package es.karmadev.locklogin.redis;
 
 import es.karmadev.locklogin.api.plugin.service.ServiceProvider;
-import es.karmadev.locklogin.redis.api.RedisService;
-import es.karmadev.locklogin.redis.api.options.RedisClusterOptions;
+import es.karmadev.locklogin.redis.options.RedisClusterOptions;
 
 /**
  * Represents the redis service provider.
  * Redis is a high-end and fast key-value database,
  * useful for BungeeCord
  */
-public final class RedisServiceProvider implements ServiceProvider<RedisService> {
+public final class RedisServiceProvider implements ServiceProvider<DefaultRedisService> {
 
     public RedisServiceProvider() {
 
@@ -44,7 +43,7 @@ public final class RedisServiceProvider implements ServiceProvider<RedisService>
      * @return the plugin service
      */
     @Override
-    public RedisService serve(final Object... arguments) {
+    public DefaultRedisService serve(final Object... arguments) {
         if (arguments.length != 1) return null;
         Object parameter = arguments[0];
         if (parameter instanceof RedisClusterOptions) {
@@ -61,7 +60,7 @@ public final class RedisServiceProvider implements ServiceProvider<RedisService>
      * @return the service class
      */
     @Override
-    public Class<RedisService> getService() {
-        return RedisService.class;
+    public Class<DefaultRedisService> getService() {
+        return DefaultRedisService.class;
     }
 }

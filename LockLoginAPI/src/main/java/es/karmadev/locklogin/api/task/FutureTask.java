@@ -193,14 +193,15 @@ public class FutureTask<T> implements Future<T> {
      * @throws CancellationException if the computation was cancelled
      * @throws InterruptedException  if the current thread was interrupted
      *                               while waiting
+     * @throws ExecutionException    if the completed task result is an error
      */
     @Override
-    public T get() throws InterruptedException, ExecutionException {
+    public T get() throws CancellationException, InterruptedException, ExecutionException {
         if (result != null) return result;
 
         Thread thread = Thread.currentThread();
         synchronized (thread) {
-            while (result == null) {
+            while (result == null && error == null) {
                 if (cancelled) {
                     throw new CancellationException();
                 }
@@ -209,6 +210,7 @@ public class FutureTask<T> implements Future<T> {
             }
         }
 
+        if (error != null) throw new ExecutionException(error);
         return result;
     }
 
@@ -242,5 +244,67 @@ public class FutureTask<T> implements Future<T> {
         if (wait <= 0) throw new TimeoutException();
 
         return result;
+    }
+
+    /**
+     * Create and get a completed future for
+     * the instance
+     *
+     * @param element the instance
+     * @return the completed future
+     * @param <T> the future type
+     */
+    public static <T> FutureTask<T> completedFuture(final T element) {
+       FutureTask<T> task = new FutureTask<>();
+        task.result = element;
+        task.error = null;
+
+        return task;
+    }
+
+    /**
+     * Create and get a completed future for
+     * the error
+     *
+     * @param error the error
+     * @return the completed future
+     * @param <T> the future type
+     */
+    public static <T> FutureTask<T> completedFuture(final Throwable error) {
+       FutureTask<T> task = new FutureTask<>();
+       task.result = null;
+       task.error = error;
+
+       return task;
+    }
+
+    /**
+     * Create and get a completed future
+     * for the element and error
+     *
+     * @param element the element
+     * @param error the error
+     * @return the completed future
+     * @param <T> the future type
+     */
+    public static <T> FutureTask<T> completedFuture(final T element, final Throwable error) {
+        FutureTask<T> task = new FutureTask<>();
+        task.result = element;
+        task.error = error;
+
+        return task;
+    }
+
+    /**
+     * Creates and get a cancelled future
+     *
+     * @return the cancelled future
+     * @param <T> the future type
+     */
+    public static <T> FutureTask<T> cancelledFuture() {
+        FutureTask<T> task = new FutureTask<>();
+        task.cancelled = true;
+
+        return task;
     }
 }

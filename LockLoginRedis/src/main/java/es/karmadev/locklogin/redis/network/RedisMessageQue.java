@@ -131,26 +131,6 @@ public class RedisMessageQue implements NetworkChannelQue {
     @Override
     public void consumePacket() {
         if (current != null) {
-            current = null;
-            packets.consume();
-        }
-    }
-
-    /**
-     * Cancel the current packet processing, and
-     * do nothing to it
-     */
-    @Override
-    public void cancelPacket() {
-        current = null;
-    }
-
-    /**
-     * Flushes the current
-     * packet
-     */
-    public boolean flushPacket() {
-        if (current != null) {
             byte[] data = current.message();
             ByteBuffer buffer = ByteBuffer.allocate(data.length + 4);
             buffer.clear();
@@ -163,11 +143,21 @@ public class RedisMessageQue implements NetworkChannelQue {
 
             if (packets.consume()) {
                 current = null;
-                return true;
+                return;
             }
-        }
 
-        return false;
+            current = null;
+            packets.consume();
+        }
+    }
+
+    /**
+     * Cancel the current packet processing, and
+     * do nothing to it
+     */
+    @Override
+    public void cancelPacket() {
+        current = null;
     }
 
     /**

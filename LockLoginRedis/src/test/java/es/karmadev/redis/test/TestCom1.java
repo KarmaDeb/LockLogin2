@@ -3,9 +3,9 @@ package es.karmadev.redis.test;
 import com.google.gson.JsonObject;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.common.api.packet.COutPacket;
+import es.karmadev.locklogin.redis.DefaultRedisService;
 import es.karmadev.locklogin.redis.RedisServiceProvider;
-import es.karmadev.locklogin.redis.api.RedisService;
-import es.karmadev.locklogin.redis.api.options.RedisClusterOptions;
+import es.karmadev.locklogin.redis.options.RedisClusterOptions;
 import es.karmadev.locklogin.redis.network.RedisChannel;
 import es.karmadev.locklogin.redis.network.RedisMessageQue;
 import org.junit.Test;
@@ -18,6 +18,18 @@ import static org.junit.Assert.*;
 public class TestCom1 {
 
     @Test
+    public void testBitOp() {
+        final int flag = 1;
+        final int flagValue = 0;
+        final int flagValue1 = 1;
+        final int flagValue2 = 2;
+
+        System.out.println(flag & flagValue & flagValue1 & flagValue2);
+        System.out.println(flag & flagValue1 & flagValue & flagValue2);
+        System.out.println(flag & flagValue2 & flagValue1 & flagValue);
+    }
+
+    @Test
     public void testConnection() {
         RedisServiceProvider provider = new RedisServiceProvider();
 
@@ -26,12 +38,12 @@ public class TestCom1 {
                 .ssl(false)
                 .build();
 
-        RedisService service = provider.serve(options);
+        DefaultRedisService service = provider.serve(options);
         assertNotNull(service);
     }
 
     @Test
-    public void testSecurity() {
+    public void testSecurity() throws Throwable {
         RedisServiceProvider provider = new RedisServiceProvider();
 
         RedisClusterOptions options = RedisClusterOptions.builder()
@@ -39,7 +51,7 @@ public class TestCom1 {
                 .ssl(false)
                 .build();
 
-        RedisService service = provider.serve(options);
+        DefaultRedisService service = provider.serve(options);
         assertNotNull(service);
 
         AtomicBoolean work = new AtomicBoolean(true);
@@ -56,7 +68,7 @@ public class TestCom1 {
             }
         }).start();
 
-        RedisChannel channel = service.createChannel("test").join();
+        RedisChannel channel = service.getChannel("test").get();
         RedisMessageQue que = (RedisMessageQue) channel.getProcessingQue();
 
         COutPacket out = new COutPacket(DataType.HELLO);

@@ -1,4 +1,4 @@
-package es.karmadev.locklogin.redis.network;
+package es.karmadev.locklogin.common.util.generic;
 
 import es.karmadev.locklogin.api.network.communication.packet.listener.NetworkListener;
 import es.karmadev.locklogin.api.network.communication.packet.listener.event.NetworkEvent;

@@ -1,12 +1,17 @@
 package es.karmadev.locklogin.redis;
 
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.object.var.Variable;
-import es.karmadev.locklogin.redis.api.RedisService;
+import es.karmadev.api.strings.StringUtils;
+import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
+import es.karmadev.locklogin.api.plugin.service.network.ChannelProviderService;
+import es.karmadev.locklogin.api.task.FutureTask;
 import es.karmadev.locklogin.redis.network.RedisChannel;
-import es.karmadev.locklogin.redis.api.options.RedisClusterOptions;
+import es.karmadev.locklogin.redis.options.RedisClusterOptions;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import redis.clients.jedis.*;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * provided by a valid {@link es.karmadev.locklogin.api.plugin.service.ServiceProvider}, for example,
  * the default implementation ({@link RedisServiceProvider})
  */
-public class DefaultRedisService implements RedisService {
+public class DefaultRedisService extends ChannelProviderService {
 
     private final RedisClusterOptions options;
     private final Map<String, RedisChannel> channel = new ConcurrentHashMap<>();
@@ -30,16 +35,6 @@ public class DefaultRedisService implements RedisService {
      */
     protected DefaultRedisService(final RedisClusterOptions options) {
         this.options = options;
-    }
-
-    /**
-     * Get the service name
-     *
-     * @return the service name
-     */
-    @Override
-    public String name() {
-        return "redis-connector";
     }
 
     /**
@@ -55,6 +50,17 @@ public class DefaultRedisService implements RedisService {
     }
 
     /**
+     * Get a collection of the registered
+     * channels from this provider.
+     *
+     * @return the provider created channels
+     */
+    @Override
+    public Collection<? extends NetworkChannel> getChannels() {
+        return channel.values();
+    }
+
+    /**
      * Create a new channel on the redis
      * network
      *
@@ -62,7 +68,12 @@ public class DefaultRedisService implements RedisService {
      * @return the redis channel
      */
     @Override
-    public CompletableFuture<RedisChannel> createChannel(final String name) {
+    public FutureTask<RedisChannel> getChannel(final String name) {
+        if (name == null) return FutureTask.cancelledFuture();
+
+        String normalized = StringUtils.toSnakeCase(name);
+        if (ObjectUtils.isNullOrEmpty(normalized)) return FutureTask.cancelledFuture();
+
         JedisCluster cluster = DefaultRedisService.cluster.getOrSet(() -> {
             Set<HostAndPort> hosts = new HashSet<>(options.getClusters());
             GenericObjectPoolConfig<Connection> config = new GenericObjectPoolConfig<>();
@@ -85,20 +96,36 @@ public class DefaultRedisService implements RedisService {
             return new JedisCluster(hosts, jedisClientConfig, 5, config);
         });
 
-        RedisChannel existing = channel.get(name);
+        RedisChannel existing = channel.get(normalized);
         if (existing != null) {
-            return CompletableFuture.completedFuture(existing);
+            return FutureTask.completedFuture(existing);
         }
 
-        CompletableFuture<RedisChannel> future = new CompletableFuture<>();
-
+        FutureTask<RedisChannel> future = new FutureTask<>();
         CompletableFuture.runAsync(() -> {
-            RedisChannel c = new RedisChannel(cluster, name);
+            RedisChannel c = new RedisChannel(cluster, normalized);
+            channel.put(normalized, c);
+
             //Cluster subscription must be done asynchronously
             future.complete(c);
         });
 
         return future;
+    }
+
+    /**
+     * Destroy a channel
+     *
+     * @param channelName the channel name to destroy
+     * @return if the channel was destroyed
+     */
+    @Override
+    public boolean destroyChannel(final String channelName) {
+        if (channelName == null) return false;
+        String normalized = StringUtils.toSnakeCase(channelName);
+        if (ObjectUtils.isNullOrEmpty(normalized)) return false;
+
+        return channel.remove(normalized) != null;
     }
 
     /**
