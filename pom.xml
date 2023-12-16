@@ -346,7 +346,6 @@
             <url>https://repository.ow2.org/nexus/content/repositories/public/</url>
         </repository>
 
-        <!--
         <repository>
             <id>karmadev_releases</id>
             <url>https://nexus.karmadev.es/repository/maven-releases/</url>
@@ -355,7 +354,6 @@
             <id>karmadev_snapshots</id>
             <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
         </repository>
-        -->
     </repositories>
 
     <!--

@@ -200,9 +200,9 @@ public class PinInventory {
                 account.setPin(pin);
             }
 
-            if (plugin.bungeeMode()) {
+            /*if (plugin.bungeeMode()) {
                 //TODO: Send pin auth status
-            }
+            }*/
 
             player.session().append(CSessionField.newField(Boolean.class, "pin_logged", true));
             if (onSuccess != null)

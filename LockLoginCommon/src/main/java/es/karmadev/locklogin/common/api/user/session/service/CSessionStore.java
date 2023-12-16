@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
-class CSessionStore implements SessionStoreService, Cached {
+public class CSessionStore implements SessionStoreService, Cached {
 
     boolean grantedThroughServiceProvider = false;
     private final SQLDriver driver;

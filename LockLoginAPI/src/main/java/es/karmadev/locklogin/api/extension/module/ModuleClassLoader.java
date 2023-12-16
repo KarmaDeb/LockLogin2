@@ -81,7 +81,7 @@ final class ModuleClassLoader extends URLClassLoader {
                             Map<?, ?> mapData = (Map<?, ?>) mapValue;
 
                             String commandName = (String) key;
-                            String cmdDescription = "";
+                            String cmdDescription;
                             List<String> cmdAliases = new ArrayList<>();
 
                             if (!mapData.containsKey("description")) continue;
