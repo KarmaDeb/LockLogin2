@@ -19,8 +19,27 @@
 
     <dependencies>
         <dependency>
-            <groupId>es.karmadev</groupId>
-            <artifactId>NettyChanneling</artifactId>
+            <groupId>es.karmadev.channeling</groupId>
+            <artifactId>server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev.channeling</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev.channeling</groupId>
+            <artifactId>client</artifactId>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>local_repository</id>
+            <url>file:${project.basedir}/v${project.version}/release</url>
+        </repository>
+        <snapshotRepository>
+            <id>local_snapshot</id>
+            <url>file:${project.basedir}/v${project.version}/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

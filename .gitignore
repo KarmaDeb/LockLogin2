@@ -55,6 +55,9 @@ deprecated.txt
 /LockLoginBungee/v2.0.0/
 /LockLoginCommon/v2.0.0-SNAPSHOT/
 /LockLoginSpigot/v2.0.0-SNAPSHOT/
+/LockLoginChannels/v2.0.0-SNAPSHOT/
+/LockLoginRedis/v2.0.0-SNAPSHOT/
+/LockLoginRedis/src/test/
 /v2.0.0-SNAPSHOT/
 /junit/
 /LockLoginSpigot/src/test/
