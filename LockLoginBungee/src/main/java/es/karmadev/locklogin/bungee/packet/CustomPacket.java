@@ -1,8 +1,6 @@
 package es.karmadev.locklogin.bungee.packet;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonObject;
 import es.karmadev.api.strings.StringOptions;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -102,8 +100,8 @@ public class CustomPacket {
 
                                 if (!type.equals(DataType.HELLO)) {
                                     JsonObject object = out.build();
-                                    if (object.has(tag)) {
-                                        byte[] sharedBytes = Base64.getDecoder().decode(object.get(tag).getAsString());
+                                    if (object.hasChild(tag)) {
+                                        byte[] sharedBytes = Base64.getDecoder().decode(object.getChild(tag).asNative().getAsString());
                                         byte[] currentBytes = plugin.getSharedSecret().getEncoded();
 
                                         if (!compare(sharedBytes, currentBytes)) {
@@ -117,11 +115,10 @@ public class CustomPacket {
                                 }
 
                                 if (PacketDataHandler.validatePacket(server, tag, out)) {
-                                    Gson gson = new GsonBuilder().create();
                                     JsonObject object = out.build();
-                                    object.addProperty("server", server.getInfo().getName());
+                                    object.put("server", server.getInfo().getName());
 
-                                    String rawJson = gson.toJson(object);
+                                    String rawJson = object.toString(false);
 
                                     IncomingPacket incoming = new CInPacket(rawJson);
                                     NetworkChannel channel = plugin.getChannel(tag);

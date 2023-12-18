@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.bungee.packet;
 
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonObject;
 import es.karmadev.api.strings.StringOptions;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -82,7 +82,7 @@ public class PacketDataHandler {
                 OutgoingPacket out = (OutgoingPacket) packet;
                 JsonObject object = out.build();
 
-                replyId = object.get("replying").getAsInt();
+                replyId = object.getChild("replying").asNative().getInteger();
             }
 
             if (pack.id() == replyId) {
@@ -125,7 +125,7 @@ public class PacketDataHandler {
             OutgoingPacket out = (OutgoingPacket) packet;
             JsonObject object = out.build();
 
-            replyId = object.get("replying").getAsInt();
+            replyId = object.getChild("replying").asNative().getInteger();
         }
 
         return stored.id() == replyId;
