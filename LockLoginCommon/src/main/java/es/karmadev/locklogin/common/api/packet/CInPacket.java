@@ -1,6 +1,10 @@
 package es.karmadev.locklogin.common.api.packet;
 
-import com.google.gson.*;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonNative;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
@@ -28,40 +32,39 @@ public class CInPacket implements IncomingPacket {
         this.data = raw.getBytes();
 
         try {
-            Gson gson = new GsonBuilder().create();
-            JsonElement element = gson.fromJson(raw, JsonElement.class);
-            if (!element.isJsonObject()) {
+            JsonInstance element = JsonReader.read(raw);
+            if (!element.isObjectType()) {
                 throw new InvalidPacketDataException("Cannot parse packet data because is not a JsonObject");
             }
 
-            json = element.getAsJsonObject();
-            if (!json.has("id")) {
+            json = element.asObject();
+            if (!json.hasChild("id")) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet ID is missing");
             }
-            if (!json.has("packetType")) {
+            if (!json.hasChild("packetType")) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet type is missing");
             }
-            if (!json.has("stamp")) {
+            if (!json.hasChild("stamp")) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet stamp is missing");
             }
 
-            JsonElement idElement = json.get("id");
-            JsonElement typeElement = json.get("packetType");
-            JsonElement stampElement = json.get("stamp");
+            JsonInstance idElement = json.getChild("id");
+            JsonInstance typeElement = json.getChild("packetType");
+            JsonInstance stampElement = json.getChild("stamp");
 
-            if (!idElement.isJsonPrimitive()) {
+            if (!idElement.isNativeType()) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet ID has invalid format");
             }
-            if (!typeElement.isJsonPrimitive()) {
+            if (!typeElement.isNativeType()) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet type has invalid format");
             }
-            if (!stampElement.isJsonPrimitive()) {
+            if (!stampElement.isNativeType()) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet stamp has invalid format");
             }
 
-            JsonPrimitive idPrimitive = idElement.getAsJsonPrimitive();
-            JsonPrimitive typePrimitive = typeElement.getAsJsonPrimitive();
-            JsonPrimitive stampPrimitive = stampElement.getAsJsonPrimitive();
+            JsonNative idPrimitive = idElement.asNative();
+            JsonNative typePrimitive = typeElement.asNative();
+            JsonNative stampPrimitive = stampElement.asNative();
 
             if (!idPrimitive.isNumber()) {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet ID is not expected type");
@@ -81,7 +84,7 @@ public class CInPacket implements IncomingPacket {
                 throw new InvalidPacketDataException("Cannot parse packet data because packet type is unknown type");
             }
 
-            long stampMillis = stampPrimitive.getAsLong();
+            long stampMillis = stampPrimitive.getLong();
             stamp = Instant.ofEpochMilli(stampMillis);
             Instant now = Instant.now();
 
@@ -89,7 +92,7 @@ public class CInPacket implements IncomingPacket {
             if (duration.getSeconds() >= 10) {
                 throw new InvalidPacketDataException("Cannot parse packet data because it expired");
             }
-        } catch (JsonSyntaxException ex) {
+        } catch (Exception ex) {
             throw new InvalidPacketDataException(ex);
         }
     }
@@ -144,10 +147,10 @@ public class CInPacket implements IncomingPacket {
     @Override @Nullable
     public String getSequence(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isString()) return element.getAsString();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isString()) return primitive.getString();
         }
 
         return null;
@@ -162,10 +165,10 @@ public class CInPacket implements IncomingPacket {
     @Override @Nullable
     public Number getNumber(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsNumber();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getNumber();
         }
 
         return null;
@@ -180,14 +183,13 @@ public class CInPacket implements IncomingPacket {
     @Override
     public char getCharacter(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isString()) return primitive.getAsCharacter();
-            if (primitive.isNumber()) return (char) primitive.getAsNumber().intValue();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isString()) return primitive.getAsString().charAt(0);
         }
 
-        return 0;
+        return '\0';
     }
 
     /**
@@ -199,10 +201,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public int getInteger(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsInt();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getInteger();
         }
 
         return -1;
@@ -217,10 +219,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public long getLong(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return primitive.getAsLong();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getLong();
         }
 
         return -1;
@@ -235,10 +237,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public double getDouble(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsDouble();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getDouble();
         }
 
         return -1;
@@ -253,10 +255,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public float getFloat(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsFloat();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getFloat();
         }
 
         return -1;
@@ -271,10 +273,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public short getShort(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsShort();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getShort();
         }
 
         return -1;
@@ -289,10 +291,10 @@ public class CInPacket implements IncomingPacket {
     @Override
     public byte getByte(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonPrimitive()) {
-            JsonPrimitive primitive = element.getAsJsonPrimitive();
-            if (primitive.isNumber()) return element.getAsByte();
+        JsonInstance element = find(key);
+        if (element.isNativeType()) {
+            JsonNative primitive = element.asNative();
+            if (primitive.isNumber()) return primitive.getByte();
         }
 
         return -1;
@@ -309,11 +311,10 @@ public class CInPacket implements IncomingPacket {
     @Override @Nullable
     public IncomingPacket getObject(final String key) throws InvalidPacketDataException {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonObject()) {
-            JsonObject object = element.getAsJsonObject();
-            Gson gson = new GsonBuilder().create();
-            String raw = gson.toJson(object);
+        JsonInstance element = find(key);
+        if (element.isObjectType()) {
+            JsonObject object = element.asObject();
+            String raw = object.toString(false);
 
             return new CInPacket(raw);
         }
@@ -330,9 +331,9 @@ public class CInPacket implements IncomingPacket {
     @Override @Nullable
     public JsonArray getList(final String key) {
         ensureJson();
-        JsonElement element = find(key);
-        if (element.isJsonArray()) {
-            return element.getAsJsonArray();
+        JsonInstance element = find(key);
+        if (element.isArrayType()) {
+            return element.asArray();
         }
 
         return null;
@@ -344,11 +345,13 @@ public class CInPacket implements IncomingPacket {
      * @param key the element key
      * @return the element
      * @throws IllegalStateException if the key is invalid
+     * @deprecated implemented in KSon
      */
-    private JsonElement find(final String key) throws IllegalStateException {
+    @Deprecated
+    private JsonInstance find(final String key) throws IllegalStateException {
         ensureJson();
-        if (json.has(key)) {
-            return json.get(key);
+        if (json.hasChild(key)) {
+            return json.getChild(key);
         }
 
         if (key.contains(".")) {
@@ -356,16 +359,16 @@ public class CInPacket implements IncomingPacket {
             JsonObject element = json;
             int index = 0;
             for (String point : keys) {
-                if (!element.has(point)) {
+                if (!element.hasChild(point)) {
                     throw new IllegalStateException("Cannot get json key " + key + " because " + point + " is not set");
                 }
 
-                JsonElement sub = element.get(point);
-                if (!sub.isJsonObject() && index != (keys.length - 1)) {
+                JsonInstance sub = element.getChild(point);
+                if (!sub.isObjectType() && index != (keys.length - 1)) {
                     throw new IllegalStateException("Cannot get json key " + key + " because " + point + " does not point to a section");
                 }
 
-                element = sub.getAsJsonObject();
+                element = sub.asObject();
                 index++;
             }
 
@@ -380,8 +383,7 @@ public class CInPacket implements IncomingPacket {
      */
     private void ensureJson() {
         if (json == null) {
-            Gson gson = new GsonBuilder().create();
-            json = gson.fromJson(new String(data, StandardCharsets.UTF_8), JsonObject.class);
+            json = JsonReader.parse(data).asObject();
         }
     }
 

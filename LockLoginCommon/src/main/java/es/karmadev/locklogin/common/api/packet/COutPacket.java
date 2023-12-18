@@ -1,10 +1,12 @@
 package es.karmadev.locklogin.common.api.packet;
 
-import com.google.gson.*;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
+import es.karmadev.api.kson.object.JsonNull;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -14,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class COutPacket implements OutgoingPacket {
 
     //private final static LockLogin plugin = CurrentPlugin.getPlugin();
-    private transient JsonObject json = new JsonObject();
+    private transient JsonObject json = JsonObject.newObject();
     private final Map<Integer, String> byteMap = new ConcurrentHashMap<>();
     private final DataType type;
     private final int id;
@@ -34,9 +36,9 @@ public class COutPacket implements OutgoingPacket {
 
         id = tmpRandom.nextInt();
 
-        json.addProperty("id", id);
-        json.addProperty("packetType", type.name());
-        json.addProperty("stamp", stamp.toEpochMilli());
+        json.put("id", id);
+        json.put("packetType", type.name());
+        json.put("stamp", stamp.toEpochMilli());
         updateData();
     }
 
@@ -81,7 +83,7 @@ public class COutPacket implements OutgoingPacket {
     @Override
     public OutgoingPacket addProperty(final String key, final char character) {
         ensureJson();
-        json.addProperty(key, character);
+        json.put(key, String.valueOf(character));
 
         updateData();
         return this;
@@ -99,11 +101,11 @@ public class COutPacket implements OutgoingPacket {
     public OutgoingPacket addProperty(final String key, final CharSequence value) {
         ensureJson();
         if (value == null) {
-            json.add(key, JsonNull.INSTANCE);
+            json.put(key, JsonNull.get());
             return this;
         }
 
-        json.addProperty(key, value.toString());
+        json.put(key, value.toString());
         updateData();
         return this;
     }
@@ -118,7 +120,7 @@ public class COutPacket implements OutgoingPacket {
     @Override
     public OutgoingPacket addProperty(final String key, final boolean value) {
         ensureJson();
-        json.addProperty(key, value);
+        json.put(key, value);
 
         updateData();
         return this;
@@ -135,11 +137,11 @@ public class COutPacket implements OutgoingPacket {
     public OutgoingPacket addProperty(final String key, final Number number) {
         ensureJson();
         if (number == null) {
-            json.add(key, JsonNull.INSTANCE);
+            json.put(key, JsonNull.get());
             return this;
         }
 
-        json.addProperty(key, number);
+        json.put(key, number);
 
         updateData();
         return this;
@@ -157,11 +159,11 @@ public class COutPacket implements OutgoingPacket {
         ensureJson();
 
         if (array == null) {
-            json.add(key, JsonNull.INSTANCE);
+            json.put(key, JsonNull.get());
             return this;
         }
 
-        json.add(key, array);
+        json.put(key, array);
 
         updateData();
         return this;
@@ -179,24 +181,24 @@ public class COutPacket implements OutgoingPacket {
         ensureJson();
 
         if (packet == null) {
-            json.add(key, JsonNull.INSTANCE);
+            json.put(key, JsonNull.get());
             return this;
         }
 
         JsonObject toAppend = packet.build();
         if (toAppend == null) {
-            json.add(key, JsonNull.INSTANCE);
+            json.put(key, JsonNull.get());
             return this;
         }
 
         DataType fromType = packet.getType();
         if (!fromType.equals(type)) {
-            toAppend.addProperty("id", id);
-            toAppend.addProperty("packetType", fromType.name());
-            toAppend.addProperty("stamp", packet.timestamp().toEpochMilli());
+            toAppend.put("id", id);
+            toAppend.put("packetType", fromType.name());
+            toAppend.put("stamp", packet.timestamp().toEpochMilli());
         }
 
-        json.add(key, toAppend);
+        json.put(key, toAppend);
 
         updateData();
         return this;
@@ -211,20 +213,19 @@ public class COutPacket implements OutgoingPacket {
     public JsonObject build() {
         ensureJson();
 
-        json.addProperty("id", id);
-        json.addProperty("packetType", type.name());
-        json.addProperty("stamp", stamp.toEpochMilli());
+        json.put("id", id);
+        json.put("packetType", type.name());
+        json.put("stamp", stamp.toEpochMilli());
 
         updateData();
-        return json.deepCopy();
+        return json;
     }
 
     private void updateData() {
         if (json == null) return;
 
         byteMap.clear();
-        Gson gson = new GsonBuilder().create();
-        byte[] outData = gson.toJson(json).getBytes(StandardCharsets.UTF_8);
+        byte[] outData = json.toString(false).getBytes();
 
         for (int i = 0; i < outData.length; i++) {
             String encoded = Byte.toString(outData[i]);
@@ -245,8 +246,7 @@ public class COutPacket implements OutgoingPacket {
                 //plugin.info("[OutPacket] Decoded {0} to {1}({2})", i, encoded, decoded);
             }
 
-            Gson gson = new GsonBuilder().create();
-            json = gson.fromJson(new String(byteCreator, StandardCharsets.UTF_8), JsonObject.class);
+            json = JsonReader.parse(byteCreator).asObject();
         }
     }
 }

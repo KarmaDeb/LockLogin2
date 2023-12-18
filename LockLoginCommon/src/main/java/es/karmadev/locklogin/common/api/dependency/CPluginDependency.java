@@ -1,7 +1,10 @@
 package es.karmadev.locklogin.common.api.dependency;
 
-import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -38,15 +41,14 @@ public class CPluginDependency {
                 JsonObject object = null;
 
                 try (InputStreamReader isr = new InputStreamReader(locklogin)) {
-                    Gson gson = new GsonBuilder().create();
-                    JsonObject json = gson.fromJson(isr, JsonObject.class);
+                    JsonObject json = JsonReader.read(isr).asObject();
 
-                    JsonArray checksum_urls = json.getAsJsonArray("checksum");
-                    JsonArray dependencies = json.getAsJsonArray("dependencies");
+                    JsonArray checksum_urls = json.getChild("checksum").asArray();
+                    JsonArray dependencies = json.getChild("dependencies").asArray();
 
                     String[] urls = new String[checksum_urls.size()];
                     for (int i = 0; i < checksum_urls.size(); i++) {
-                        urls[i] = checksum_urls.get(i).getAsString();
+                        urls[i] = checksum_urls.get(i).asNative().getString();
                     }
 
                     URL checksum_url = URLUtilities.getOptional(urls).orElse(null);
@@ -77,31 +79,32 @@ public class CPluginDependency {
                             reader.close();
                             bf.close();
 
-                            object = gson.fromJson(PathUtilities.read(dataFile), JsonObject.class);
+                            object = JsonReader.read(PathUtilities.read(dataFile)).asObject();
                         }
                     }
 
                     List<JsonDependency> ignore = new ArrayList<>();
                     List<JsonDependency> install = new ArrayList<>();
-                    for (JsonElement element : dependencies) {
-                        JsonObject dependencyJson = element.getAsJsonObject();
+                    for (JsonInstance element : dependencies) {
+                        JsonObject dependencyJson = element.asObject();
                         JsonDependency dependency = new JsonDependency(dependencyJson);
 
                         if (dependency.type().equals(DependencyType.PLUGIN)) continue; //Ignore plugin dependencies
 
-                        String id = dependencyJson.get("id").getAsString();
+                        String id = dependencyJson.getChild("id").asNative().getString();
                         long adler = 0;
                         long crc = 0;
                         String hash = "";
                         if (object != null) {
-                            JsonObject dependencyTable = object.get("dependency").getAsJsonObject();
-                            if (!dependencyTable.has(dependency.id())) continue; //Ignore unknown dependencies
+                            JsonObject dependencyTable = object.getChild("dependency")
+                                    .asObject();
+                            if (!dependencyTable.hasChild(dependency.id())) continue; //Ignore unknown dependencies
 
-                            JsonObject dependencyData = dependencyTable.get(dependency.id()).getAsJsonObject();
+                            JsonObject dependencyData = dependencyTable.getChild(dependency.id()).asObject();
 
-                            adler = dependencyData.get("adler").getAsLong();
-                            crc = dependencyData.get("crc").getAsLong();
-                            hash = dependencyData.get("hash").getAsString();
+                            adler = dependencyData.getChild("adler").asNative().getLong();
+                            crc = dependencyData.getChild("crc").asNative().getLong();
+                            hash = dependencyData.getChild("hash").asNative().getString();
                         }
 
                         String testClass = dependency.testClass();

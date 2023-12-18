@@ -39,6 +39,10 @@
         </dependency>
         <dependency>
             <groupId>es.karmadev</groupId>
+            <artifactId>KSon</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
         <dependency>

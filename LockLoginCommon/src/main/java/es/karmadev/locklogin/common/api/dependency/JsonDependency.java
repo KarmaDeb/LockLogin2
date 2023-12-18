@@ -1,9 +1,9 @@
 package es.karmadev.locklogin.common.api.dependency;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonNative;
+import es.karmadev.api.kson.JsonObject;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyChecksum;
 import es.karmadev.locklogin.api.plugin.runtime.dependency.DependencyType;
@@ -37,7 +37,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public DependencyType type() {
-        return DependencyType.valueOf(object.get("type").getAsString().toUpperCase());
+        return DependencyType.valueOf(object.getChild("type").asNative().getString().toUpperCase());
     }
 
     /**
@@ -47,7 +47,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public String id() {
-        return object.get("id").getAsString();
+        return object.getChild("id").asNative().getString();
     }
 
     /**
@@ -57,7 +57,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public String name() {
-        return object.get("name").getAsString();
+        return object.getChild("name").asNative().getString();
     }
 
     /**
@@ -68,7 +68,7 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public String testClass() {
-        String test = object.get("test").getAsString();
+        String test = object.getChild("test").asNative().getString();
         RelocationSet set = getRelocations();
         if (set.hasRelocation()) {
             Relocation relocation;
@@ -90,8 +90,10 @@ public class JsonDependency implements LockLoginDependency {
      */
     @Override
     public DependencyVersion version() {
-        String project = object.get("version").getAsJsonObject().get("project").getAsString();
-        String required = object.get("version").getAsJsonObject().get("required").getAsString();
+        String project = object.getChild("version")
+                .asObject().getChild("project").asNative().getString();
+        String required = object.getChild("version")
+                .asObject().getChild("required").asNative().getString();
 
         return Version.of(project, required);
     }
@@ -104,7 +106,8 @@ public class JsonDependency implements LockLoginDependency {
     @Override
     public Path file() {
         if (!type().equals(DependencyType.SINGLE)) return null;
-        return CurrentPlugin.getPlugin().workingDirectory().resolve("dependencies").resolve(object.get("file").getAsString());
+        return CurrentPlugin.getPlugin().workingDirectory().resolve("dependencies")
+                .resolve(object.getChild("file").asNative().getString());
     }
 
     /**
@@ -136,19 +139,19 @@ public class JsonDependency implements LockLoginDependency {
     public @NotNull RelocationSet getRelocations() {
         if (type().equals(DependencyType.PLUGIN) ||
                 type().equals(DependencyType.PACKAGE) ||
-                !object.has("relocations") ||
-                !object.get("relocations").isJsonArray()) return CRelocationSet.empty();
+                !object.hasChild("relocations") ||
+                !object.getChild("relocations").isArrayType()) return CRelocationSet.empty();
 
-        JsonArray relocations = object.get("relocations").getAsJsonArray();
+        JsonArray relocations = object.getChild("relocations").asArray();
         if (relocations.isEmpty()) return CRelocationSet.empty();
 
         List<CRelocation> relocationList = new ArrayList<>();
-        for (JsonElement element : relocations) {
-            if (element.isJsonObject()) {
-                JsonObject sub = element.getAsJsonObject();
-                if (sub.has("from") && sub.has("to")) {
-                    String from = sub.get("from").getAsString();
-                    String to = sub.get("to").getAsString();
+        for (JsonInstance element : relocations) {
+            if (element.isObjectType()) {
+                JsonObject sub = element.asObject();
+                if (sub.hasChild("from") && sub.hasChild("to")) {
+                    String from = sub.getChild("from").asNative().getString();
+                    String to = sub.getChild("to").asNative().getString();
 
                     CRelocation relocation = CRelocation.of(from, to);
                     relocationList.add(relocation);
@@ -167,10 +170,10 @@ public class JsonDependency implements LockLoginDependency {
     @Override
     public @NotNull List<String> getDependencies() {
         List<String> dependencies = new ArrayList<>();
-        if (object.has("depends") && object.get("depends").isJsonArray()) {
-            JsonArray array = object.getAsJsonArray("depends");
-            for (JsonElement element : array) {
-                dependencies.add(element.getAsString());
+        if (object.hasChild("depends") && object.getChild("depends").isArrayType()) {
+            JsonArray array = object.getChild("depends").asArray();
+            for (JsonInstance element : array) {
+                dependencies.add(element.asNative().getString());
             }
         }
 
@@ -186,14 +189,15 @@ public class JsonDependency implements LockLoginDependency {
     public URL downloadURL() {
         if (type().equals(DependencyType.PLUGIN)) return null;
 
-        JsonArray urls = object.get("download").getAsJsonArray();
+        JsonArray urls = object.getChild("download").asArray();
         if (urls.isEmpty()) return null; //No need to iterate over nothing
 
-        for (JsonElement element : urls) {
-            if (element.isJsonPrimitive()) {
-                JsonPrimitive primitive = element.getAsJsonPrimitive();
+        for (JsonInstance element : urls) {
+            if (element.isNativeType()) {
+                JsonNative primitive = element.asNative();
                 if (primitive.isString()) {
-                    String raw_url = primitive.getAsString() + object.get("id").getAsString() + ".jar";
+                    String raw_url = primitive.getAsString() + object.getChild("id")
+                            .asNative().getString() + ".jar";
                     try {
                         return new URL(raw_url);
                     } catch (MalformedURLException ignored) {}

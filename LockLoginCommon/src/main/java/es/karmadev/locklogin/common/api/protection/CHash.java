@@ -1,9 +1,8 @@
 package es.karmadev.locklogin.common.api.protection;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
 import es.karmadev.locklogin.api.security.LockLoginHasher;
@@ -31,15 +30,13 @@ public class CHash extends HashResult {
             byte[] rawJson = Base64.getDecoder().decode(data);
             String string = new String(rawJson, StandardCharsets.UTF_8);
 
-            Gson gson = new GsonBuilder().create();
+            JsonInstance element = JsonReader.read(string);
+            if (element.isObjectType()) {
+                JsonObject main = element.asObject();
+                JsonObject result = main.getChild("product").asObject();
+                JsonObject references = result.getChild("references").asObject();
 
-            JsonElement element = gson.fromJson(string, JsonElement.class);
-            if (element != null && element.isJsonObject()) {
-                JsonObject main = element.getAsJsonObject();
-                JsonObject result = main.getAsJsonObject("product");
-                JsonObject references = result.getAsJsonObject("references");
-
-                String hashMethodName = main.get("method").getAsString();
+                String hashMethodName = main.getChild("method").asNative().getString();
 
                 LockLogin plugin = CurrentPlugin.getPlugin();
                 LockLoginHasher hasher = plugin.hasher();
@@ -49,17 +46,17 @@ public class CHash extends HashResult {
                     return null;
                 }
 
-                byte[] value = Base64.getDecoder().decode(result.get("value").getAsString());
-                boolean valid = result.get("virtualized").getAsBoolean();
-                int refSize = references.get("size").getAsInt();
+                byte[] value = Base64.getDecoder().decode(result.getChild("value").asNative().getString());
+                boolean valid = result.getChild("virtualized").asNative().getBoolean();
+                int refSize = references.getChild("size").asNative().getInteger();
                 VirtualizedInput input = CVirtualInput.raw(value);
                 if (refSize > 0) {
                     int[] refs = new int[refSize];
-                    for (JsonElement child : references.getAsJsonArray("values")) {
-                        if (!child.isJsonObject()) continue;
-                        JsonObject childObject = child.getAsJsonObject();
-                        int index = childObject.get("source").getAsInt();
-                        int refValue = childObject.get("target").getAsInt();
+                    for (JsonInstance child : references.getChild("values").asArray()) {
+                        if (!child.isObjectType()) continue;
+                        JsonObject childObject = child.asObject();
+                        int index = childObject.getChild("source").asNative().getInteger();
+                        int refValue = childObject.getChild("target").asNative().getInteger();
 
                         refs[index] = refValue;
                     }

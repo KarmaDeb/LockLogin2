@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.network.client;
 
-import com.google.gson.JsonElement;
+import es.karmadev.api.kson.JsonInstance;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.TextContainer;
 import es.karmadev.locklogin.api.network.client.offline.LocalNetworkClient;
@@ -47,7 +47,7 @@ public interface NetworkClient extends LocalNetworkClient, TextContainer {
      * @param data the packet data
      * @throws SecurityException if there's no module or plugin trying to send the packet
      */
-    void appendPacket(final Module sender, final int priority, final JsonElement data) throws SecurityException;
+    void appendPacket(final Module sender, final int priority, final JsonInstance data) throws SecurityException;
 
     /**
      * Send a packet to the current client server
@@ -78,7 +78,7 @@ public interface NetworkClient extends LocalNetworkClient, TextContainer {
      * @param data the packet data
      * @throws SecurityException if there's no module or plugin trying to send the packet
      */
-    default void appendPacket(final Module sender, final JsonElement data) throws SecurityException {
+    default void appendPacket(final Module sender, final JsonInstance data) throws SecurityException {
         appendPacket(sender, Integer.MAX_VALUE, data);
     }
 

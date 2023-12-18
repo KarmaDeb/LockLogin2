@@ -1,9 +1,8 @@
 package es.karmadev.locklogin.common.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.BuildType;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -48,20 +47,20 @@ public class LockLoginJson {
         try (InputStream locklogin = plugin.load("internal/locklogin.json")) {
             if (locklogin != null) {
                 try (InputStreamReader isr = new InputStreamReader(locklogin)) {
-                    Gson gson = new GsonBuilder().create();
-                    JsonObject json = gson.fromJson(isr, JsonObject.class);
+                    JsonObject json = JsonReader.read(isr).asObject();
 
-                    versionId = json.get("id").getAsString();
-                    version = json.getAsJsonObject("version").get("name").getAsString();
-                    channel = BuildType.valueOf(json.get("update").getAsString().toUpperCase()).map(versionId, version);
-                    langVersion = json.get("lang").getAsInt();
+                    versionId = json.getChild("id").asNative().getString();
+                    version = json.getChild("version.name").asNative().getString();
+                    channel = BuildType.valueOf(json.getChild("update")
+                            .asNative().getAsString().toUpperCase()).map(versionId, version);
+                    langVersion = json.getChild("lang").asNative().getInteger();
 
-                    updateName = json.getAsJsonObject("version").get("type").getAsString();
-                    marketVersion = json.getAsJsonObject("version").get("marketplace").getAsInt();
+                    updateName = json.getChild("version.type").asNative().getString();
+                    marketVersion = json.getChild("version.marketplace").asNative().getInteger();
 
                     List<URI> uriList = new ArrayList<>();
-                    for (JsonElement element : json.getAsJsonObject("version").getAsJsonArray("check")) {
-                        String url = element.getAsString();
+                    for (JsonInstance element : json.getChild("version.check").asArray()) {
+                        String url = element.asNative().getString();
                         URL netURL = URLUtilities.fromString(url);
 
                         if (netURL == null) continue;

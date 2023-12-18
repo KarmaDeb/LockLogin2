@@ -1,9 +1,7 @@
 package es.karmadev.locklogin.api.security.hash;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonObject;
 import es.karmadev.locklogin.api.security.virtual.VirtualizedInput;
 
 import java.nio.charset.StandardCharsets;
@@ -57,35 +55,33 @@ public abstract class HashResult {
      * @return the serialized string
      */
     public final String serialize() {
-        JsonObject main = new JsonObject();
-        JsonObject result = new JsonObject();
+        JsonObject main = JsonObject.newObject();
+        JsonObject result = JsonObject.newObject("product");
         VirtualizedInput vInput = product();
 
-        result.addProperty("value", Base64.getEncoder().encodeToString(vInput.product()));
-        result.addProperty("virtualized", vInput.valid());
+        result.put("value", Base64.getEncoder().encodeToString(vInput.product()));
+        result.put("virtualized", vInput.valid());
 
-        JsonObject references = new JsonObject();
-        JsonArray array = new JsonArray();
+        JsonObject references = JsonObject.newObject("references");
+        JsonArray array = JsonArray.newArray("values");
         int[] ref = vInput.references();
 
-        references.addProperty("size", ref.length);
+        references.put("size", ref.length);
         for (int i = 0; i < ref.length; i++) {
-            JsonObject refObject = new JsonObject();
-            refObject.addProperty("source", i);
-            refObject.addProperty("target", ref[i]);
+            JsonObject refObject = JsonObject.newObject();
+            refObject.put("source", i);
+            refObject.put("target", ref[i]);
 
             array.add(refObject);
         }
 
-        references.add("values", array);
-        result.add("references", references);
+        references.put("values", array);
+        result.put("references", references);
 
-        main.addProperty("method", hasher().name());
-        main.add("product", result);
+        main.put("method", hasher().name());
+        main.put("product", result);
 
-        Gson gson = new GsonBuilder().disableHtmlEscaping().serializeNulls().create();
-        String raw = gson.toJson(main);
-
+        String raw = main.toString(false);
         return Base64.getEncoder().withoutPadding().encodeToString(raw.getBytes(StandardCharsets.UTF_8));
     }
 }

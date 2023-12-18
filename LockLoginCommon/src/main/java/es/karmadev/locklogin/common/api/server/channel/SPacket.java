@@ -1,8 +1,6 @@
 package es.karmadev.locklogin.common.api.server.channel;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import es.karmadev.api.kson.JsonInstance;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.server.packet.NetworkPacket;
 
@@ -29,10 +27,9 @@ public class SPacket implements NetworkPacket {
         raw_data = Base64.getEncoder().encode(raw.getBytes(StandardCharsets.UTF_8));
     }
 
-    public SPacket(final Module sender, final JsonElement element) {
+    public SPacket(final Module sender, final JsonInstance element) {
         this.sender = sender;
-        Gson gson = new GsonBuilder().create();
-        raw_data = gson.toJson(element).getBytes(StandardCharsets.UTF_8);
+        raw_data = element.toString(false).getBytes();
     }
 
     public SPacket priority(final int level) {

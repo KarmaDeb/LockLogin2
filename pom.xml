@@ -436,6 +436,12 @@
             </dependency>
             <dependency>
                 <groupId>es.karmadev</groupId>
+                <artifactId>KSon</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
                 <artifactId>KarmaAPI-Spigot</artifactId>
                 <version>${locklogin.karmaapi.version}</version>
                 <scope>provided</scope>
@@ -475,17 +481,12 @@
 
             <!-- Google stuff -->
             <dependency>
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>2.9.1</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${google.guava.version}</version>
                 <scope>provided</scope>
             </dependency>
+
             <!--
             <dependency>
                 <groupId>com.warrenstrange</groupId>

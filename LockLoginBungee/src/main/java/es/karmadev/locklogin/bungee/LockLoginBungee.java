@@ -1,9 +1,5 @@
 package es.karmadev.locklogin.bungee;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import es.karmadev.api.core.KarmaAPI;
 import es.karmadev.api.database.DatabaseManager;
 import es.karmadev.api.database.model.JsonDatabase;
@@ -12,6 +8,9 @@ import es.karmadev.api.file.FileEncryptor;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.strings.StringUtils;
@@ -223,12 +222,13 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             if (Files.exists(keyStore)) {
                 encryptor.decrypt(spec);
 
-                Gson gson = new GsonBuilder().create();
-                JsonObject data = gson.fromJson(PathUtilities.read(keyStore), JsonObject.class);
+                JsonObject data = JsonReader.read(PathUtilities.read(keyStore)).asObject();
 
-                if (data.has("public") && data.has("private")) {
-                    byte[] publicBytes = Base64.getDecoder().decode(data.get("public").getAsString());
-                    byte[] privateBytes = Base64.getDecoder().decode(data.get("private").getAsString());
+                if (data.hasChild("public") && data.hasChild("private")) {
+                    byte[] publicBytes = Base64.getDecoder().decode(data.getChild("public")
+                            .asNative().getString());
+                    byte[] privateBytes = Base64.getDecoder().decode(data.getChild("private")
+                            .asNative().getString());
 
                     KeyFactory factory = KeyFactory.getInstance("RSA");
 
@@ -252,11 +252,11 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                 pair = generator.generateKeyPair();
 
                 PathUtilities.createPath(keyStore);
-                JsonObject object = new JsonObject();
-                object.addProperty("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
-                object.addProperty("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
+                JsonObject object = JsonObject.newObject();
+                object.put("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
+                object.put("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
 
-                String raw = new GsonBuilder().create().toJson(object);
+                String raw = object.toString(false);
                 PathUtilities.write(keyStore, raw);
 
                 encryptor.encrypt(spec);
@@ -320,27 +320,26 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
         CurrentPlugin.updateState();
 
         Path databaseData = plugin.workingDirectory().resolve("cache").resolve("database.json");
-        Gson gson = new GsonBuilder().serializeNulls().disableHtmlEscaping().setPrettyPrinting().create();
 
         Database database = configuration.database();
         if (Files.exists(databaseData)) {
-            JsonElement databaseCache = gson.fromJson(PathUtilities.read(databaseData), JsonElement.class);
-            if (databaseCache == null || !databaseCache.isJsonObject()) return;
+            JsonInstance databaseCache = JsonReader.read(PathUtilities.read(databaseData));
+            if (!databaseCache.isObjectType()) return;
 
-            JsonObject object = databaseCache.getAsJsonObject();
+            JsonObject object = databaseCache.asObject();
             boolean modifications = false;
             for (Table table : Table.values()) {
                 String rawName = table.name();
 
-                JsonObject tableObject = new JsonObject();
-                if (object.has(rawName) && object.get(rawName).isJsonObject()) {
-                    tableObject = object.getAsJsonObject(rawName);
+                JsonObject tableObject = JsonObject.newObject();
+                if (object.hasChild(rawName) && object.getChild(rawName).isObjectType()) {
+                    tableObject = object.getChild(rawName).asObject();
                 }
 
                 String tableValue = database.tableName(table);
-                if (tableObject.has("name") && tableObject.get("name").isJsonPrimitive() &&
-                        tableObject.getAsJsonPrimitive("name").isString()) {
-                    tableValue = tableObject.get("name").getAsString();
+                if (tableObject.hasChild("name") && tableObject.getChild("name").isNativeType() &&
+                        tableObject.getChild("name").asNative().isString()) {
+                    tableValue = tableObject.getChild("name").asNative().getString();
                 }
 
                 String tableName = database.tableName(table);
@@ -354,7 +353,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                         statement = connection.createStatement();
 
                         statement.executeUpdate(QueryBuilder.createQuery().alter(table).rename(tableValue).build());
-                        tableObject.addProperty("name", tableName);
+                        tableObject.put("name", tableName);
                         modifications = true;
                     } catch (SQLException ex) {
                         log(ex, "Failed to rename table {0} from {1} to {2}", table.name(), tableValue, tableName);
@@ -366,9 +365,9 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
                 for (Row row : table.getUsableRows()) {
                     String columnValue = database.columnName(table, row);
-                    if (tableObject.has(row.name()) && tableObject.get(row.name()).isJsonPrimitive() &&
-                            tableObject.getAsJsonPrimitive(row.name()).isString()) {
-                        columnValue = tableObject.get(row.name()).getAsString();
+                    if (tableObject.hasChild(row.name()) && tableObject.getChild(row.name()).isNativeType() &&
+                            tableObject.getChild(row.name()).asNative().isString()) {
+                        columnValue = tableObject.getChild(row.name()).asNative().getString();
                     }
 
                     String columnName = database.columnName(table, row);
@@ -395,7 +394,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                             } catch (SQLException ignored) {}
 
                             statement.executeUpdate(QueryBuilder.createQuery().alter(table).rename(row, columnValue).build());
-                            tableObject.addProperty(row.name(), columnName);
+                            tableObject.put(row.name(), columnName);
                             modifications = true;
                         } catch (SQLException ex) {
                             log(ex, "Failed to rename column {0} from {1} to {2} at {3}", row.name(), columnValue, columnName, tableName);
@@ -406,30 +405,30 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                     }
                 }
 
-                object.add(table.name(), tableObject);
+                object.put(table.name(), tableObject);
             }
 
             if (modifications) {
-                String raw = gson.toJson(object);
+                String raw = object.toString(false);
                 PathUtilities.write(databaseData, raw);
             }
         } else {
-            JsonObject object = new JsonObject();
+            JsonObject object = JsonObject.newObject();
             for (Table table : Table.values()) {
                 String name = database.tableName(table);
 
-                JsonObject tableObject = new JsonObject();
-                tableObject.addProperty("name", name);
+                JsonObject tableObject = JsonObject.newObject();
+                tableObject.put("name", name);
 
                 for (Row row : table.getUsableRows()) {
                     String rowName = database.columnName(table, row);
-                    tableObject.addProperty(row.name(), rowName);
+                    tableObject.put(row.name(), rowName);
                 }
 
-                object.add(table.name(), tableObject);
+                object.put(table.name(), tableObject);
             }
 
-            String raw = gson.toJson(object);
+            String raw = object.toString(false);
             PathUtilities.write(databaseData, raw);
         }
     }

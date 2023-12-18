@@ -1,11 +1,10 @@
 package es.karmadev.locklogin.common.plugin.web;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.web.request.RequestData;
 import es.karmadev.api.web.url.URLUtilities;
@@ -68,17 +67,16 @@ public class License {
                                 .add("certificate", certificate)
                                 .contentType(RequestData.ContentType.JSON));
 
-                Gson gson = new GsonBuilder().create();
-                JsonElement element = gson.fromJson(response, JsonElement.class);
+                JsonInstance element = JsonReader.read(response);
 
-                if (element == null || !element.isJsonObject()) return;
-                JsonObject object = element.getAsJsonObject();
+                if (!element.isObjectType()) return;
+                JsonObject object = element.asObject();
 
-                if (object.has("success")) {
-                    licensed = object.get("success").getAsBoolean();
+                if (object.hasChild("success")) {
+                    licensed = object.getChild("success").asNative().getAsBoolean();
                 }
-                if (object.has("username")) {
-                    buyer = object.get("username").getAsString();
+                if (object.hasChild("username")) {
+                    buyer = object.getChild("username").asNative().getString();
                 }
             } catch (UnknownHostException | SocketException | NoSuchAlgorithmException ignored) {}
 

@@ -1,8 +1,7 @@
 package es.karmadev.locklogin.spigot.protocol.injector;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.spigot.server.SpigotServer;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
@@ -145,11 +144,10 @@ public class Injection extends ChannelDuplexHandler {
                             OutgoingPacket out = (OutgoingPacket) comPacket;
                             JsonObject outBuild = out.build();
 
-                            outBuild.addProperty("identifier", identifier);
-                            outBuild.addProperty("replying", out.id());
+                            outBuild.put("identifier", identifier);
+                            outBuild.put("replying", out.id());
 
-                            Gson gson = new GsonBuilder().create();
-                            raw = gson.toJson(outBuild);
+                            raw = outBuild.toString(false);
 
                             IncomingPacket converted = new CInPacket(raw);
                             NetworkChannel ch = plugin.getChannel(identifier);
@@ -167,12 +165,11 @@ public class Injection extends ChannelDuplexHandler {
                             IncomingPacket incoming = (IncomingPacket) comPacket;
                             byte[] inData = incoming.getData();
 
-                            Gson gson = new GsonBuilder().create();
-                            JsonObject obj = gson.fromJson(new String(inData, StandardCharsets.UTF_8), JsonObject.class);
-                            obj.addProperty("identifier", identifier);
-                            obj.addProperty("replying", incoming.id());
+                            JsonObject obj = JsonReader.parse(inData).asObject();
+                            obj.put("identifier", identifier);
+                            obj.put("replying", incoming.id());
 
-                            String rawJson = gson.toJson(obj);
+                            String rawJson = obj.toString(false);
                             incoming = new CInPacket(rawJson);
 
                             //plugin.onReceive(incoming);
@@ -198,16 +195,15 @@ public class Injection extends ChannelDuplexHandler {
 
                 if (out.getType().equals(DataType.HELLO)) {
                     out.addProperty("identifier", identifier);
-                    byte[] rawKey = Base64.getDecoder().decode(outBuild.get("key").getAsString());
+                    byte[] rawKey = Base64.getDecoder().decode(outBuild.getChild("key").asNative().getString());
                     KeyFactory factory = KeyFactory.getInstance("RSA");
                     EncodedKeySpec keySpec = new X509EncodedKeySpec(rawKey);
                     sharedPublic = factory.generatePublic(keySpec);
 
-                    outBuild.addProperty("identifier", identifier);
-                    outBuild.addProperty("replying", out.id());
+                    outBuild.put("identifier", identifier);
+                    outBuild.put("replying", out.id());
 
-                    Gson gson = new GsonBuilder().create();
-                    String raw = gson.toJson(outBuild);
+                    String raw = outBuild.toString(false);
 
                     IncomingPacket converted = new CInPacket(raw);
                     NetworkChannel ch = plugin.getChannel(identifier);

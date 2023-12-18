@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.api.network.communication.packet;
 
-import com.google.gson.JsonArray;
+import es.karmadev.api.kson.JsonArray;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import org.jetbrains.annotations.Nullable;

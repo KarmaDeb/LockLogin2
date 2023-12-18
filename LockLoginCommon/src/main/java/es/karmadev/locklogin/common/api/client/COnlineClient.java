@@ -1,6 +1,6 @@
 package es.karmadev.locklogin.common.api.client;
 
-import com.google.gson.JsonElement;
+import es.karmadev.api.kson.JsonInstance;
 import es.karmadev.locklogin.api.extension.module.Module;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
 import es.karmadev.locklogin.api.network.client.data.PermissionObject;
@@ -175,7 +175,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
      * @throws SecurityException if there's no module or plugin trying to send the packet
      */
     @Override
-    public void appendPacket(final Module sender, final int priority, final JsonElement data) throws SecurityException {
+    public void appendPacket(final Module sender, final int priority, final JsonInstance data) throws SecurityException {
         if (sender == null) throw new SecurityException("Packet sender cannot be null");
         if (!sender.isEnabled()) throw new SecurityException("Packet sender must be enabled");
 

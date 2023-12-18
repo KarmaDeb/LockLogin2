@@ -1,7 +1,10 @@
 package es.karmadev.locklogin.common.api.plugin.service.backup;
 
-import com.google.gson.*;
 import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -84,12 +87,11 @@ public class CLocalBackup implements BackupService {
             Consumer<Throwable> error_catcher = task.error;
 
             try {
-                Gson gson = new GsonBuilder().create();
                 UserAccount[] accounts = plugin.getAccountFactory(false).getAllAccounts();
 
                 Collection<LocalNetworkClient> clients = plugin.network().getPlayers();
 
-                JsonArray stored_accounts = new JsonArray();
+                JsonArray stored_accounts = JsonArray.newArray();
                 Runnable start_run = task.start;
                 if (start_run != null) {
                     start_run.run();
@@ -113,18 +115,18 @@ public class CLocalBackup implements BackupService {
 
                 Instant creation = Instant.now();
 
-                JsonObject backup = new JsonObject();
-                backup.addProperty("id", id);
-                backup.addProperty("stored", stored_accounts.size());
-                backup.addProperty("created", creation.toEpochMilli());
-                backup.add("accounts", stored_accounts);
+                JsonObject backup = JsonObject.newObject();
+                backup.put("id", id);
+                backup.put("stored", stored_accounts.size());
+                backup.put("created", creation.toEpochMilli());
+                backup.put("accounts", stored_accounts);
 
                 error_catcher = task.error;
                 try {
                     Path destination = plugin.workingDirectory().resolve("data").resolve("service").resolve("backups").resolve(name + ".json");
                     PathUtilities.createPath(destination);
 
-                    String json = gson.toJson(backup);
+                    String json = backup.toString(false);
                     Files.write(destination, json.getBytes(StandardCharsets.UTF_8));
 
                     Consumer<BackupStorage> success = task.success;
@@ -156,18 +158,17 @@ public class CLocalBackup implements BackupService {
         try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
-            Gson gson = new GsonBuilder().create();
             for (Path backup : backup_files) {
                 try {
-                    JsonObject json = gson.fromJson(Files.newBufferedReader(backup), JsonObject.class);
+                    JsonObject json = JsonReader.read(Files.newBufferedReader(backup)).asObject();
 
-                    String id = json.get("id").getAsString();
-                    Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
-                    JsonArray serial_accounts = json.get("accounts").getAsJsonArray();
+                    String id = json.getChild("id").asNative().getString();
+                    Instant created = Instant.ofEpochMilli(json.getChild("created").asNative().getLong());
+                    JsonArray serial_accounts = json.getChild("accounts").asArray();
 
                     List<UserBackup> backups = new ArrayList<>();
-                    for (JsonElement element : serial_accounts) {
-                        String serialized = element.getAsString();
+                    for (JsonInstance element : serial_accounts) {
+                        String serialized = element.asNative().getString();
                         backups.add(StringUtils.loadAndCast(serialized));
                     }
 
@@ -196,18 +197,17 @@ public class CLocalBackup implements BackupService {
         try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
-            Gson gson = new GsonBuilder().create();
             for (Path backup : backup_files) {
                 try {
-                    JsonObject json = gson.fromJson(Files.newBufferedReader(backup), JsonObject.class);
+                    JsonObject json = JsonReader.read(Files.newBufferedReader(backup)).asObject();
 
-                    if (id.equals(json.get("id").getAsString())) {
-                        Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
-                        JsonArray serial_accounts = json.get("accounts").getAsJsonArray();
+                    if (id.equals(json.getChild("id").asNative().getString())) {
+                        Instant created = Instant.ofEpochMilli(json.getChild("created").asNative().getLong());
+                        JsonArray serial_accounts = json.getChild("accounts").asArray();
 
                         List<UserBackup> backups = new ArrayList<>();
-                        for (JsonElement element : serial_accounts) {
-                            String serialized = element.getAsString();
+                        for (JsonInstance element : serial_accounts) {
+                            String serialized = element.asNative().getString();
                             backups.add(StringUtils.loadAndCast(serialized));
                         }
 
@@ -268,12 +268,11 @@ public class CLocalBackup implements BackupService {
         try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
-            Gson gson = new GsonBuilder().create();
             for (Path backup : backup_files) {
                 try {
-                    JsonObject json = gson.fromJson(Files.newBufferedReader(backup), JsonObject.class);
+                    JsonObject json = JsonReader.read(Files.newBufferedReader(backup)).asObject();
 
-                    Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
+                    Instant created = Instant.ofEpochMilli(json.getChild("created").asNative().getLong());
                     if (created.isAfter(start) && created.isBefore(end)) {
                         if (PathUtilities.destroy(backup)) {
                             purged++;
@@ -304,12 +303,11 @@ public class CLocalBackup implements BackupService {
         try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
-            Gson gson = new GsonBuilder().create();
             for (Path backup : backup_files) {
                 try {
-                    JsonObject json = gson.fromJson(Files.newBufferedReader(backup), JsonObject.class);
+                    JsonObject json = JsonReader.read(Files.newBufferedReader(backup)).asObject();
 
-                    Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
+                    Instant created = Instant.ofEpochMilli(json.getChild("created").asNative().getLong());
                     if (created.isAfter(start)) {
                         if (PathUtilities.destroy(backup)) {
                             purged++;
@@ -340,12 +338,11 @@ public class CLocalBackup implements BackupService {
         try(Stream<Path> files = Files.list(backups_location).filter((path) -> !Files.isDirectory(path) && PathUtilities.getExtension(path).equals("json"))) {
             List<Path> backup_files = files.collect(Collectors.toList());
 
-            Gson gson = new GsonBuilder().create();
             for (Path backup : backup_files) {
                 try {
-                    JsonObject json = gson.fromJson(Files.newBufferedReader(backup), JsonObject.class);
+                    JsonObject json = JsonReader.read(Files.newBufferedReader(backup)).asObject();
 
-                    Instant created = Instant.ofEpochMilli(json.get("created").getAsLong());
+                    Instant created = Instant.ofEpochMilli(json.getChild("created").asNative().getLong());
                     if (created.isBefore(end)) {
                         if (PathUtilities.destroy(backup)) {
                             purged++;

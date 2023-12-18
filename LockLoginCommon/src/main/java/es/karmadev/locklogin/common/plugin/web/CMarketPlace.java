@@ -1,6 +1,9 @@
 package es.karmadev.locklogin.common.plugin.web;
 
-import com.google.gson.*;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -38,15 +41,14 @@ public class CMarketPlace implements MarketPlace {
         }
 
         String response = URLUtilities.get(url);
-        Gson gson = new GsonBuilder().create();
 
-        JsonElement element = gson.fromJson(response, JsonElement.class);
-        if (element == null || !element.isJsonObject()) {
+        JsonInstance element = JsonReader.read(response);
+        if (!element.isObjectType()) {
             plugin.err("Connected to LockLogin Marketplace server but service didn't give any valid response");
             return;
         }
 
-        cachedVersion = element.getAsJsonObject().get("version").getAsInt();
+        cachedVersion = element.asObject().getChild("version").asNative().getInteger();
     }
 
     private final CResourceManager resourceManager = new CResourceManager();
@@ -88,7 +90,10 @@ public class CMarketPlace implements MarketPlace {
                 return 0;
             }
 
-            return element.getAsJsonObject().getAsJsonObject("pagination").get("max").getAsInt();
+            return element.asObject()
+                    .getChild("pagination").asObject()
+                    .getChild("max").asNative()
+                    .getInteger();
         });
 
         return task;
@@ -136,7 +141,8 @@ public class CMarketPlace implements MarketPlace {
                 return 0;
             }
 
-            return element.getAsJsonObject().getAsJsonArray("resources").size();
+            return element.asObject()
+                    .getChild("resources").asArray().size();
         });
 
         return task;
@@ -170,27 +176,29 @@ public class CMarketPlace implements MarketPlace {
 
             URL url = URLUtilities.fromString(apiUrl);
             JsonObject element = execute(plugin, url);
-            if (element == null || !element.isJsonObject()) {
+            if (element == null || !element.isObjectType()) {
                 return resources;
             }
 
-            JsonArray resourceArray = element.getAsJsonArray("resources");
-            for (JsonElement jsonResource : resourceArray) {
-                if (!jsonResource.isJsonObject()) continue;
-                JsonObject object = jsonResource.getAsJsonObject();
+            JsonArray resourceArray = element.getChild("resources").asArray();
+            for (JsonInstance jsonResource : resourceArray) {
+                if (!jsonResource.isObjectType()) continue;
+                JsonObject object = jsonResource.asObject();
 
-                int resourceId = object.get("id").getAsInt();
-                Category resourceCategory = Category.byId(object.get("category").getAsJsonObject().get("id").getAsInt());
-                String name = object.get("name").getAsString();
-                String description = object.get("description").getAsString();
-                String version = object.get("version").getAsString();
-                String publisher = object.get("publisher").getAsJsonObject().get("name").getAsString();
-                int downloadCount = object.get("downloads").getAsInt();
+                int resourceId = object.getChild("id").asNative().getInteger();
+                Category resourceCategory = Category.byId(object.getChild("category").asObject()
+                        .getChild("id").asNative().getInteger());
+                String name = object.getChild("name").asNative().getString();
+                String description = object.getChild("description").asNative().getString();
+                String version = object.getChild("version").asNative().getString();
+                String publisher = object.getChild("publisher").asObject()
+                        .getChild("name").asNative().getString();
+                int downloadCount = object.getChild("downloads").asNative().getInteger();
 
-                JsonObject downloadInfo = object.getAsJsonObject("download");
-                String downloadName = downloadInfo.get("name").getAsString();
-                long downloadSize = downloadInfo.get("size").getAsLong();
-                String downloadURL = downloadInfo.get("url").getAsString();
+                JsonObject downloadInfo = object.getChild("download").asObject();
+                String downloadName = downloadInfo.getChild("name").asNative().getString();
+                long downloadSize = downloadInfo.getChild("size").asNative().getLong();
+                String downloadURL = downloadInfo.getChild("url").asNative().getString();
 
                 CMarketResource resource = CMarketResource
                         .of(resourceId, resourceCategory,
@@ -229,18 +237,20 @@ public class CMarketPlace implements MarketPlace {
                 return null;
             }
 
-            JsonObject object = element.getAsJsonObject("resource");
-            Category resourceCategory = Category.byId(object.get("category").getAsJsonObject().get("id").getAsInt());
-            String name = object.get("name").getAsString();
-            String description = object.get("description").getAsString();
-            String version = object.get("version").getAsString();
-            String publisher = object.get("publisher").getAsJsonObject().get("name").getAsString();
-            int downloadCount = object.get("downloads").getAsInt();
+            JsonObject object = element.getChild("resource").asObject();
+            Category resourceCategory = Category.byId(object.getChild("category").asObject()
+                    .getChild("id").asNative().getInteger());
+            String name = object.getChild("name").asNative().getString();
+            String description = object.getChild("description").asNative().getString();
+            String version = object.getChild("version").asNative().getString();
+            String publisher = object.getChild("publisher").asObject()
+                    .getChild("name").asNative().getString();
+            int downloadCount = object.getChild("downloads").asNative().getInteger();
 
-            JsonObject downloadInfo = object.getAsJsonObject("download");
-            String downloadName = downloadInfo.get("name").getAsString();
-            long downloadSize = downloadInfo.get("size").getAsLong();
-            String downloadURL = downloadInfo.get("url").getAsString();
+            JsonObject downloadInfo = object.getChild("download").asObject();
+            String downloadName = downloadInfo.getChild("name").asNative().getString();
+            long downloadSize = downloadInfo.getChild("size").asNative().getLong();
+            String downloadURL = downloadInfo.getChild("url").asNative().getString();
 
             return CMarketResource
                     .of(id, resourceCategory,
@@ -270,14 +280,13 @@ public class CMarketPlace implements MarketPlace {
         }
 
         String response = URLUtilities.get(url);
-        Gson gson = new GsonBuilder().create();
 
-        JsonElement element = gson.fromJson(response, JsonElement.class);
-        if (element == null || !element.isJsonObject()) {
+        JsonInstance element = JsonReader.read(response);
+        if (!element.isObjectType()) {
             plugin.err("Connected to LockLogin Marketplace server but service didn't give any valid response");
             return null;
         }
 
-        return element.getAsJsonObject();
+        return element.asObject();
     }
 }

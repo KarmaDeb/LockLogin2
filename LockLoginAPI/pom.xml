@@ -54,8 +54,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
+            <groupId>es.karmadev</groupId>
+            <artifactId>KSon</artifactId>
         </dependency>
         <dependency>
             <groupId>es.karmadev</groupId>

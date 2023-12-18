@@ -1,12 +1,10 @@
 package es.karmadev.locklogin.common.api.protection.totp;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSyntaxException;
 import es.karmadev.api.database.DatabaseManager;
 import es.karmadev.api.database.model.JsonDatabase;
 import es.karmadev.api.database.model.json.JsonConnection;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.web.url.URLUtilities;
 import es.karmadev.auth.key.TOTPKey;
 import es.karmadev.auth.totp.TOTP;
@@ -91,11 +89,8 @@ public class CTotpService implements TotpService {
             if (url == null) return null;
             String response = URLUtilities.get(url);
 
-            Gson gson = new GsonBuilder().create();
-            try {
-                JsonElement element = gson.fromJson(response, JsonElement.class);
-                if (element.isJsonObject()) return null; //We failed to generate QR code if we have a valid json
-            } catch (JsonSyntaxException ignored) {}
+            JsonInstance element = JsonReader.read(response);
+            if (element.isObjectType()) return null; //We failed to generate QR code if we have a valid json
 
             client.account().setTotp(token);
             return url;

@@ -19,14 +19,14 @@
 
         <dependency>
             <groupId>es.karmadev</groupId>
+            <artifactId>KSon</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>es.karmadev</groupId>
             <artifactId>KarmaAPI-Core</artifactId>
         </dependency>
 
         <!-- Google -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

@@ -1,10 +1,9 @@
 package es.karmadev.locklogin.spigot;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.kson.JsonInstance;
+import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.logger.log.BoundedLogger;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.object.ObjectUtils;
@@ -301,7 +300,6 @@ public class SpigotPlugin extends KarmaPlugin {
         Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
         try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
             logger().log(LogLevel.INFO, "Preparing to load marketplace resources");
-            Gson gson = new GsonBuilder().create();
 
             Pattern idPattern = Pattern.compile("id=[0-9]*");
             Pattern categoryPattern = Pattern.compile("category=[A-Z]*");
@@ -318,8 +316,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 if (!Files.exists(resourceMeta) || !Files.exists(manifest)) return;
                 if (Files.isDirectory(resourceMeta) || Files.isDirectory(manifest)) return;
 
-                JsonElement element = gson.fromJson(PathUtilities.read(manifest), JsonElement.class);
-
+                JsonInstance element = JsonReader.read(PathUtilities.read(manifest));
                 ResourceManifest rm = new ResourceManifest();
                 if (rm.read(spigot, element)) {
                     List<String> rawData = PathUtilities.readAllLines(resourceMeta);

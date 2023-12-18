@@ -1,7 +1,7 @@
 package es.karmadev.locklogin.api.network.communication.packet;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import es.karmadev.api.kson.JsonArray;
+import es.karmadev.api.kson.JsonObject;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 
 /**
