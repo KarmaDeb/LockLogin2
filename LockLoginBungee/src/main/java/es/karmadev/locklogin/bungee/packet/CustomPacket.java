@@ -46,7 +46,10 @@ public class CustomPacket {
      * Handle the packet from the event
      *
      * @param event the event
+     * @deprecated logic only existed for testing during development, so
+     * it's no longer required?
      */
+    @Deprecated
     public static void handle(final PluginMessageEvent event) {
         String tag = event.getTag();
         if (PacketDataHandler.tagExists(tag)) {
@@ -59,12 +62,12 @@ public class CustomPacket {
             Object packetObject = StringUtils.load(rawPacketData).orElse(null);
 
             if (packetObject instanceof PacketFrame) {
-                    /*
-                    We actually only accept packet frames, any other type of
-                    packet we receive will be discarded as "invalid", even though
-                    we could perfectly read it, it has not been "verified" by being
-                    sent encrypted through a packet frame
-                     */
+                /*
+                We actually only accept packet frames, any other type of
+                packet we receive will be discarded as "invalid", even though
+                we could perfectly read it, it has not been "verified" by being
+                sent encrypted through a packet frame
+                */
 
                 PacketFrame frame = (PacketFrame) packetObject;
                 FrameBuilder builder = frames.computeIfAbsent(tag, (b) -> new CFrameBuilder((rawPacket) -> {
@@ -147,7 +150,9 @@ public class CustomPacket {
      * @param id       the packet id
      * @param incoming the outgoing packet
      * @return the created packet
+     * @deprecated moved logic to another place
      */
+    @Deprecated
     public static DefinedPacket buildIncoming(final String id, final IncomingPacket incoming) {
         String rawObject = StringUtils.serialize(incoming);
         byte[] data = rawObject.getBytes(StandardCharsets.UTF_8);
