@@ -145,6 +145,9 @@
         <java.native.version>5.12.1</java.native.version>
         <java.native.test>com.sun.jna.Native</java.native.test>
 
+        <karma.json.version>1.0.0-SNAPSHOT</karma.json.version>
+        <karma.json.test>es.karmadev.api.kson.JsonObject</karma.json.test>
+
         <placeholder.api.version>2.10.9</placeholder.api.version>
         <protocol.lib.version>4.8.0</protocol.lib.version>
         <packet.listener.version>3.9.10</packet.listener.version>
@@ -437,7 +440,7 @@
             <dependency>
                 <groupId>es.karmadev</groupId>
                 <artifactId>KSon</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>${karma.json.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>

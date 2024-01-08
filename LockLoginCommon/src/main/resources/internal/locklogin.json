@@ -303,6 +303,20 @@
         "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
       ]
     },
+    {
+      "type": "single",
+      "id": "karma_kson",
+      "name": "Karma Json",
+      "file": "Kson.jar",
+      "test": "${karma.json.test}",
+      "version": {
+        "project": "${karma.json.version}",
+        "required": "${karma.json.version}"
+      },
+      "download": [
+        "https://karmadev.es/locklogin-repository/dependency/${locklogin.repository.version}/"
+      ]
+    },
 
     {
       "type": "plugin",

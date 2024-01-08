@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a generic plugin listener. This object
- * exists only to make easier and avoid the "Repeat yourself"
+ * exists only to make it easier and avoid the "Repeat yourself"
  * on the code.
  */
 public final class GenericHandlerList {
@@ -31,19 +31,19 @@ public final class GenericHandlerList {
     /**
      * Do not use any flag
      */
-    public final static byte FLAGS_NONE = -1;
+    public final static byte FLAGS_NONE = 8;
 
     /**
      * The handlers will be available by using the
      * global instance of the handler list
      */
-    public final static byte FLAGS_GLOBAL = 1;
+    public final static byte FLAGS_GLOBAL = 16;
 
     /**
      * The handler will allow null module as
      * a listener owner
      */
-    public final static byte FLAGS_NOT_MODULE = 2;
+    public final static byte FLAGS_NOT_MODULE = 32;
 
     private final int flags;
 

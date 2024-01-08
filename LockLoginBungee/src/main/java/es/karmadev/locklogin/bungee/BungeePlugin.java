@@ -4,17 +4,24 @@ import es.karmadev.api.bungee.core.KarmaPlugin;
 import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.locklogin.bungee.command.TestCommand;
-import es.karmadev.locklogin.bungee.packet.CustomPacket;
+import es.karmadev.locklogin.bungee.packet.PacketDataHandler;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class BungeePlugin extends KarmaPlugin implements Listener {
 
     LockLoginBungee bungee;
+
+    private final Map<String, BiConsumer<Server, byte[]>> channelListeners = new ConcurrentHashMap<>();
 
     public BungeePlugin() throws NoSuchFieldException, IllegalAccessException, AlreadyRegisteredException {
         super(false);
@@ -40,8 +47,31 @@ public class BungeePlugin extends KarmaPlugin implements Listener {
 
     }
 
+    /**
+     * Add a channel listener
+     *
+     * @param channel the channel name to listen at
+     * @param dataHandler the data handler
+     */
+    public void addChannelListener(final String channel, final BiConsumer<Server, byte[]> dataHandler) {
+        this.channelListeners.put(channel, dataHandler);
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onMessageReceive(final PluginMessageEvent e) { //I feel bad for having a single class just for this...
-        CustomPacket.handle(e);
+        String tag = e.getTag();
+        if (PacketDataHandler.tagExists(tag)) {
+            Server server = (Server) e.getSender();
+
+            BiConsumer<Server, byte[]> handler = channelListeners.get(e.getTag());
+            if (handler == null) {
+                logger().send(LogLevel.WARNING, "Unhandled plugin message at {0}", tag);
+                return;
+            }
+
+            handler.accept(server, e.getData());
+        }
+
+        //CustomPacket.handle(e);
     }
 }

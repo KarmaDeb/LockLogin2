@@ -13,6 +13,7 @@ import es.karmadev.api.kson.JsonObject;
 import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.minecraft.text.Colorize;
+import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.api.version.Version;
 import es.karmadev.locklogin.api.BuildType;
@@ -97,10 +98,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.sql.*;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -126,6 +124,8 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     //private final SpigotModuleMaker moduleMaker;
     @Getter
     private final TotpGlobalHandler totpHandler = new TotpGlobalHandler();
+
+    private final Set<NetworkChannel> channels = ConcurrentHashMap.newKeySet();
 
     private CAccountFactory default_account_factory;
     private CSessionFactory default_session_factory;
@@ -1088,7 +1088,9 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public NetworkChannel getChannel(final String name) {
-        return null;
+        if (ObjectUtils.isNullOrEmpty(name)) return null;
+        return channels.stream().filter((channel) -> channel.getChannel().equals(name))
+                .findAny().orElse(null);
     }
 
     /**
@@ -1098,7 +1100,10 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
      */
     @Override
     public void registerChannel(final NetworkChannel channel) {
+        if (channel == null) return;
 
+        channels.removeIf((ch) -> ch.getChannel().equals(channel.getChannel()));
+        channels.add(channel);
     }
 
     /**

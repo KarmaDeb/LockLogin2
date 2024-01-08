@@ -15,13 +15,17 @@ import lombok.RequiredArgsConstructor;
  * compatible with multi-bungee instances, but it's recommended
  * to use Redis or Channels instead.
  */
-@RequiredArgsConstructor
 public class BungeeChannel implements NetworkChannel {
 
     private final String channel;
-    private final BungeeMessagingQue que = new BungeeMessagingQue();
+    private final BungeeMessagingQue que;
 
     private final GenericHandlerList handlerList = new GenericHandlerList();
+
+    BungeeChannel(final String channel) {
+        this.channel = channel;
+        this.que = new BungeeMessagingQue(this);
+    }
 
     /**
      * Get the channel name this
