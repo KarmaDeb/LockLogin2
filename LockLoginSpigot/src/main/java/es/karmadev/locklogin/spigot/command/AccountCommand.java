@@ -22,7 +22,7 @@ public class AccountCommand extends Command {
 
     private final LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
 
-    protected AccountCommand(final @NotNull String name) {
+    public AccountCommand(final @NotNull String name) {
         super(name);
     }
 

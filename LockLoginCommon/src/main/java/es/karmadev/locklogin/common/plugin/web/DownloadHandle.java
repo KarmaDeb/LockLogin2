@@ -67,6 +67,7 @@ public class DownloadHandle implements ResourceDownload {
             CMarketPlace market = (CMarketPlace) plugin.getMarketPlace();
             StoredResource stored = market.getManager().getResources().stream().filter((rs) ->
                     rs.getId() == resource.getId() && rs.getVersion().equals(resource.getVersion())).findAny().orElse(null);
+
             if (stored != null) {
                 plugin.warn("Resource {0} is already installed and up-to-date, skipping download", resource.getName());
                 if (!stored.isLoaded()) {
@@ -84,6 +85,7 @@ public class DownloadHandle implements ResourceDownload {
             }
 
             if (downloadURL == null) {
+                plugin.logErr("An error occurred while downloading resource {0} (Invalid resource URL)");
                 return false;
             }
 
@@ -91,12 +93,15 @@ public class DownloadHandle implements ResourceDownload {
 
             JsonInstance element = JsonReader.read(response);
             if (!element.isObjectType()) {
+                plugin.logErr("An error occurred while downloading resource {0} [{1}]", resource.getId(), response);
                 return false;
             }
 
             String finalDownloadURL = element.asObject().getChild("url").asNative().getString();
             URL url = URLUtilities.fromString(finalDownloadURL);
+
             if (url == null) {
+                plugin.logErr("An error occurred while downloading resource {0} (Invalid download URL)");
                 return false;
             }
 
@@ -109,8 +114,8 @@ public class DownloadHandle implements ResourceDownload {
                     Path resourcesDirectory = plugin.workingDirectory().resolve("marketplace").resolve("resources")
                             .resolve(String.valueOf(resource.getId()));
                     String extension = PathUtilities.getExtension(destination);
-
                     ResourceManifest manifest = new ResourceManifest();
+
                     switch (extension.toLowerCase()) {
                         case "zip":
                             try (ZipFile zip = new ZipFile(destination.toFile())) {
@@ -122,7 +127,7 @@ public class DownloadHandle implements ResourceDownload {
 
                                 try (InputStream stream = zip.getInputStream(entry)) {
                                     JsonInstance mf = JsonReader.read(stream);
-                                    manifest = new ResourceManifest();
+
                                     if (!manifest.read(plugin, mf)) {
                                         plugin.warn("Resource file is not a valid zip file (invalid manifest.json)");
                                         return false;
@@ -160,7 +165,6 @@ public class DownloadHandle implements ResourceDownload {
                                     try (InputStream stream = jar.getInputStream(entry)) {
                                         String raw = new String(StreamUtils.read(stream));
                                         JsonInstance mf = JsonReader.read(raw);
-                                        manifest = new ResourceManifest();
 
                                         if (manifest.read(plugin, mf)) {
                                             PathUtilities.write(virtualManifest, raw);
@@ -251,19 +255,16 @@ public class DownloadHandle implements ResourceDownload {
 
                     if (Files.exists(destination)) {
                         PathUtilities.destroy(destination);
-                        /*
-                        We want to ensure the downloaded module
-                        is not keep in system
-                         */
                     }
 
                     return storedResource.isLoaded();
                 }
 
+                plugin.logErr("An error occurred while downloading resource {0}", resource.getId());
                 PathUtilities.destroy(destination);
                 return false;
             } catch (IOException | NoSuchAlgorithmException | KeyManagementException ex) {
-                ex.printStackTrace();
+                plugin.log(ex, "An error occurred while downloading resource {0}", resource.getId());
                 return false;
             }
         });

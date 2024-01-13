@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.Adler32;
 import java.util.zip.CRC32;
@@ -83,8 +84,8 @@ public class CPluginDependency {
                         }
                     }
 
-                    List<JsonDependency> ignore = new ArrayList<>();
-                    List<JsonDependency> install = new ArrayList<>();
+                    Set<JsonDependency> ignore = new LinkedHashSet<>();
+                    Set<JsonDependency> install = new LinkedHashSet<>();
                     for (JsonInstance element : dependencies) {
                         JsonObject dependencyJson = element.asObject();
                         JsonDependency dependency = new JsonDependency(dependencyJson);
@@ -95,6 +96,7 @@ public class CPluginDependency {
                         long adler = 0;
                         long crc = 0;
                         String hash = "";
+
                         if (object != null) {
                             JsonObject dependencyTable = object.getChild("dependency")
                                     .asObject();
@@ -116,6 +118,9 @@ public class CPluginDependency {
                             install.add(dependency);
                         }
 
+                        long genAdler = 0;
+                        long genCrc = 0;
+                        String genHash = null;
                         if (Files.exists(dependency.file())) {
                             byte[] rBytes = Files.readAllBytes(dependency.file());
 
@@ -125,23 +130,24 @@ public class CPluginDependency {
                             CRC32 rCrc = new CRC32();
                             rCrc.update(ByteBuffer.wrap(rBytes));
 
-                            dependency.generateChecksum().define("adler", rAdler.getValue());
-                            dependency.generateChecksum().define("crc", rCrc.getValue());
-                            dependency.generateChecksum().hash(hash);
-                        } else {
-                            dependency.generateChecksum().define("adler", 0);
-                            dependency.generateChecksum().define("crc", 0);
-                            dependency.generateChecksum().hash(null);
+                            genAdler = rAdler.getValue();
+                            genCrc = rCrc.getValue();
+                            genHash = doMD5(rBytes);
                         }
 
-                        dependency.checksum().define("adler", adler);
-                        dependency.checksum().define("crc", crc);
-
+                        DependencyChecksum generated = dependency.generateChecksum();
                         DependencyChecksum checksum = dependency.checksum();
-                        if (checksum.matches(dependency.generateChecksum())) {
-                            if (!ignore.contains(dependency))
-                                ignore.add(dependency);
 
+                        generated.define("adler", genAdler);
+                        generated.define("crc", genCrc);
+                        generated.hash(genHash);
+
+                        checksum.define("adler", adler);
+                        checksum.define("crc", crc);
+                        checksum.hash(hash);
+
+                        if (checksum.matches(generated)) {
+                            ignore.add(dependency);
                             install.remove(dependency);
                         }
 
@@ -209,5 +215,24 @@ public class CPluginDependency {
         }
 
         sortedMap.put(key, dependency);
+    }
+
+    private static String doMD5(final byte[] data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("md5");
+            digest.update(data);
+
+            byte[] result = digest.digest();
+
+            StringBuilder builder = new StringBuilder();
+            for (byte b : result) {
+                int i = Byte.toUnsignedInt(b);
+                builder.append(Integer.toHexString(i));
+            }
+
+            return builder.toString();
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

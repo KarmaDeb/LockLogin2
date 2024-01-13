@@ -41,8 +41,8 @@ public class CMarketPlace implements MarketPlace {
         }
 
         String response = URLUtilities.get(url);
-
         JsonInstance element = JsonReader.read(response);
+
         if (!element.isObjectType()) {
             plugin.err("Connected to LockLogin Marketplace server but service didn't give any valid response");
             return;
@@ -279,8 +279,11 @@ public class CMarketPlace implements MarketPlace {
             return null;
         }
 
-        String response = URLUtilities.get(url);
-
+        String response = URLUtilities.get(url).replace("\\u003d", "=");
+        /*
+        For some reason, in some cases, sometimes, it encodes the = as the UTF code. Don't know
+        why, don't know when, don't know how, but it just happens
+        */
         JsonInstance element = JsonReader.read(response);
         if (!element.isObjectType()) {
             plugin.err("Connected to LockLogin Marketplace server but service didn't give any valid response");
@@ -289,4 +292,5 @@ public class CMarketPlace implements MarketPlace {
 
         return element.asObject();
     }
+
 }

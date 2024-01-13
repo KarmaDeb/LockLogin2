@@ -298,6 +298,9 @@ public class SpigotPlugin extends KarmaPlugin {
 
     private void arrangeMarketplace(final CMarketPlace marketPlace) {
         Path resourcesDirectory = spigot.workingDirectory().resolve("marketplace").resolve("resources");
+        if (!Files.exists(resourcesDirectory) &&
+                !PathUtilities.createDirectory(resourcesDirectory)) return;
+
         try(Stream<Path> files = Files.list(resourcesDirectory).filter(Files::isDirectory)) {
             logger().log(LogLevel.INFO, "Preparing to load marketplace resources");
 
@@ -660,7 +663,7 @@ public class SpigotPlugin extends KarmaPlugin {
                 WebDomain domain = URLUtilities.getDomain(url);
                 if (domain == null) continue;
 
-                String host = String.format("%s://%s.%s/", domain.protocol(), domain.root(), domain.tld());
+                String host = String.format("%s://%s.%s/locklogin/version", domain.protocol(), domain.root(), domain.tld());
                 URL hostURL = URLUtilities.fromString(host);
 
                 if (hostURL == null) continue;

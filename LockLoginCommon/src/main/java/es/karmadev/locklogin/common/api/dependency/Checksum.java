@@ -97,10 +97,10 @@ class Checksum implements DependencyChecksum {
 
         for (String key : values.keySet()) {
             long value = values.getOrDefault(key, 0L);
-            if (value == 0) return false;
+            if (value == 0) continue;
 
-            if (other.value(key) != value) {
-                return false;
+            if (other.value(key) == value) {
+                return true;
             }
         }
 

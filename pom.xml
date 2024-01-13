@@ -145,8 +145,7 @@
         <java.native.version>5.12.1</java.native.version>
         <java.native.test>com.sun.jna.Native</java.native.test>
 
-        <karma.json.version>1.0.0-SNAPSHOT</karma.json.version>
-        <karma.json.test>es.karmadev.api.kson.JsonObject</karma.json.test>
+        <karma.json.version>1.0.2-SNAPSHOT</karma.json.version>
 
         <placeholder.api.version>2.10.9</placeholder.api.version>
         <protocol.lib.version>4.8.0</protocol.lib.version>
@@ -215,6 +214,11 @@
                                     <relocation>
                                         <pattern>me.lucko.jarrelocator</pattern>
                                         <shadedPattern>es.karmadev.locklogin.shaded.jarrelocator</shadedPattern>
+                                    </relocation>
+
+                                    <relocation>
+                                        <pattern>es.karmadev.api.kson</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.kson</shadedPattern>
                                     </relocation>
                                 </relocations>
                                 <minimizeJar>false</minimizeJar>
@@ -350,6 +354,7 @@
             <url>https://repository.ow2.org/nexus/content/repositories/public/</url>
         </repository>
 
+        <!--
         <repository>
             <id>karmadev_releases</id>
             <url>https://nexus.karmadev.es/repository/maven-releases/</url>
@@ -358,8 +363,10 @@
             <id>karmadev_snapshots</id>
             <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
         </repository>
+        -->
     </repositories>
 
+    <!--
     <pluginRepositories>
         <pluginRepository>
             <id>karmadev_releases</id>
@@ -384,6 +391,7 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+    -->
 
     <dependencies>
         <dependency>
@@ -441,7 +449,7 @@
                 <groupId>es.karmadev</groupId>
                 <artifactId>KSon</artifactId>
                 <version>${karma.json.version}</version>
-                <scope>provided</scope>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>es.karmadev</groupId>

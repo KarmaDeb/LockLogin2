@@ -594,6 +594,7 @@ public class ChatHandler implements Listener {
                                 runningLRM = false;
                                 return;
                             }
+
                             if (success == null || !success) {
                                 client.sendMessage("&eSuccessfully downloaded resource with id&7 " + resourceId + "&e but failed to enable.&c Is it compatible?");
                                 runningLRM = false;
