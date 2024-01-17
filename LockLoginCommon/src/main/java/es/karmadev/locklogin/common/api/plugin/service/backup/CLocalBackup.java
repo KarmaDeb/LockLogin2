@@ -91,7 +91,7 @@ public class CLocalBackup implements BackupService {
 
                 Collection<LocalNetworkClient> clients = plugin.network().getPlayers();
 
-                JsonArray stored_accounts = JsonArray.newArray();
+                JsonArray stored_accounts = JsonArray.newArray("", "stored");
                 Runnable start_run = task.start;
                 if (start_run != null) {
                     start_run.run();
@@ -115,7 +115,7 @@ public class CLocalBackup implements BackupService {
 
                 Instant creation = Instant.now();
 
-                JsonObject backup = JsonObject.newObject();
+                JsonObject backup = JsonObject.newObject("", "");
                 backup.put("id", id);
                 backup.put("stored", stored_accounts.size());
                 backup.put("created", creation.toEpochMilli());

@@ -29,6 +29,7 @@ import java.sql.Statement;
 import java.time.Instant;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class CLocalClient implements LocalNetworkClient {
@@ -38,8 +39,14 @@ public class CLocalClient implements LocalNetworkClient {
 
     public Function<String, Boolean> hasPermission;
 
-    private final CacheElement<UserSession> session = new CacheElement<>();
-    private final CacheElement<UserAccount> account = new CacheElement<>();
+    private final CacheElement<String> name = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<UUID> uniqueId = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<UUID> onlineId = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<InetSocketAddress> address = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<Instant> creation = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<UserSession> session = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<UserAccount> account = new CacheElement<>(30, TimeUnit.MINUTES);
+    private final CacheElement<ConnectionType> connectionType = new CacheElement<>(30, TimeUnit.MINUTES);
 
     public CLocalClient(final int id, final SQLDriver engine) {
         this.id = id;
@@ -53,28 +60,30 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public String name() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+        return name.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.NAME)
-                    .where(Row.ID, "=", id);
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.NAME)
+                        .where(Row.ID, "=", id);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    return result.getString(1);
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        return result.getString(1);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -84,33 +93,35 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public InetSocketAddress address() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+        return address.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.ADDRESS, Row.PORT)
-                    .where(Row.ID, "=", id);
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.ADDRESS, Row.PORT)
+                        .where(Row.ID, "=", id);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    String address = result.getString(1);
-                    int port = result.getInt(2);
-                    if (!result.wasNull()) {
-                        if (address == null) address = "127.0.0.1";
-                        return InetSocketAddress.createUnresolved(address, port);
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        String address = result.getString(1);
+                        int port = result.getInt(2);
+                        if (!result.wasNull()) {
+                            if (address == null) address = "127.0.0.1";
+                            return InetSocketAddress.createUnresolved(address, port);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
+            return InetSocketAddress.createUnresolved("127.0.0.1", new Random().nextInt(65565));
+        });
     }
 
     /**
@@ -120,29 +131,31 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public Instant creation() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+        return creation.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.CREATED_AT)
-                    .where(Row.ID, "=", id);
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.CREATED_AT)
+                        .where(Row.ID, "=", id);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    long millis = result.getLong(1);
-                    return Instant.ofEpochMilli(millis);
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        long millis = result.getLong(1);
+                        return Instant.ofEpochMilli(millis);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return Instant.now();
+            return Instant.now();
+        });
     }
 
     /**
@@ -173,6 +186,9 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setAddress(final InetSocketAddress address) {
+        if (this.address.elementEquals(address)) return;
+        this.address.assign(address);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -200,6 +216,9 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setName(final String name) {
+        if (this.name.elementEquals(name)) return;
+        this.name.assign(name);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -226,28 +245,30 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public UUID uniqueId() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+        return uniqueId.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.UUID)
-                    .where(Row.ID, "=", id);
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.UUID)
+                        .where(Row.ID, "=", id);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    return UUID.fromString(result.getString(1));
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        return UUID.fromString(result.getString(1));
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -258,28 +279,34 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public UUID onlineId() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
+        return onlineId.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
 
-            QueryBuilder builder = QueryBuilder.createQuery()
-                    .select(Table.USER, Row.PREMIUM_UUID)
-                    .where(Row.ID, "=", id);
+                QueryBuilder builder = QueryBuilder.createQuery()
+                        .select(Table.USER, Row.PREMIUM_UUID)
+                        .where(Row.ID, "=", id);
 
-            try (ResultSet result = statement.executeQuery(builder.build(""))) {
-                if (result.next()) {
-                    return UUID.fromString(result.getString(1));
+                System.out.println(builder.build(""));
+                try (ResultSet result = statement.executeQuery(builder.build(""))) {
+                    if (result.next()) {
+                        String value = result.getString(1);
+                        if (result.wasNull() || value.trim().isEmpty()) return null;
+
+                        return UUID.fromString(value);
+                    }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return null;
+            return null;
+        });
     }
 
     /**
@@ -289,6 +316,9 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setUniqueId(final UUID id) {
+        if (this.uniqueId.elementEquals(id)) return;
+        this.uniqueId.assign(id);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -311,29 +341,31 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public ConnectionType connection() {
-        Connection connection = null;
-        Statement statement = null;
-        try {
-            connection = engine.retrieve();
-            statement = connection.createStatement();
-            try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
-                    .select(Table.USER, Row.CONNECTION_TYPE)
-                    .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
+        return connectionType.getOrElse(() -> {
+            Connection connection = null;
+            Statement statement = null;
+            try {
+                connection = engine.retrieve();
+                statement = connection.createStatement();
+                try (ResultSet result = statement.executeQuery(QueryBuilder.createQuery()
+                        .select(Table.USER, Row.CONNECTION_TYPE)
+                        .where(Row.ID, QueryBuilder.EQUALS, id).build())) {
 
-                if (result.next()) {
-                    int type = result.getInt(1);
-                    if (!result.wasNull()) {
-                        return ConnectionType.byId(type);
+                    if (result.next()) {
+                        int type = result.getInt(1);
+                        if (!result.wasNull()) {
+                            return ConnectionType.byId(type);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            } finally {
+                engine.close(connection, statement);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        } finally {
-            engine.close(connection, statement);
-        }
 
-        return ConnectionType.OFFLINE;
+            return ConnectionType.OFFLINE;
+        });
     }
 
     /**
@@ -343,6 +375,9 @@ public class CLocalClient implements LocalNetworkClient {
      */
     @Override
     public void setConnection(final ConnectionType type) {
+        if (this.connectionType.elementEquals(type)) return;
+        this.connectionType.assign(type);
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -635,17 +670,40 @@ public class CLocalClient implements LocalNetworkClient {
     @Override
     public void reset(final String name) {
         if (name == null) {
-            session.assign(null);
-            account.assign(null);
+            this.name.assign(null);
+            this.uniqueId.assign(null);
+            this.onlineId.assign(null);
+            this.creation.assign(null);
+            this.session.assign(null);
+            this.account.assign(null);
+            this.connectionType.assign(null);
             return;
         }
 
         switch (name.toLowerCase()) {
+            case "name":
+                this.name.assign(null);
+                break;
+            case "uniqueid":
+                this.uniqueId.assign(null);
+                break;
+            case "onlineid":
+                this.onlineId.assign(null);
+                break;
+            case "address":
+                this.address.assign(null);
+                break;
+            case "creation":
+                this.creation.assign(null);
+                break;
             case "session":
-                session.assign(null);
+                this.session.assign(null);
                 break;
             case "account":
-                account.assign(null);
+                this.account.assign(null);
+                break;
+            case "connection":
+                this.connectionType.assign(null);
                 break;
         }
     }

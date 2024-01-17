@@ -53,10 +53,10 @@ public class LockLoginJson {
                     version = json.getChild("version.name").asNative().getString();
                     channel = BuildType.valueOf(json.getChild("update")
                             .asNative().getAsString().toUpperCase()).map(versionId, version);
-                    langVersion = json.getChild("lang").asNative().getInteger();
+                    langVersion = json.getChild("lang").asNative().asInteger();
 
                     updateName = json.getChild("version.type").asNative().getString();
-                    marketVersion = json.getChild("version.marketplace").asNative().getInteger();
+                    marketVersion = json.getChild("version.marketplace").asNative().asInteger();
 
                     List<URI> uriList = new ArrayList<>();
                     for (JsonInstance element : json.getChild("version.check").asArray()) {

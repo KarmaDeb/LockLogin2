@@ -1,32 +1,79 @@
 package es.karmadev.locklogin.common.api.plugin;
 
+import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.locklogin.api.plugin.CacheContainer;
 
+import javax.annotation.concurrent.ThreadSafe;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-@SuppressWarnings("unused")
+/**
+ * Provides an implementation for the cache
+ * elements on the application.
+ * The cache element should be thread-safe in most
+ * scenarios, meaning multiple threads can read and
+ * write to the element safely.
+ * This might not apply in all scenarios, so proceed
+ * with caution
+ * @param <T> the cached element type
+ */
+@SuppressWarnings("unused") @ThreadSafe
 public class CacheElement<T> implements CacheContainer<T> {
 
-    private T element;
+    private static <T> WeakReference<T> NULL_REFERENCE() {
+        return new WeakReference<>(null);
+    }
+
+    private WeakReference<T> element = NULL_REFERENCE();
     private long lastModification = System.currentTimeMillis();
     private final long expiration;
 
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
     public CacheElement() {
-        this(null, 0);
+        this(null, 0, TimeUnit.MILLISECONDS);
     }
 
     public CacheElement(final long expiration) {
-        this(null, expiration);
+        this(null, expiration, TimeUnit.SECONDS);
+    }
+
+    public CacheElement(final long expiration, final TimeUnit unit) {
+        this(null, expiration, unit);
     }
 
     public CacheElement(final T initialValue) {
-        this(initialValue, 0);
+        this(initialValue, 0, TimeUnit.MILLISECONDS);
     }
 
     public CacheElement(final T initialValue, final long expiration) {
-        this.element = initialValue;
-        this.expiration = expiration;
+        this(initialValue, expiration, TimeUnit.SECONDS);
+    }
+
+    public CacheElement(final T initialValue, final long expiration, final TimeUnit unit) {
+        this.element = makeRef(initialValue);
+        this.expiration = TimeUnit.MILLISECONDS.convert(Math.max(0, expiration), unit);
+
+        AsyncTaskExecutor.EXECUTOR.scheduleAtFixedRate(() -> {
+            if (this.element.get() == null) {
+                this.lastModification = System.currentTimeMillis();
+                return;
+            }
+
+            long diff = System.currentTimeMillis() - lastModification;
+            if (diff >= this.expiration) {
+                this.element = NULL_REFERENCE();
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    private WeakReference<T> makeRef(final T element) {
+        if (element == null) return NULL_REFERENCE();
+        return new WeakReference<>(element);
     }
 
     /**
@@ -36,7 +83,12 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getElement() {
-        return element;
+        lock.readLock().lock();
+        try {
+            return element.get();
+        } finally {
+            lock.readLock().unlock();;
+        }
     }
 
     /**
@@ -51,11 +103,11 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getElement(final T other) {
-        if (element == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+        if (element.get() == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
             return other;
         }
 
-        return element;
+        return getElement();
     }
 
     /**
@@ -70,11 +122,11 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getElement(final Supplier<T> provider) {
-        if (element == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+        if (element.get() == null || expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
             return provider.get();
         }
 
-        return element;
+        return getElement();
     }
 
     /**
@@ -88,15 +140,21 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getOrElse(final T other) {
-        if (expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
-            element = null;
-        }
-        if (element == null) {
-            element = other;
-            lastModification = System.currentTimeMillis();
-        }
+        lock.writeLock().lock();
+        try {
+            if (expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+                element = NULL_REFERENCE();
+            }
 
-        return element;
+            if (element.get() == null) {
+                element = makeRef(other);
+                lastModification = System.currentTimeMillis();
+            }
+
+            return getElement();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -109,15 +167,20 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public T getOrElse(final Supplier<T> provider) {
-        if (expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
-            element = null;
-        }
-        if (element == null) {
-            element = provider.get();
-            lastModification = System.currentTimeMillis();
-        }
+        lock.writeLock().lock();
+        try {
+            if (expiration > 0 && lastModification + expiration <= System.currentTimeMillis()) {
+                element = NULL_REFERENCE();
+            }
+            if (element.get() == null) {
+                element = makeRef(provider.get());
+                lastModification = System.currentTimeMillis();
+            }
 
-        return element;
+            return getElement();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -167,8 +230,13 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public void assign(final T element) {
-        this.element = element;
-        lastModification = System.currentTimeMillis();
+        lock.writeLock().lock();
+        try {
+            this.element = makeRef(element);
+            lastModification = System.currentTimeMillis();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -181,7 +249,13 @@ public class CacheElement<T> implements CacheContainer<T> {
      */
     @Override
     public <A extends T, B extends A> boolean elementEquals(final B element) {
-        if (this.element == null) return element == null;
-        return Objects.equals(this.element, element);
+        lock.readLock().lock();
+
+        try {
+            if (this.element.get() == null) return element == null;
+            return Objects.equals(this.element.get(), element);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }

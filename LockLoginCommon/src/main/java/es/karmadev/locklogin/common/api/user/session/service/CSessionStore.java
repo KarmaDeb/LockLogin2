@@ -73,9 +73,9 @@ public class CSessionStore implements SessionStoreService, Cached {
         if (!configuration.session().enable()) return null;
 
         int timeout = configuration.session().timeout();
-
         long exp = Math.max(0, TimeUnit.MINUTES.toMillis(timeout));
-        CacheContainer<SessionCache> cacheElement = sessions.computeIfAbsent(address, (c) -> new CacheElement<>(exp));
+
+        CacheContainer<SessionCache> cacheElement = sessions.computeIfAbsent(address, (c) -> new CacheElement<>(timeout, TimeUnit.MINUTES));
 
         return cacheElement.getOrElse(() -> {
             Connection connection = null;
@@ -139,9 +139,7 @@ public class CSessionStore implements SessionStoreService, Cached {
         if (!configuration.session().enable()) return;
 
         int timeout = configuration.session().timeout();
-
-        long exp = Math.max(0, TimeUnit.MINUTES.toMillis(timeout));
-        CacheContainer<SessionCache> cacheElement = sessions.computeIfAbsent(client.address(), (c) -> new CacheElement<>(exp));
+        CacheContainer<SessionCache> cacheElement = sessions.computeIfAbsent(client.address(), (c) -> new CacheElement<>(timeout, TimeUnit.MINUTES));
 
         UserSession session = client.session();
 

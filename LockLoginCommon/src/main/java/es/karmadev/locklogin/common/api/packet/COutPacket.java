@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class COutPacket implements OutgoingPacket {
 
     //private final static LockLogin plugin = CurrentPlugin.getPlugin();
-    private transient JsonObject json = JsonObject.newObject();
+    private transient JsonObject json = JsonObject.newObject("", "");
     private final Map<Integer, String> byteMap = new ConcurrentHashMap<>();
     private final DataType type;
     private final int id;

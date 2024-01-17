@@ -55,20 +55,20 @@ public abstract class HashResult {
      * @return the serialized string
      */
     public final String serialize() {
-        JsonObject main = JsonObject.newObject();
-        JsonObject result = JsonObject.newObject("product");
+        JsonObject main = JsonObject.newObject("", "");
+        JsonObject result = JsonObject.newObject("", "product");
         VirtualizedInput vInput = product();
 
         result.put("value", Base64.getEncoder().encodeToString(vInput.product()));
         result.put("virtualized", vInput.valid());
 
-        JsonObject references = JsonObject.newObject("references");
-        JsonArray array = JsonArray.newArray("values");
+        JsonObject references = JsonObject.newObject("", "references");
+        JsonArray array = JsonArray.newArray("", "values");
         int[] ref = vInput.references();
 
         references.put("size", ref.length);
         for (int i = 0; i < ref.length; i++) {
-            JsonObject refObject = JsonObject.newObject();
+            JsonObject refObject = JsonObject.newObject("", "");
             refObject.put("source", i);
             refObject.put("target", ref[i]);
 

@@ -1,10 +1,8 @@
 package es.karmadev.locklogin.spigot;
 
-import es.karmadev.api.core.source.exception.AlreadyRegisteredException;
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.kson.JsonInstance;
 import es.karmadev.api.kson.io.JsonReader;
-import es.karmadev.api.logger.log.BoundedLogger;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.object.ObjectUtils;
 import es.karmadev.api.schedule.runner.TaskRunner;
@@ -114,15 +112,13 @@ public class SpigotPlugin extends KarmaPlugin {
     @Getter
     private InterfaceIOEvent UI_CloseOpenHandler; //Internal usage, we don't really care the name it has
 
-    public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException, AlreadyRegisteredException {
+    public SpigotPlugin() throws NoSuchFieldException, IllegalAccessException {
         super(false);
         Field commandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
         commandMap.setAccessible(true);
         CommandMap map = (CommandMap) commandMap.get(Bukkit.getServer());
 
         spigot = new LockLoginSpigot(this, map);
-        BoundedLogger logger = (BoundedLogger) logger();
-        logger.setLogToConsole(false); //Prevent from logging into console
     }
 
     /**

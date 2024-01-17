@@ -98,10 +98,10 @@ public class JoinHandler implements Listener {
             online_uid = UUIDFetcher.fetchUUID(name, UUIDType.ONLINE);
         }
 
-        CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(offline_uid);
+        LocalNetworkClient offline = plugin.network().getOfflinePlayer(offline_uid);
         if (offline == null) {
             if (online_uid != null) {
-                CLocalClient premiumClient = (CLocalClient) plugin.network().getOfflinePlayer(online_uid);
+                LocalNetworkClient premiumClient = plugin.network().getOfflinePlayer(online_uid);
                 if (premiumClient != null) {
                     premiumClient.setUniqueId(offline_uid);
                     offline = premiumClient;
@@ -109,18 +109,13 @@ public class JoinHandler implements Listener {
             }
 
             if (offline == null) {
-                offline = (CLocalClient) plugin.getUserFactory(false).create(name, offline_uid);
+                offline = plugin.getUserFactory(false).create(name, offline_uid);
                 EntityCreatedEvent event = new EntityCreatedEvent(offline);
                 plugin.moduleManager().fireEvent(event);
             }
         }
 
         UserSession session = offline.session();
-
-        //session.login(false);
-        //session.totpLogin(false);
-        //session.pinLogin(false);
-
         validateUser(e, offline, offline_uid, online_uid);
     }
 
@@ -132,8 +127,14 @@ public class JoinHandler implements Listener {
         UserDataHandler.setReady(player);
 
         UUID id = player.getUniqueId();
-        CLocalClient offline = (CLocalClient) plugin.network().getOfflinePlayer(id);
-        COnlineClient online = ((COnlineClient) offline.client())
+        LocalNetworkClient offline = plugin.network().getOfflinePlayer(id);
+        NetworkClient onlineClient = offline.client();
+        if (!(onlineClient instanceof COnlineClient)) {
+            plugin.logWarn("Not configuring client {0} because it is provided by an external service", id);
+            return;
+        }
+
+        COnlineClient online = ((COnlineClient) onlineClient)
                 .onMessageRequest((msg) -> {
                     if (!player.isOnline()) return;
                     player.sendMessage(Colorize.colorize(msg)
@@ -204,9 +205,9 @@ public class JoinHandler implements Listener {
         boolean auth = false;
         //TODO: Logic to auto-login if needed
 
-        online.session().append(CSessionField.newField(Boolean.class, "pass_logged", false));
-        online.session().append(CSessionField.newField(Boolean.class, "pin_logged", false));
-        online.session().append(CSessionField.newField(Boolean.class, "totp_logged", false));
+        online.session().append(CSessionField.newField(Boolean.class, "pass_logged", auth));
+        online.session().append(CSessionField.newField(Boolean.class, "pin_logged", auth));
+        online.session().append(CSessionField.newField(Boolean.class, "totp_logged", auth));
 
         player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
 
@@ -396,7 +397,8 @@ public class JoinHandler implements Listener {
         }
     }
 
-    private void validateUser(final AsyncPlayerPreLoginEvent e, final LocalNetworkClient client,
+    private void validateUser(final AsyncPlayerPreLoginEvent e,
+                              final LocalNetworkClient client,
                               final UUID offline_uid,
                               final UUID online_uid) {
         String name = e.getName();

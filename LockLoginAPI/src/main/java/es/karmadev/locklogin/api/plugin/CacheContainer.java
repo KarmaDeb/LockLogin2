@@ -3,7 +3,10 @@ package es.karmadev.locklogin.api.plugin;
 import java.util.function.Supplier;
 
 /**
- * Contains cached elements for an object
+ * Contains cached elements for an object.
+ * Please note, thread-safety depends on implementations, the
+ * interface itself DOES NOT provide any kind of thread
+ * safety, proceed with caution
  */
 @SuppressWarnings("unused")
 public interface CacheContainer<T> {

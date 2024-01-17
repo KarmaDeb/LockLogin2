@@ -145,7 +145,7 @@
         <java.native.version>5.12.1</java.native.version>
         <java.native.test>com.sun.jna.Native</java.native.test>
 
-        <karma.json.version>1.0.2-SNAPSHOT</karma.json.version>
+        <karma.json.version>1.0.4-SNAPSHOT</karma.json.version>
 
         <placeholder.api.version>2.10.9</placeholder.api.version>
         <protocol.lib.version>4.8.0</protocol.lib.version>
@@ -214,11 +214,6 @@
                                     <relocation>
                                         <pattern>me.lucko.jarrelocator</pattern>
                                         <shadedPattern>es.karmadev.locklogin.shaded.jarrelocator</shadedPattern>
-                                    </relocation>
-
-                                    <relocation>
-                                        <pattern>es.karmadev.api.kson</pattern>
-                                        <shadedPattern>es.karmadev.locklogin.shaded.kson</shadedPattern>
                                     </relocation>
                                 </relocations>
                                 <minimizeJar>false</minimizeJar>
@@ -449,7 +444,7 @@
                 <groupId>es.karmadev</groupId>
                 <artifactId>KSon</artifactId>
                 <version>${karma.json.version}</version>
-                <scope>compile</scope>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>es.karmadev</groupId>
