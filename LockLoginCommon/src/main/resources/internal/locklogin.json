@@ -1,7 +1,7 @@
 {
   "id": "${locklogin.update.id}",
   "update": "${locklogin.version.type}",
-  "lang": ${locklogin.lang},
+  "lang": "${locklogin.lang}",
   "dependencies": [
     {
       "type": "single",
@@ -396,7 +396,7 @@
       "https://karmadev.es/locklogin/version/",
       "https://raw.githubusercontent.com/KarmaDeb/updates/master/LockLogin/version/"
     ],
-    "marketplace": ${locklogin.market.version}
+    "marketplace": "${locklogin.market.version}"
   },
   "checksum": [
     "https://karmadev.es/locklogin-repository/${locklogin.checksum.version}/checksum.json"
