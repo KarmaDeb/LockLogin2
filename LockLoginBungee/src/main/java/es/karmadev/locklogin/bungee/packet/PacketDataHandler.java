@@ -14,6 +14,7 @@ import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.protocol.DefinedPacket;
 
 import java.security.PublicKey;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -37,11 +38,10 @@ public class PacketDataHandler {
      * @param packet the packet
      */
     public static Task<IncomingPacket> emitPacket(final Server server, final OutgoingPacket packet) {
-        String packetId = StringUtils.generateString(16, StringOptions.LOWERCASE);
+        String packetId = StringUtils.generateString(6, StringOptions.LOWERCASE);
         Map<String, ComPacket> ids = packetData.computeIfAbsent(server, (data) -> new ConcurrentHashMap<>());
 
         Task<IncomingPacket> task = new Task<IncomingPacket>() {
-
             Consumer<IncomingPacket> consumer = (p) -> {};
 
             @Override
@@ -54,6 +54,7 @@ public class PacketDataHandler {
                 if (object != null) consumer = object;
             }
         };
+
         packetTasks.put(packet, task);
         if (ids.containsKey(packetId)) {
             emitPacket(server, packet);
@@ -113,8 +114,14 @@ public class PacketDataHandler {
             packetId = packetId.split(":")[1]; //0 is the prefix
         }
 
+        System.out.println("Validating: " + packetId);
+
         Map<String, ComPacket> ids = packetData.computeIfAbsent(emitter, (data) -> new ConcurrentHashMap<>());
+        System.out.println(ids);
+
         ComPacket stored = ids.remove(packetId);
+
+        System.out.println(stored);
         if (stored == null) return false;
 
         int replyId = 0;
@@ -127,6 +134,8 @@ public class PacketDataHandler {
 
             replyId = object.getChild("replying").asNative().getInteger();
         }
+        System.out.println(replyId);
+        System.out.println(stored.id());
 
         return stored.id() == replyId;
     }
@@ -134,7 +143,7 @@ public class PacketDataHandler {
     public static boolean tagExists(final String tag) {
         String packetId = null;
         if (tag.contains(":")) {
-            packetId = tag.split(":")[1]; //0 is the prefix
+            packetId = tag.split(":")[1]; //index 0 is the prefix
         }
         if (packetId == null) return false;
 
