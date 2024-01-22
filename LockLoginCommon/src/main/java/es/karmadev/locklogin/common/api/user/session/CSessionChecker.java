@@ -34,6 +34,8 @@ public class CSessionChecker implements SessionChecker {
     private boolean resultSet = false;
     private boolean result = false;
 
+    private int authTime;
+
     /**
      * Initialize the session checker
      *
@@ -77,7 +79,8 @@ public class CSessionChecker implements SessionChecker {
             running = false;
             cancelled = false;
 
-            runner.start();
+            runner.forceTimeLeft((long) authTime);
+            runner.resume();
             running = true;
         }
     }
@@ -149,7 +152,7 @@ public class CSessionChecker implements SessionChecker {
             UserAccount account = client.account();
             UserSession session = client.session();
             AtomicBoolean registered = new AtomicBoolean(account.isRegistered());
-            int authTime = (registered.get() ? configuration.login().timeout() : configuration.register().timeout());
+            authTime = (registered.get() ? configuration.login().timeout() : configuration.register().timeout());
 
             AtomicInteger nextLoginMessage = new AtomicInteger(-1);
             AtomicInteger nextRegisterMessage = new AtomicInteger(-1);

@@ -53,7 +53,6 @@
                 <fail argument="$module">§5Failed to reload module: §7$module</fail>
             </response>
 
-
             <response command="locklogin" argument="version current">
                 <success argument="$current">§dCurrent version is:§e $current</success>
                 <fail/>

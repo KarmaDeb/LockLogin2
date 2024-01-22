@@ -18,6 +18,16 @@ public class CProcessFactory implements ProcessFactory {
     private final Map<UUID, UserAuthProcess> userProcess  = new HashMap<>();
 
     /**
+     * Reset a client process
+     *
+     * @param client the client to reset a process for
+     */
+    @Override
+    public void reset(final NetworkClient client) {
+        userProcess.remove(client.uniqueId());
+    }
+
+    /**
      * Get the next process for the client
      *
      * @param client the client

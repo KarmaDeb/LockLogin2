@@ -25,7 +25,12 @@ public enum Table {
     /**
      * Users table
      */
-    USER("Users", Row.NAME, Row.EMAIL, Row.UUID, Row.PREMIUM_UUID, Row.ACCOUNT_ID, Row.SESSION_ID, Row.CONNECTION_TYPE, Row.LAST_SERVER, Row.PREV_SERVER, Row.STATUS, Row.CREATED_AT),
+    USER("Users",
+            Row.NAME, Row.EMAIL, Row.UUID,
+            Row.ADDRESS, Row.PORT, Row.PREMIUM_UUID,
+            Row.ACCOUNT_ID, Row.SESSION_ID, Row.CONNECTION_TYPE,
+            Row.LAST_SERVER, Row.PREV_SERVER, Row.STATUS,
+            Row.CREATED_AT),
     /**
      * Brute force table
      */

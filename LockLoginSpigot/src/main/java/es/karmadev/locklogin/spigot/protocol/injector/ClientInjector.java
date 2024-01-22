@@ -21,18 +21,6 @@ import java.util.concurrent.TimeUnit;
 public class ClientInjector {
 
     private final ConcurrentMap<UUID, Injection> injections = new ConcurrentHashMap<>();
-    private ConnectionPool pool;
-
-    public ClientInjector() {
-        ActionListener<Player> listener = (unused, player) -> {
-            Injection injection = inject(player);
-            if (injection.isInjected()) {
-                pool.remove(player.getUniqueId());
-            }
-        };
-        pool = new ConnectionPool(listener);
-        pool.schedule();
-    }
 
     /**
      * Inject the player
@@ -42,12 +30,7 @@ public class ClientInjector {
      */
     public Injection inject(final Player player) {
         Injection result = injections.computeIfAbsent(player.getUniqueId(), (injection) -> new Injection());
-        Object playerConnection = Injection.playerConnection(Injection.toEntityHandle(player));
-        if (playerConnection != null) {
-            result.inject(player);
-        } else {
-            pool.add(player.getUniqueId(), player.getName());
-        }
+        result.inject(player);
 
         return result;
     }
@@ -62,50 +45,5 @@ public class ClientInjector {
         if (result == null) return;
 
         result.release();
-    }
-}
-
-/**
- * Player pool
- */
-class ConnectionPool {
-
-    private final Map<UUID, String> ids = new ConcurrentHashMap<>();
-    private final ActionListener<Player> actionExecutor;
-    private boolean running = false;
-
-    public ConnectionPool(final ActionListener<Player> action) {
-        actionExecutor = action;
-    }
-
-    public void schedule() {
-        if (running) return;
-        running = true;
-
-        LockLoginSpigot spigot = (LockLoginSpigot) CurrentPlugin.getPlugin();
-        KarmaPlugin plugin = spigot.plugin();
-        AsyncTaskExecutor.EXECUTOR.scheduleAtFixedRate(() -> {
-            for (UUID id : ids.keySet()) {
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    Player player = Bukkit.getPlayer(id);
-                    if (player != null) {
-                        Object handle = Injection.toEntityHandle(player);
-                        Object connection = Injection.playerConnection(handle);
-
-                        if (connection != null) {
-                            actionExecutor.onAction(player.getName(), player);
-                        }
-                    }
-                });
-            }
-        }, 0, 1, TimeUnit.MILLISECONDS);
-    }
-
-    public void add(final UUID id, final String reason) {
-        ids.put(id, reason);
-    }
-
-    public void remove(final UUID id) {
-        ids.remove(id);
     }
 }

@@ -571,4 +571,20 @@ public class CSession implements UserSession {
                 break;
         }
     }
+
+    @Override
+    public String toString() {
+        return "CSession{" +
+                "id=" + id +
+                ", session_id=" + session_id +
+                ", engine=" + engine +
+                ", valid=" + valid +
+                ", captchaLogged=" + captchaLogged.getElement() +
+                ", passwordLogged=" + passwordLogged.getElement() +
+                ", totpLogged=" + totpLogged.getElement() +
+                ", pinLogged=" + pinLogged.getElement() +
+                ", persistent=" + persistent.getElement() +
+                ", creation=" + creation.getElement() +
+                '}';
+    }
 }

@@ -447,7 +447,7 @@ public final class QueryBuilder {
             firstRow = false;
             rawQuery.append("SET `").append(rowName).append("` = ").append(rawValue).append(" ");
         } else {
-            rawQuery.append(", SET `").append(rowName).append("` = ").append(rawValue).append(" ");
+            rawQuery.append(", `").append(rowName).append("` = ").append(rawValue).append(" ");
         }
 
         return this;
@@ -485,7 +485,7 @@ public final class QueryBuilder {
     public QueryBuilder where(final Row row, final String operation, final Object value) {
         if (table == null || !table.hasRow(row)) return this;
         if (queryType.equals("update") && firstRow) return this;
-        if (!queryType.equals("update") && !queryType.equals("fetch")) return this;
+        if (!queryType.equals("update") && !queryType.equals("fetch") && !queryType.equals("drop-column")) return this;
 
         firstRow = false;
 

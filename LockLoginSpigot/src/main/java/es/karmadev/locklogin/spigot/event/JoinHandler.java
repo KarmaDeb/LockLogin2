@@ -30,7 +30,6 @@ import es.karmadev.locklogin.api.user.session.UserSession;
 import es.karmadev.locklogin.api.user.session.service.SessionCache;
 import es.karmadev.locklogin.api.user.session.service.SessionStoreService;
 import es.karmadev.locklogin.common.api.CPluginNetwork;
-import es.karmadev.locklogin.common.api.client.CLocalClient;
 import es.karmadev.locklogin.common.api.client.COnlineClient;
 import es.karmadev.locklogin.common.api.user.storage.session.CSessionField;
 import es.karmadev.locklogin.common.plugin.internal.PluginPermissionManager;
@@ -202,17 +201,19 @@ public class JoinHandler implements Listener {
         CPluginNetwork network = (CPluginNetwork) plugin.network();
         network.appendClient(online);
 
-        boolean auth = false;
+        boolean auth = plugin.bungeeMode();
         //TODO: Logic to auto-login if needed
 
         online.session().append(CSessionField.newField(Boolean.class, "pass_logged", auth));
         online.session().append(CSessionField.newField(Boolean.class, "pin_logged", auth));
         online.session().append(CSessionField.newField(Boolean.class, "totp_logged", auth));
+        if (auth) {
+            online.session().login(true);
+            online.session().pinLogin(true);
+            online.session().totpLogin(true);
+        }
 
         player.setMetadata("networkId", new FixedMetadataValue(plugin.plugin(), online.id()));
-
-        ClientInjector injector = plugin.getInjector();
-        injector.inject(player);
 
         if (configuration.spawn().enabled()) {
             Location spawn = SpawnLocationStorage.load();
@@ -226,9 +227,11 @@ public class JoinHandler implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPostJoin(final PlayerJoinEvent e) {
         Player player = e.getPlayer();
+
         NetworkClient online = plugin.network().getPlayer(UserDataHandler.getNetworkId(player));
         Messages messages = plugin.messages();
 
+        online.setAddress(player.getAddress());
         if (configuration.clearChat()) {
             ProtocolAssistant.clearChat(player);
         }
@@ -246,10 +249,16 @@ public class JoinHandler implements Listener {
 
                 if (service != null) {
                     SessionCache cache = service.getSession(player.getAddress());
-                    if (cache != null && cache.getClient().id() == online.id()) {
+                    if (cache != null && cache.getClient().id() == online.id() && cache.getAddress().equals(online.address())) {
                         session.login(cache.isLogged());
                         session.pinLogin(cache.isPinLogged());
                         session.totpLogin(cache.isTotpLogged());
+
+                        session.append(CSessionField.newField(Boolean.class, "pass_logged", true));
+                        session.append(CSessionField.newField(Boolean.class, "pin_logged", true));
+                        session.append(CSessionField.newField(Boolean.class, "totp_logged", true));
+
+                        online.sendMessage(messages.prefix() + messages.logged());
                     }
                 }
             }
@@ -290,6 +299,13 @@ public class JoinHandler implements Listener {
         }
 
         return false;
+    }
+
+    public void resetProcess(final NetworkClient client) {
+        passedProcess.remove(client.uniqueId());
+
+        ProcessFactory factory = plugin.getProcessFactory();
+        factory.reset(client);
     }
 
     public void startAuthProcess(final NetworkClient client, final AuthProcess previous) {

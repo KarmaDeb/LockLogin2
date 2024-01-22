@@ -1,8 +1,18 @@
 package es.karmadev.locklogin.spigot.util.window.settings;
 
+import es.karmadev.api.minecraft.text.Colorize;
 import es.karmadev.api.spigot.reflection.skull.SkullBuilder;
+import es.karmadev.locklogin.api.CurrentPlugin;
+import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.plugin.file.Configuration;
+import es.karmadev.locklogin.api.plugin.file.language.Messages;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
+
+import java.util.function.Consumer;
 
 public enum SettingsButton {
     TOGGLE_SESSION(
@@ -33,9 +43,31 @@ public enum SettingsButton {
     }
 
     public ItemStack toItemStack() {
-        return SkullBuilder.createSkull(value, signature, (meta) -> {
+        ItemStack item = SkullBuilder.createSkull(value, signature);
+
+        if (item == null) {
+            item = new ItemStack(Material.STONE);
+
+            ItemMeta meta = item.getItemMeta();
+            assert meta != null;
+
             meta.addItemFlags(ItemFlag.values());
-            return meta;
-        });
+            item.setItemMeta(meta);
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        assert meta != null;
+
+        meta.addItemFlags(ItemFlag.values());
+        LockLogin plugin = CurrentPlugin.getPlugin();
+        Messages messages = plugin.messages();
+
+        //TODO: Set item name
+        String prettyName = this.name().substring(0, 1).toUpperCase() + this.name()
+                .substring(1).toLowerCase().replace('_', ' ');
+        meta.setDisplayName(Colorize.colorize("&e{0}", prettyName));
+        item.setItemMeta(meta);
+
+        return item;
     }
 }

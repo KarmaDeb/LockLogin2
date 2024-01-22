@@ -11,6 +11,13 @@ import java.util.Optional;
 public interface ProcessFactory {
 
     /**
+     * Reset a client process
+     *
+     * @param client the client to reset a process for
+     */
+    void reset(final NetworkClient client);
+
+    /**
      * Get the next process for the client
      *
      * @param client the client

@@ -36,7 +36,6 @@ import java.security.spec.EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -45,9 +44,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Injection extends ChannelDuplexHandler {
 
     private final LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
+    private static Field playerConnectionField;
+    private static Field networkManagerField;
+    private static Field channelField;
+
     static PublicKey sharedPublic;
 
-    private UUID client;
     @Getter
     private boolean injected = false;
     private Object playerConnection;
@@ -71,6 +73,8 @@ public class Injection extends ChannelDuplexHandler {
             Field[] fields = packet.getClass().getDeclaredFields();
             String identifierField = null;
             String dataField = null;
+
+            Object readFrom = packet;
             for (Field field : fields) {
                 if (Modifier.isStatic(field.getModifiers())) continue;
 
@@ -83,21 +87,35 @@ public class Injection extends ChannelDuplexHandler {
                 if (ftName.equalsIgnoreCase("PacketDataSerializer")) {
                     dataField = field.getName();
                 }
+
+                if (ftName.equalsIgnoreCase("CustomPacketPayload")) {
+                    field.setAccessible(true);
+                    Object customPacketPayload = field.get(packet);
+
+                    if (customPacketPayload.getClass().getSimpleName().equalsIgnoreCase("UnknownPayload")) {
+                        readFrom = customPacketPayload;
+
+                        identifierField = "id";
+                        dataField = "data";
+                        break;
+                    }
+                }
             }
 
-            Object identifierObject = getField(packet, identifierField);
-            Object dataObject = getField(packet, dataField);
+            if (identifierField == null || dataField == null) return;
+            Object identifierObject = getField(readFrom, identifierField);
+            Object dataObject = getField(readFrom, dataField);
 
-            assert identifierObject != null && dataObject != null;
-
+            if (identifierObject == null || dataObject == null) return;
             String identifier = identifierObject.toString();
-            //if (!identifier.equals("test:test")) return;
 
             byte[] data;
             try {
                 ByteBuf buf = (ByteBuf) dataObject;
                 data = new byte[buf.readableBytes()];
                 buf.readBytes(data);
+
+                buf.setIndex(0, 0);
             } catch (ClassCastException ex) {
                 return;
             }
@@ -117,21 +135,18 @@ public class Injection extends ChannelDuplexHandler {
                     } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                              IllegalBlockSizeException |
                              BadPaddingException ignored) {
-                        //plugin.info(ex.fillInStackTrace().toString());
                     }
 
                     return rawPacket;
                 }));
 
-                /*byte[] encrypted = new byte[frame.length()];
-                frame.read(encrypted, 0);*/
+                byte[] encrypted = new byte[frame.length()];
+                frame.read(encrypted, 0);
 
                 builder.append(frame);
 
                 int position = frame.position();
                 int max = frame.frames();
-
-                //plugin.info("Frame {0} encrypted is: {1}", position, new String(encrypted));
 
                 if (position == max) {
                     try {
@@ -172,21 +187,14 @@ public class Injection extends ChannelDuplexHandler {
                             String rawJson = obj.toString(false);
                             incoming = new CInPacket(rawJson);
 
-                            //plugin.onReceive(incoming);
-                            NetworkChannel ch = plugin.getChannel(identifier);
-
-                            if (ch == null) {
-                                throw new IllegalStateException("Received a packet from unregistered channel: " + identifier);
-                            }
-
-                            ch.handle(
-                                    new PacketReceiveEvent(ch, incoming)
-                            );
+                            plugin.onReceive(incoming);
                         }
                     } catch (InvalidPacketDataException ex) {
                         plugin.log(ex, "Failed to handle packet under tag {0}", identifier);
                     }
                 }
+
+                return;
             }
 
             if (object instanceof OutgoingPacket) {
@@ -206,28 +214,24 @@ public class Injection extends ChannelDuplexHandler {
                     String raw = outBuild.toString(false);
 
                     IncomingPacket converted = new CInPacket(raw);
-                    NetworkChannel ch = plugin.getChannel(identifier);
-
-                    if (ch == null) {
-                        throw new IllegalStateException("Received a packet from unregistered channel: " + identifier);
-                    }
-
-                    ch.handle(
-                            new PacketReceiveEvent(ch, converted)
-                    );
-                    //plugin.onReceive(converted);
+                    plugin.onReceive(converted);
                 }
+
+                return;
             }
         }
 
         super.channelRead(context, packet);
     }
 
+    @Override
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        super.write(ctx, msg, promise);
+    }
+
     protected void inject(final Player player) {
         if (!injected) {
             if (player == null) return;
-
-            this.client = player.getUniqueId();
 
             this.channel = getChannel(player);
             if (channel == null) return;
@@ -245,7 +249,6 @@ public class Injection extends ChannelDuplexHandler {
                 loop.submit(() -> channel.pipeline().remove(this));
             }
 
-            this.client = null;
             injected = false;
             channel = null;
             playerConnection = null;
@@ -283,54 +286,63 @@ public class Injection extends ChannelDuplexHandler {
     }
 
     protected static Object playerConnection(final Object entityHandle) {
-        Class<?> playerConnection = SpigotServer.netMinecraftServer("PlayerConnection").orElseGet(() ->
-                SpigotServer.netMinecraftServer("PlayerConnection", "network").orElse(null)
-        );
-        if (playerConnection == null) return null;
+        if (playerConnectionField == null) {
+            Class<?> playerConnection = SpigotServer.netMinecraftServer("PlayerConnection").orElseGet(() ->
+                    SpigotServer.netMinecraftServer("ServerCommonPacketListenerImpl", "server", "network").orElseGet(() ->
+                            SpigotServer.netMinecraftServer("PlayerConnection", "server", "network").orElse(null))
+            );
+            if (playerConnection == null) return null;
 
-        Field[] fields = entityHandle.getClass().getDeclaredFields();
-        Field targetField = null;
-        for (Field field : fields) {
-            Class<?> fieldType = field.getType();
-            if (fieldType.equals(playerConnection)) {
-                targetField = field;
-                break;
+            Class<?> source = entityHandle.getClass();
+            while (source != null) {
+                Field[] fields = source.getDeclaredFields();
+                for (Field field : fields) {
+                    Class<?> fieldType = field.getType();
+                    if (playerConnection.isAssignableFrom(fieldType)) {
+                        playerConnectionField = field;
+                        break;
+                    }
+                }
+
+                source = source.getSuperclass();
             }
         }
-        if (targetField == null) return null;
 
+        if (playerConnectionField == null) return null;
         try {
-            targetField.setAccessible(true);
-            return targetField.get(entityHandle);
+            playerConnectionField.setAccessible(true);
+            return playerConnectionField.get(entityHandle);
         } catch (IllegalAccessException | SecurityException ex) {
             return null;
         }
     }
 
     private Object networkManager(final Object playerConnection) {
-        Class<?> networkManager = SpigotServer.netMinecraftServer("NetworkManager").orElseGet(() -> {
-            try {
-                return Class.forName("net.minecraft.network.NetworkManager");
-            } catch (ClassNotFoundException ex) {
-                return null;
-            }
-        });
-        if (networkManager == null) return null;
+        if (networkManagerField == null) {
+            Class<?> networkManager = SpigotServer.netMinecraftServer("NetworkManager").orElseGet(() ->
+                    SpigotServer.netMinecraftServer("NetworkManager", "network").orElse(null)
+            );
+            if (networkManager == null) return null;
 
-        Field[] fields = playerConnection.getClass().getDeclaredFields();
-        Field targetField = null;
-        for (Field field : fields) {
-            Class<?> fieldType = field.getType();
-            if (fieldType.equals(networkManager)) {
-                targetField = field;
-                break;
+            Class<?> source = playerConnection.getClass();
+            while (source != null) {
+                Field[] fields = source.getDeclaredFields();
+                for (Field field : fields) {
+                    Class<?> fieldType = field.getType();
+                    if (fieldType.equals(networkManager)) {
+                        networkManagerField = field;
+                        break;
+                    }
+                }
+
+                source = source.getSuperclass();
             }
         }
-        if (targetField == null) return null;
 
+        if (networkManagerField == null) return null;
         try {
-            targetField.setAccessible(true);
-            return targetField.get(playerConnection);
+            networkManagerField.setAccessible(true);
+            return networkManagerField.get(playerConnection);
         } catch (IllegalAccessException | SecurityException ex) {
             return null;
         }
@@ -348,21 +360,28 @@ public class Injection extends ChannelDuplexHandler {
         Object networkManager = networkManager(playerConnection);
         if (networkManager == null) return null;
 
-        Class<Channel> channel = Channel.class;
-        Field[] fields = networkManager.getClass().getDeclaredFields();
-        Field targetField = null;
-        for (Field field : fields) {
-            Class<?> fieldType = field.getType();
-            if (fieldType.equals(channel)) {
-                targetField = field;
-                break;
+        if (channelField == null) {
+            Class<Channel> channel = Channel.class;
+            Class<?> source = networkManager.getClass();
+
+            while (source != null) {
+                Field[] fields = source.getDeclaredFields();
+                for (Field field : fields) {
+                    Class<?> fieldType = field.getType();
+                    if (fieldType.equals(channel)) {
+                        channelField = field;
+                        break;
+                    }
+                }
+
+                source = source.getSuperclass();
             }
         }
-        if (targetField == null) return null;
 
+        if (channelField == null) return null;
         try {
-            targetField.setAccessible(true);
-            return (Channel) targetField.get(networkManager);
+            channelField.setAccessible(true);
+            return (Channel) channelField.get(networkManager);
         } catch (IllegalAccessException | SecurityException ex) {
             return null;
         }
@@ -374,28 +393,6 @@ public class Injection extends ChannelDuplexHandler {
             f.setAccessible(true);
             return f.get(object);
         } catch (NoSuchFieldException | IllegalAccessException | SecurityException ex) {
-            return null;
-        }
-    }
-
-    private Object invokeMethod(final Object object, final String method) {
-        try {
-            Method m = object.getClass().getDeclaredMethod(method);
-            m.setAccessible(true);
-
-            return m.invoke(object);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException ex) {
-            return null;
-        }
-    }
-
-    private Object invokeMethod(final Object object, final String method, final Class<?>[] paramTypes, final Object[] params) {
-        try {
-            Method m = object.getClass().getDeclaredMethod(method, paramTypes);
-            m.setAccessible(true);
-
-            return m.invoke(object, params);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException ex) {
             return null;
         }
     }

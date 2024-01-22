@@ -383,7 +383,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             for (Table table : Table.values()) {
                 String rawName = table.name();
 
-                JsonObject tableObject = JsonObject.newObject("", "");
+                JsonObject tableObject = JsonObject.newObject("", table.name());
                 if (object.hasChild(rawName) && object.getChild(rawName).isObjectType()) {
                     tableObject = object.getChild(rawName).asObject();
                 }
@@ -469,7 +469,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             for (Table table : Table.values()) {
                 String name = database.tableName(table);
 
-                JsonObject tableObject = JsonObject.newObject("", "");
+                JsonObject tableObject = JsonObject.newObject("", table.name());
                 tableObject.put("name", name);
 
                 for (Row row : table.getUsableRows()) {
@@ -1162,13 +1162,8 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         switch (packet.getType()) {
             case HELLO:
                 byte[] publicKey = pair.getPublic().getEncoded();
-                //info("Public key: {0}", (Object) publicKey);
-                /*KeyMap map = new KeyMap(pair.getPublic());
-                map.map();*/
-
                 String sharedKey = Base64.getEncoder().encodeToString(publicKey);
 
-                //String str = StringUtils.serialize(map);
                 out.addProperty("key", sharedKey);
                 break;
             case CHANNEL_INIT:
@@ -1179,7 +1174,6 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(sharedSecret);
 
                         this.sharedSecret = factory.generatePrivate(spec);
-                        //info("Stored proxy shared secret message");
                     } catch (NoSuchAlgorithmException | InvalidKeySpecException ignored) {
                     }
                 }

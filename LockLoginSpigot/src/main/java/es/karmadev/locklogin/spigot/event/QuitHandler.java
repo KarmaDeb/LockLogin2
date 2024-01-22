@@ -58,9 +58,16 @@ public class QuitHandler implements Listener {
                     spigot.getInjector().release(client);
                     spigot.getTotpHandler().destroyAll(client);
 
+                    client.session().login(false);
+                    client.session().totpLogin(false);
+                    client.session().pinLogin(false);
+                    //Logout, we don't care about session, as we (should) already stored its previous state
+
                     client.session().reset();
                     client.account().reset();
                     client.reset();
+
+                    UserDataHandler.destroySettings(client);
                     //Reset caches
                 }
             }

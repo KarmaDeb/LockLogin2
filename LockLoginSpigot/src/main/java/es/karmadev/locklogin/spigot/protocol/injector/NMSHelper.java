@@ -33,35 +33,34 @@ import java.util.List;
 public class NMSHelper {
 
     private final static LockLoginSpigot plugin = (LockLoginSpigot) CurrentPlugin.getPlugin();
+    private final static Class<?> packetDataSerializer = SpigotServer.netMinecraftServer("PacketDataSerializer").orElseGet(() ->
+            SpigotServer.netMinecraftServer("PacketDataSerializer", "network").orElse(null)
+    );
+    private final static Class<?> payloadPacketClass = SpigotServer.netMinecraftServer("PacketPlayOutCustomPayload").orElseGet(() ->
+            SpigotServer.netMinecraftServer("PacketPlayOutCustomPayload", "network", "protocol", "game").orElseGet(() ->
+                    SpigotServer.netMinecraftServer("ClientboundCustomPayloadPacket", "network", "protocol", "common").orElse(null))
+    );
+    private final static Class<?> minecraftKeyClass = SpigotServer.netMinecraftServer("MinecraftKey").orElseGet(() ->
+            SpigotServer.netMinecraftServer("MinecraftKey", "resources").orElse(null)
+    );
+    private final static Class<?> customPacketPayload = SpigotServer.netMinecraftServer("CustomPacketPayload",
+            "network", "protocol", "common", "custom").orElse(null);
+
+    private static Method sendPacketMethod;
+
+    private final static Class<?> unknownPayloadClass;
+    static {
+        Class<?> val = null;
+        try {
+            val = Class.forName("net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket$UnknownPayload");
+        } catch (ClassNotFoundException | NoClassDefFoundError ignored) {}
+
+        unknownPayloadClass = val;
+    }
 
     @NotNull
     public static Object[] createPayloads(final String identifier, final OutgoingPacket packet) {
-        Class<?> packetDataSerializer = SpigotServer.netMinecraftServer("PacketDataSerializer").orElseGet(() -> {
-            try {
-                return Class.forName("net.minecraft.network.PacketDataSerializer");
-            } catch (ClassNotFoundException ex) {
-                return null;
-            }
-        });
-        Class<?> payloadPacketClass = SpigotServer.netMinecraftServer("PacketPlayOutCustomPayload").orElseGet(() -> {
-            try {
-                return Class.forName("net.minecraft.network.protocol.game.PacketPlayOutCustomPayload");
-            } catch (ClassNotFoundException ex) {
-                return null;
-            }
-        });
-        Class<?> minecraftKeyClass = SpigotServer.netMinecraftServer("MinecraftKey").orElseGet(() -> {
-            try {
-                return Class.forName("net.minecraft.resources.MinecraftKey");
-            } catch (ClassNotFoundException ex) {
-                return null;
-            }
-        });
-
         if (packetDataSerializer == null || payloadPacketClass == null) return new Object[0];
-
-        //if (packet.getType().equals(DataType.HELLO)) return new Object[]{resolveHello(identifier, packet)};
-
         List<byte[]> dataToEncrypt = new ArrayList<>();
 
         PrivateKey sharedSecret = plugin.getSharedSecret();
@@ -104,11 +103,14 @@ public class NMSHelper {
 
                 CFramePacket frame = new CFramePacket(packet.id(), position++, dataToEncrypt.size(), encrypted, packet.timestamp());
                 String serial = StringUtils.serialize(frame);
-                byte[] serialData = compress(serial.getBytes(StandardCharsets.UTF_8));
+                byte[] serialData = serial.getBytes(StandardCharsets.UTF_8);
 
-                Object data = createPacketData(packetDataSerializer, serialData);
-                packetsData.add(data);
-
+                if (unknownPayloadClass != null) {
+                    packetsData.add(Unpooled.wrappedBuffer(serialData));
+                } else {
+                    Object data = createPacketData(serialData);
+                    packetsData.add(data);
+                }
             }
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException |
                  BadPaddingException ex) {
@@ -138,12 +140,32 @@ public class NMSHelper {
                     return new Object[0];
                 }
 
-                try {
-                    Constructor<?> modernPacketConstructor = payloadPacketClass.getDeclaredConstructor(minecraftKeyClass, packetDataSerializer);
-                    internalPacket = modernPacketConstructor.newInstance(minecraftKey, serializedData);
-                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                         InvocationTargetException ex) {
-                    ex.printStackTrace();
+                if (unknownPayloadClass == null) {
+                    try {
+                        Constructor<?> modernPacketConstructor = payloadPacketClass.getDeclaredConstructor(minecraftKeyClass, packetDataSerializer);
+                        internalPacket = modernPacketConstructor.newInstance(minecraftKey, serializedData);
+                    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                             InvocationTargetException ex) {
+                        ex.printStackTrace();
+                    }
+                } else {
+                    Object unknownPayload;
+                    try {
+                        Constructor<?> payloadConstructor = unknownPayloadClass.getDeclaredConstructor(minecraftKeyClass, ByteBuf.class);
+                        unknownPayload = payloadConstructor.newInstance(minecraftKey, (ByteBuf) serializedData);
+                    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                             InvocationTargetException ex) {
+                        ex.printStackTrace();
+                        return new Object[0];
+                    }
+
+                    try {
+                        Constructor<?> modernPacketConstructor = payloadPacketClass.getDeclaredConstructor(customPacketPayload);
+                        internalPacket = modernPacketConstructor.newInstance(unknownPayload);
+                    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                             InvocationTargetException ex) {
+                        ex.printStackTrace();
+                    }
                 }
             }
 
@@ -155,20 +177,9 @@ public class NMSHelper {
         return createdPackets.toArray();
     }
 
-    private static byte[] compress(byte[] input) {
-        /*try(ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream)) {
-            deflaterOutputStream.write(input);
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            return null;
-        }*/
-
-        return input;
-    }
-
-    private static Object createPacketData(final Class<?> clazz, final byte[] data) {
+    private static Object createPacketData(final byte[] data) {
         try {
-            Constructor<?> packetDataConstructor = clazz.getDeclaredConstructor(ByteBuf.class);
+            Constructor<?> packetDataConstructor = packetDataSerializer.getDeclaredConstructor(ByteBuf.class);
             return packetDataConstructor.newInstance(Unpooled.wrappedBuffer(data));
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             return null;
@@ -180,32 +191,42 @@ public class NMSHelper {
         Object playerConnection = Injection.playerConnection(entityHandle);
 
         if (playerConnection != null) {
-            Class<?> packetClass = SpigotServer.netMinecraftServer("Packet").orElseGet(() -> {
-                try {
-                    return Class.forName("net.minecraft.network.protocol.Packet");
-                } catch (ClassNotFoundException ex) {
-                    return null;
-                }
-            });
+            Class<?> packetClass = SpigotServer.netMinecraftServer("Packet").orElseGet(() ->
+                SpigotServer.netMinecraftServer("Packet", "network", "protocol").orElse(null));
 
-            if (packetClass == null) throw new RuntimeException("Failed to locate minecraft packet class");
-            Method[] methods = playerConnection.getClass().getDeclaredMethods();
-
-            Method sendPacketMethod = null;
-            for (Method method : methods) {
-                Parameter[] parameters = method.getParameters();
-                if (parameters.length == 1) {
-                    Parameter parameter = parameters[0];
-                    if (parameter.getType().equals(packetClass)) {
-                        sendPacketMethod = method;
-                        break;
-                    }
-                }
-            }
-
-            if (sendPacketMethod == null) throw new RuntimeException("Cannot send packet because playerConnection object doesn't have sendPacket method");
-            sendPacketMethod.setAccessible(true);
+            Method sendPacketMethod = getMethod(packetClass, playerConnection);
             sendPacketMethod.invoke(playerConnection, packet);
         }
+    }
+
+    @NotNull
+    private static Method getMethod(Class<?> packetClass, Object playerConnection) {
+        if (packetClass == null) throw new RuntimeException("Failed to locate minecraft packet class");
+
+        if (sendPacketMethod == null) {
+            Class<?> source = playerConnection.getClass();
+            while (source != null) {
+                Method[] methods = source.getMethods();
+                for (Method method : methods) {
+                    Parameter[] parameters = method.getParameters();
+                    Class<?> returnType = method.getReturnType();
+                    if (returnType.equals(Void.class) || returnType.equals(void.class)) {
+                        if (parameters.length == 1) {
+                            Parameter parameter = parameters[0];
+                            if (parameter.getType().equals(packetClass)) {
+                                sendPacketMethod = method;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                source = source.getSuperclass();
+            }
+        }
+
+        if (sendPacketMethod == null) throw new RuntimeException("Cannot send packet because playerConnection object doesn't have sendPacket method");
+        sendPacketMethod.setAccessible(true);
+        return sendPacketMethod;
     }
 }

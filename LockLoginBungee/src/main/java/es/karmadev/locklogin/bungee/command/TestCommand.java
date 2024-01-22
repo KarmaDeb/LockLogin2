@@ -33,6 +33,10 @@ public class TestCommand extends Command {
             ProxiedPlayer player = (ProxiedPlayer) commandSender;
             Server server = player.getServer();
 
+            player.sendMessage(TextComponent.fromLegacyText(
+                    ChatColor.translateAlternateColorCodes('&', "&aTrying to send packet")
+            ));
+
             PacketDataHandler.emitPacket(server, outgoing).then((incoming) -> {
                 player.sendMessage(TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', "&aReceived hello!")));
 

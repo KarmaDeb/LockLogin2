@@ -117,6 +117,8 @@ Tables:
       name:       "name"
       email:      "email"
       uuid:       "uuid"
+      address:    "user_ip"
+      port:       "user_port"
       premium:    "premium_uuid"
       account:    "account_id"
       session:    "session_id"

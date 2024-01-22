@@ -7,15 +7,14 @@ import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
-import es.karmadev.locklogin.api.network.communication.packet.NetworkChannel;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.frame.FrameBuilder;
 import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
-import es.karmadev.locklogin.api.network.communication.packet.listener.event.PacketReceiveEvent;
 import es.karmadev.locklogin.bungee.LockLoginBungee;
 import es.karmadev.locklogin.common.api.packet.CInPacket;
 import es.karmadev.locklogin.common.api.packet.frame.CFrameBuilder;
 import es.karmadev.locklogin.common.api.packet.frame.CFramePacket;
+import es.karmadev.locklogin.common.util.Task;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.PluginMessageEvent;
@@ -28,10 +27,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,13 +42,13 @@ public class CustomPacket {
      * Handle the packet from the event
      *
      * @param event the event
-     * @deprecated logic only existed for testing during development, so
-     * it's no longer required?
      */
-    @Deprecated
     public static void handle(final PluginMessageEvent event) {
         String tag = event.getTag();
+        System.out.println(tag);
+
         if (PacketDataHandler.tagExists(tag)) {
+            System.out.println("Tag exists!");
             Server server = (Server) event.getSender();
 
             byte[] rawData = event.getData();
@@ -60,6 +56,10 @@ public class CustomPacket {
 
             String rawPacketData = new String(rawData, StandardCharsets.UTF_8);
             Object packetObject = StringUtils.load(rawPacketData).orElse(null);
+
+            if (packetObject != null) {
+                System.out.println(packetObject.getClass().getSimpleName());
+            }
 
             if (packetObject instanceof PacketFrame) {
                 /*
@@ -90,12 +90,17 @@ public class CustomPacket {
                 int max = frame.frames();
 
                 if (position == max) {
+                    System.out.println("Received final frame");
                     ProxyServer.getInstance().getScheduler().runAsync(plugin.plugin(), () -> {
                         try {
                             byte[] rawPacket = builder.build();
 
                             String raw = new String(rawPacket, StandardCharsets.UTF_8);
                             Object packet = StringUtils.load(raw).orElse(null);
+
+                            if (packet != null) {
+                                System.out.println(packet.getClass().getSimpleName());
+                            }
 
                             if (packet instanceof OutgoingPacket) {
                                 OutgoingPacket out = (OutgoingPacket) packet;
@@ -117,14 +122,18 @@ public class CustomPacket {
                                     }
                                 }
 
+                                System.out.println("Validating packet...");
                                 if (PacketDataHandler.validatePacket(server, tag, out)) {
+                                    System.out.println("Packet validated!");
                                     JsonObject object = out.build();
                                     object.put("server", server.getInfo().getName());
 
                                     String rawJson = object.toString(false);
 
                                     IncomingPacket incoming = new CInPacket(rawJson);
-                                    NetworkChannel channel = plugin.getChannel(tag);
+                                    plugin.onReceive(incoming);
+
+                                    /*NetworkChannel channel = plugin.getChannel(tag);
 
                                     if (channel == null) {
                                         throw new IllegalStateException("Received a packet from unregistered channel: " + tag);
@@ -132,7 +141,16 @@ public class CustomPacket {
 
                                     channel.handle(
                                             new PacketReceiveEvent(channel, incoming)
-                                    );
+                                    );*/
+
+
+                                    Task<IncomingPacket> task = PacketDataHandler.getTask(incoming);
+                                    System.out.println(task);
+                                    if (task != null) {
+                                        task.apply(incoming);
+                                    }
+                                } else {
+                                    System.out.println("Failed to validate packet");
                                 }
                             }
                         } catch (InvalidPacketDataException ex) {

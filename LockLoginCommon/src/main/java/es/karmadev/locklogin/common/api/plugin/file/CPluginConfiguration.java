@@ -125,8 +125,10 @@ public class CPluginConfiguration implements Configuration {
         if (ObjectUtils.isNullOrEmpty(name)) {
             name = "My server";
             yaml.set("ServerName", name);
+
             try {
                 yaml.save();
+                yaml.validate();
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

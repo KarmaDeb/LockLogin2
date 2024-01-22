@@ -290,7 +290,6 @@ public class CLocalClient implements LocalNetworkClient {
                         .select(Table.USER, Row.PREMIUM_UUID)
                         .where(Row.ID, "=", id);
 
-                System.out.println(builder.build(""));
                 try (ResultSet result = statement.executeQuery(builder.build(""))) {
                     if (result.next()) {
                         String value = result.getString(1);

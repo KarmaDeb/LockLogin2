@@ -142,6 +142,8 @@ public class CSQLDriver implements SQLDriver {
                         .withRow(Row.ID, RowType.INTEGER, QueryBuilder.NOT_NULL)
                         .withRow(Row.NAME, RowType.VARCHAR, QueryBuilder.NOT_NULL, QueryModifier.of("(16)"))
                         .withRow(Row.UUID, RowType.VARCHAR, QueryBuilder.NOT_NULL, QueryModifier.of("(36)"))
+                        .withRow(Row.ADDRESS, RowType.VARCHAR, QueryModifier.of("(42)"))
+                        .withRow(Row.PORT, RowType.INTEGER)
                         .withRow(Row.PREMIUM_UUID, RowType.VARCHAR, QueryModifier.of("(36)"), QueryBuilder.DEFAULT(QueryBuilder.NULL))
                         .withRow(Row.ACCOUNT_ID, RowType.INTEGER, QueryBuilder.DEFAULT(QueryBuilder.NULL))
                         .withRow(Row.SESSION_ID, RowType.INTEGER, QueryBuilder.DEFAULT(QueryBuilder.NULL))

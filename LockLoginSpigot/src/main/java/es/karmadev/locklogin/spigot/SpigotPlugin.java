@@ -50,6 +50,7 @@ import es.karmadev.locklogin.spigot.event.helper.EventHelper;
 import es.karmadev.locklogin.spigot.event.client.PlayerVersusHandler;
 import es.karmadev.locklogin.spigot.event.window.InterfaceIOEvent;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
+import es.karmadev.locklogin.spigot.protocol.BungeeListener;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
 import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import lombok.Getter;
@@ -62,6 +63,7 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -89,6 +91,7 @@ import java.util.zip.ZipEntry;
 
 public class SpigotPlugin extends KarmaPlugin {
 
+    @Getter
     LockLoginSpigot spigot;
 
     @Getter
@@ -286,6 +289,12 @@ public class SpigotPlugin extends KarmaPlugin {
             logger().send(LogLevel.INFO, "LockLogin initialized in {0}ms ({1} seconds)", rs, TimeUnit.MILLISECONDS.toSeconds(rs));
             if (License.isLicensed()) {
                 spigot.info("Thanks {0} for supporting Locklogin", License.getBuyer());
+            }
+
+            if (spigot.bungeeMode()) {
+                PluginMessageListener messageListener = new BungeeListener(this);
+                getServer().getMessenger().registerIncomingPluginChannel(this, "login:inject", messageListener);
+                getServer().getMessenger().registerOutgoingPluginChannel(this, "login:inject");
             }
         } else {
             logger().send(LogLevel.WARNING, "LockLogin won't initialize due an internal error. Please report this to discord {0}", "https://discord.gg/77p8KZNfqE");

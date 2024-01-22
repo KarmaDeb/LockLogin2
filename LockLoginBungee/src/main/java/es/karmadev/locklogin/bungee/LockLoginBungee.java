@@ -331,7 +331,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             for (Table table : Table.values()) {
                 String rawName = table.name();
 
-                JsonObject tableObject = JsonObject.newObject("", "");
+                JsonObject tableObject = JsonObject.newObject("", table.name());
                 if (object.hasChild(rawName) && object.getChild(rawName).isObjectType()) {
                     tableObject = object.getChild(rawName).asObject();
                 }
@@ -417,7 +417,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             for (Table table : Table.values()) {
                 String name = database.tableName(table);
 
-                JsonObject tableObject = JsonObject.newObject("", "");
+                JsonObject tableObject = JsonObject.newObject("", table.name());
                 tableObject.put("name", name);
 
                 for (Row row : table.getUsableRows()) {

@@ -26,6 +26,9 @@
     <filter-actions connection-id="fd798b65-3733-408e-ac9a-6ed3391aa70d" dataset="accounts.user" active-filter-id="EMPTY_FILTER" />
     <filter-actions connection-id="fd798b65-3733-408e-ac9a-6ed3391aa70d" dataset="accounts.account" active-filter-id="EMPTY_FILTER" />
   </component>
+  <component name="DBNavigator.Project.ExecutionManager">
+    <retain-sticky-names value="false" />
+  </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />
     <filters />
@@ -97,7 +100,7 @@
           <tcp-port-from value="4000" />
           <tcp-port-to value="4999" />
         </debugger>
-        <object-filters hide-empty-schemas="false" hide-pseudo-columns="false">
+        <object-filters hide-empty-schemas="false" hide-pseudo-columns="false" hide-audit-columns="false">
           <object-type-filter>
             <object-type name="SCHEMA" enabled="true" />
             <object-type name="USER" enabled="true" />
@@ -278,6 +281,7 @@
       <confirmations>
         <save-changes value="false" />
         <revert-changes value="true" />
+        <exit-on-changes value="ASK" />
       </confirmations>
     </code-editor-settings>
     <code-completion-settings>

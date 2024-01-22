@@ -76,7 +76,6 @@ public class CSessionStore implements SessionStoreService, Cached {
         long exp = Math.max(0, TimeUnit.MINUTES.toMillis(timeout));
 
         CacheContainer<SessionCache> cacheElement = sessions.computeIfAbsent(address, (c) -> new CacheElement<>(timeout, TimeUnit.MINUTES));
-
         return cacheElement.getOrElse(() -> {
             Connection connection = null;
             Statement statement = null;
@@ -99,7 +98,9 @@ public class CSessionStore implements SessionStoreService, Cached {
                         long now = System.currentTimeMillis();
                         if (exp > 0 && now > creation + exp) {
                             String deleteQuery = QueryBuilder.createQuery(driver.getDriver())
-                                    .delete(Table.SESSION_STORE).where(Row.USER_ID, QueryBuilder.EQUALS, id).build();
+                                    .delete(Table.SESSION_STORE).where(Row.USER_ID, QueryBuilder.EQUALS, id)
+                                    .build();
+
                             statement.execute(deleteQuery);
 
                             return null; //Expired
