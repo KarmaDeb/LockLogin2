@@ -1,0 +1,24 @@
+name: LockLogin
+version: "${project.parent.version}"
+description: "${project.parent.description}"
+author: "KarmaDev"
+website: "https://karmadev.es/"
+#main: ${spigot.main}
+main: es.karmadev.locklogin.spigot.SpigotPlugin
+#database: false
+api-version: 1.13
+depend:
+  - KarmaAPI
+
+softdepend:
+  - PlaceholderAPI
+  - ProtocolLib
+  - floodgate
+
+#commands:
+#  register:
+#    description: The principal command to create an account
+#  login:
+#    description: The principal command to authenticate an user
+#  setloginspawn:
+#    description: The principal command to set the spawn location

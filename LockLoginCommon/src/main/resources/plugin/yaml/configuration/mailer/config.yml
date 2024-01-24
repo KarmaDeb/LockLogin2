@@ -1,0 +1,30 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under RedDo GPL license  #
+#               https://reddo.es/license                  #
+#                                                         #
+#                                                         #
+#                   For more help                         #
+#             go to: https://rb.gy/simfd2                 #
+#                                                         #
+###########################################################
+
+#Mailer host settings. We highly recommend taking a
+#look at those (NOT SPONSORED)
+#
+# SendinBlue:   https://es.sendinblue.com/
+# ElasticEmail: https://elasticemail.com/
+# MooSend:      https://moosend.com/
+#
+# Host: The host from where messages will be sent (leave empty to disable mail service)
+# Port: The host port used by your SMTP server
+# TLS: While true, the connection will be performed under TLS/SSL
+# User: The username for your SMTP host
+# Password: The user password for your SMTP host
+# HostName: The name to use when sending emails
+Host: ''
+Port: 25
+TLS: true
+User: 'myuser'
+Password: 'mypassword'
+Sender: 'myuser@myserver.com'

@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>es.karmadev</groupId>
+    <artifactId>LockLogin</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>LockLoginAPI</module>
+        <module>LockLoginCommon</module>
+        <module>LockLoginSpigot</module>
+        <module>LockLoginBungee</module>
+        <module>LockLoginRedis</module>
+        <module>LockLoginChannels</module>
+    </modules>
+
+    <name>LockLogin</name>
+    <description>
+        LockLogin is an advanced login plugin, one of the most secure available,
+        with tons of features. It has a lot of customization options to not say
+        almost everything is customizable. Regular updates and one of the bests
+        discord supports ( according to spigotmc reviews ). LockLogin is a plugin
+        always open to new feature requests, and bug reports. More than a plugin,
+        a plugin you can contribute indirectly; A community plugin for the plugin community.
+    </description>
+    <url>https://github.com/KarmaConfigs/LockLoginReborn</url>
+
+    <licenses>
+        <license>
+            <name>RedDo GPL 1.2</name>
+            <url>https://karmadev.es/license</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Karma Dev</name>
+            <email>admin@karmadev.es</email>
+            <organization>RedDo</organization>
+            <organizationUrl>https://discord.gg/jRFfsdxnJR</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/KarmaDeb/LockLogin2.git</connection>
+        <developerConnection>scm:git:ssh://github.com:KarmaDeb/LockLogin2.git</developerConnection>
+        <url>http://github.com/KarmaDeb/LockLogin2/tree/master</url>
+        <tag>2.0.0</tag>
+    </scm>
+
+    <properties>
+        <jar.name>LockLoginPOM</jar.name>
+
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <locklogin.lang>2</locklogin.lang>
+
+        <locklogin.version.type>snapshot</locklogin.version.type>
+        <locklogin.version.letter>a</locklogin.version.letter>
+
+        <locklogin.update.id>wu</locklogin.update.id>
+        <locklogin.update.name>WebUpdate</locklogin.update.name>
+        <locklogin.market.version>1</locklogin.market.version>
+
+        <locklogin.manager>v9</locklogin.manager>
+
+        <locklogin.repository.version>v3</locklogin.repository.version>
+
+        <locklogin.checksum.generate>false</locklogin.checksum.generate>
+        <locklogin.checksum.print>false</locklogin.checksum.print>
+        <locklogin.checksum.version>v6</locklogin.checksum.version>
+
+        <locklogin.karmaapi.version>2.0.0-SNAPSHOT</locklogin.karmaapi.version>
+        <locklogin.karmaapi.platform>1.3.4-10</locklogin.karmaapi.platform>
+
+        <asm.relocator.version>9.2</asm.relocator.version>
+        <asm.relocator.test>org.objectweb.asm.Type</asm.relocator.test>
+
+        <asm.tree.version>9.2</asm.tree.version>
+        <asm.tree.test>org.objectweb.asm.tree.ParameterNode</asm.tree.test>
+
+        <asm.analysis.version>9.2</asm.analysis.version>
+        <asm.analysis.test>org.objectweb.asm.tree.analysis.Analyzer</asm.analysis.test>
+
+        <asm.commons.version>9.2</asm.commons.version>
+        <asm.commons.test>org.objectweb.asm.commons.Method</asm.commons.test>
+
+        <jakarta.api.version>2.1.2</jakarta.api.version>
+        <jakarta.api.test>jakarta.mail.Address</jakarta.api.test>
+        <jakarta.activation.version>2.1.2</jakarta.activation.version>
+        <jakarta.activation.test>jakarta.activation.ActivationDataFlavor</jakarta.activation.test>
+
+        <angus.mail.version>2.0.2</angus.mail.version>
+        <angus.mail.test>org.eclipse.angus.mail.auth.MD4</angus.mail.test>
+
+        <jar.relocator.version>1.7</jar.relocator.version>
+        <jar.relocator.test>me.lucko.jarrelocator.JarRelocator</jar.relocator.test>
+
+        <log4j.core.version>2.17.1</log4j.core.version>
+        <log4j.core.test>org.apache.logging.log4j.core.Logger</log4j.core.test>
+        <log4j.web.version>2.17.1</log4j.web.version>
+        <log4j.web.test>org.apache.logging.log4j.web.WebLookup</log4j.web.test>
+
+        <slf.api.version>2.0.7</slf.api.version>
+        <slf.api.test>org.slf4j.LoggerFactory</slf.api.test>
+
+        <!--
+        <google.auth.version>1.5.0</google.auth.version>
+        <google.auth.test>com.warrenstrange.googleauth.GoogleAuthenticator</google.auth.test>
+
+        <topt.auth.version>1.0</topt.auth.version>
+        <topt.auth.test>de.taimos.topt.TOPT</topt.auth.test>
+        -->
+
+        <google.guava.version>31.1-jre</google.guava.version>
+        <google.guava.test>com.google.common.hash.Hashing</google.guava.test>
+
+        <apache.commons.version>1.15</apache.commons.version>
+        <apache.commons.test>org.apache.commons.codec.net.Utils</apache.commons.test>
+
+        <hikari.cp.version>4.0.3</hikari.cp.version>
+        <hikari.cp.test>com.zaxxer.hikari.HikariConfig</hikari.cp.test>
+
+        <favre.bcrypt.version>0.10.2</favre.bcrypt.version>
+        <favre.bcrypt.test>at.favre.lib.crypto.bcrypt.BCrypt</favre.bcrypt.test>
+
+        <favre.bytes.version>1.6.1</favre.bytes.version>
+        <favre.bytes.test>at.favre.lib.bytes.Bytes</favre.bytes.test>
+
+        <argon.flat.version>2.11</argon.flat.version>
+        <argon.flat.test>de.mkammerer.argon2.Argon2</argon.flat.test>
+
+        <argon.java.version>2.11</argon.java.version>
+        <argon.java.test>!!notest!!</argon.java.test> <!-- assume always we don't have this -->
+
+        <craft.api.version>0.6.2</craft.api.version>
+        <craft.api.test>com.github.games647.craftapi.FastUUID</craft.api.test>
+
+        <java.native.version>5.12.1</java.native.version>
+        <java.native.test>com.sun.jna.Native</java.native.test>
+
+        <karma.json.version>1.0.4-SNAPSHOT</karma.json.version>
+
+        <placeholder.api.version>2.10.9</placeholder.api.version>
+        <protocol.lib.version>4.8.0</protocol.lib.version>
+        <packet.listener.version>3.9.10</packet.listener.version>
+        <floodgate.version>2.2.0-SNAPSHOT</floodgate.version>
+        <spartan.version>9.1</spartan.version>
+        <luckperms.version>5.4.40</luckperms.version>
+        <vault.version>1.7.3</vault.version>
+
+        <channeling.api>1.0.2-SNAPSHOT</channeling.api>
+        <maven.build.timestamp.format>hhmmss</maven.build.timestamp.format>
+        <!--
+        <spigot.main>es.karmadev.locklogin.s${locklogin.update.id}_${maven.build.timestamp}R.SpigotPlugin</spigot.main>
+        <bungee.main>es.karmadev.locklogin.b${locklogin.update.id}_${maven.build.timestamp}R.BungeePlugin</bungee.main>
+        -->
+    </properties>
+
+    <build>
+        <finalName>${jar.name}</finalName>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <source>8</source>
+                        <target>8</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.2.4</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                                <relocations>
+                                    <relocation>
+                                        <pattern>at.favre.lib.crypto.bcrypt</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.bcrypt</shadedPattern>
+                                    </relocation>
+
+                                    <relocation>
+                                        <pattern>com.github.games647.craftapi</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.craftapi</shadedPattern>
+                                    </relocation>
+
+                                    <relocation>
+                                        <pattern>de.mkammerer.argon2</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.argon2</shadedPattern>
+                                    </relocation>
+
+                                    <relocation>
+                                        <pattern>org.eclipse.angus.mail</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.mail</shadedPattern>
+                                    </relocation>
+
+                                    <relocation>
+                                        <pattern>me.lucko.jarrelocator</pattern>
+                                        <shadedPattern>es.karmadev.locklogin.shaded.jarrelocator</shadedPattern>
+                                    </relocation>
+                                </relocations>
+                                <minimizeJar>false</minimizeJar>
+                                <filters>
+                                    <filter>
+                                        <artifact>*:*</artifact>
+                                        <excludes>
+                                            <exclude>META-INF/MANIFEST.MF</exclude>
+                                            <exclude>META-INF/PFOPENSO.SF</exclude>
+                                            <exclude>META-INF/PFOPENSO.RSA</exclude>
+                                            <exclude>**/module-info.class</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.2.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <additionalOptions>
+                            <additionalOption>-Xdoclint:none</additionalOption>
+                        </additionalOptions>
+                    </configuration>
+                </plugin>
+                <!--
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.5</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                -->
+            </plugins>
+        </pluginManagement>
+        <resources>
+            <resource>
+                <!-- Certificate should not be filtered, as it would make it invalid -->
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>internal/mojang_key.der</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>internal/mojang_key.der</exclude>
+                </excludes>
+                <!--Replace variables-->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>bungeecord-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+        <repository>
+            <id>dmulloy2-repo</id>
+            <url>https://repo.dmulloy2.net/repository/public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+
+        <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
+        </repository>
+        <repository>
+            <id>codemc-repo</id>
+            <url>https://repo.codemc.org/repository/maven-public/</url>
+        </repository>
+
+        <!--
+        <repository>
+            <id>Sparky</id>
+            <url>https://nexus.sparky.ac/repository/Sparky/</url>
+        </repository>
+        -->
+
+        <repository>
+            <id>ow2</id>
+            <url>https://repository.ow2.org/nexus/content/repositories/public/</url>
+        </repository>
+
+        <!--
+        <repository>
+            <id>karmadev_releases</id>
+            <url>https://nexus.karmadev.es/repository/maven-releases/</url>
+        </repository>
+        <repository>
+            <id>karmadev_snapshots</id>
+            <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
+        </repository>
+        -->
+    </repositories>
+
+    <!--
+    <pluginRepositories>
+        <pluginRepository>
+            <id>karmadev_releases</id>
+            <name>KarmaDev Releases</name>
+            <url>https://nexus.karmadev.es/repository/maven-releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>karmadev_snapshots</id>
+            <name>KarmaDev Snapshots</name>
+            <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    -->
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>23.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spigot and BungeeCord -->
+            <dependency>
+                <groupId>org.spigotmc</groupId>
+                <artifactId>spigot-api</artifactId>
+                <version>1.20.1-R0.1-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>1.20-R0.1-SNAPSHOT</version>
+                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.md-5</groupId>
+                <artifactId>bungeecord-api</artifactId>
+                <version>1.20-R0.1-SNAPSHOT</version>
+                <type>javadoc</type>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- KarmaAPI -->
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Core</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>Collect</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KSon</artifactId>
+                <version>${karma.json.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Spigot</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Bungee</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>KarmaAPI-Minecraft</artifactId>
+                <version>${locklogin.karmaapi.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- !SELF! -->
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginAPI</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginCommon</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>LockLoginSpigot</artifactId>
+                <version>${project.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Google stuff -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${google.guava.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!--
+            <dependency>
+                <groupId>com.warrenstrange</groupId>
+                <artifactId>googleauth</artifactId>
+                <version>1.5.0</version>
+                <scope>provided</scope>
+            </dependency>
+            -->
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>auth</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <!-- HikariCP -->
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>${hikari.cp.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Hashing -->
+            <dependency>
+                <groupId>at.favre.lib</groupId>
+                <artifactId>bcrypt</artifactId>
+                <version>0.10.2</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>de.mkammerer</groupId>
+                <artifactId>argon2-jvm</artifactId>
+                <version>2.11</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>net.java.dev.jna</groupId>
+                        <artifactId>jna</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Apache -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.core.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-web</artifactId>
+                <version>${log4j.web.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- Provided by KarmaAPI -->
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>5.2.1</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- YAML -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>2.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Spigot dependencies -->
+            <dependency>
+                <groupId>com.comphenix.protocol</groupId>
+                <artifactId>ProtocolLib</artifactId>
+                <version>5.0.0-SNAPSHOT</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.inventivetalent.packetlistenerapi</groupId>
+                <artifactId>api</artifactId>
+                <version>3.9.10-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.games647</groupId>
+                <artifactId>craftapi</artifactId>
+                <version>0.6.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.MilkBowl</groupId>
+                <artifactId>VaultAPI</artifactId>
+                <version>1.7</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>me.vagdedes</groupId>
+                <artifactId>SpartanAPI</artifactId>
+                <version>${spartan.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Mailing service -->
+            <!--
+            <dependency>
+                <groupId>org.eclipse.angus</groupId>
+                <artifactId>angus-mail</artifactId>
+                <version>2.0.2</version>
+                <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.eclipse.angus</groupId>
+                        <artifactId>angus-activation</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            -->
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
+                <version>4.1.93.Final</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!--
+            <dependency>
+                <groupId>dev.simplix</groupId>
+                <artifactId>protocolize-api</artifactId>
+                <version>2.3.0</version>
+                <scope>provided</scope>
+            </dependency>
+            -->
+
+            <dependency>
+                <groupId>me.lucko</groupId>
+                <artifactId>jar-relocator</artifactId>
+                <version>1.7</version>
+                <scope>compile</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-commons</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>2.0.1</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>net.luckperms</groupId>
+                <artifactId>api</artifactId>
+                <version>5.4</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>4.3.1</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>es.karmadev.channeling</groupId>
+                <artifactId>server</artifactId>
+                <version>${channeling.api}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev.channeling</groupId>
+                <artifactId>client</artifactId>
+                <version>${channeling.api}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev.channeling</groupId>
+                <artifactId>common</artifactId>
+                <version>${channeling.api}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>es.karmadev</groupId>
+                <artifactId>ChannelsAPI</artifactId>
+                <version>${channeling.api}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>karmadev_releases</id>
+            <url>${TARGET_RELEASES}</url>
+        </repository>
+        <snapshotRepository>
+            <id>karmadev_snapshots</id>
+            <url>${TARGET_SNAPSHOTS}</url>
+        </snapshotRepository>
+    </distributionManagement>
+</project>

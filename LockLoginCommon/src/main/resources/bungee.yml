@@ -1,0 +1,10 @@
+name: LockLogin
+version: "${project.parent.version}"
+description: "${project.parent.description}"
+author: KarmaDev
+#main: ${spigot.main}
+main: es.karmadev.locklogin.bungee.BungeePlugin
+depends:
+  - KarmaAPI
+softDepends:
+  - floodgate

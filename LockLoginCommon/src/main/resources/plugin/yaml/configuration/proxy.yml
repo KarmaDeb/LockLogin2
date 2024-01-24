@@ -1,0 +1,86 @@
+###########################################################
+#                                                         #
+#   LockLogin source is a plugin under GSA GPL license    #
+#             https://karmadev.es/license                 #
+#                                                         #
+#                                                         #
+#                   This configuration                    #
+#              file manages multi-bungee and              #
+#           auth/lobby servers configuration...           #
+#                                                         #
+###########################################################
+
+#Manage which servers will use LockLogin
+# This works like server-priority of bungee's configuration,
+# the plugin will try with the first, if fail with the second
+# and like that until the list ends or the player-server-send is success.
+#
+# To use all the servers you can use '*' or add all of them manually
+# To disable simply leave them empty ([]) Ex:
+# Servers:
+#   Lobby: []
+#   Auth:
+#     - auth
+#   Premium: []
+#
+# Please note: Premium servers will be available only for users with /premium enabled
+#              or with "locklogin.join.limbo" permission
+Servers:
+  Lobby:
+    - "lobby"
+    - "lobbyFallBack"
+  Auth:
+    - "auth"
+    - "authFallBack"
+  Premium:
+    - "premiumLobby"
+    - "premiumLobbyFallback"
+
+#Select the plugin bridge communication
+#method. We highly recommend redis for multi
+#instance proxies, and channels for simple
+#networks with only one bungeecord instances.
+#
+# More information about "channels" here
+# https://github.com/KarmaDeb/NettyChanneling
+#
+#Both of the options requires you to have a redis server
+#or a Channels servers. If you cannot host any of those
+#you can set this value to "bungee" to use BungeeCords
+#bridging
+Bridge: "bungee"
+
+#Redis-specific configuration
+#
+# Host: The redis host
+# Port: The redis port
+# User: The redis user
+# Password: The redis password
+#
+# If you have a redis connection URL, that's
+# the URL schema:
+# redis://username:password@host:port
+#
+# In case you don't have a password leave it empty, and
+# in case you don't have username, put "default"
+#
+# The SSL settings depends on if your server supports
+# it or not. We highly recommend to enable and configure
+# it properly, or switch to Channels, which has built-in
+# encryption features
+Redis:
+  Host: '127.0.0.1'
+  Port: 6379
+  User: 'default'
+  Password: ''
+  SSL: false
+
+#Channels specific configuration
+#
+# Host: The Channels server host
+# Port: The Channels server port
+# AccessKey: The Channels access key.
+Channels:
+  Host: '127.0.0.1'
+  Port: 4653
+  AccessKey: ''

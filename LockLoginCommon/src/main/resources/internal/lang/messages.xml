@@ -1,0 +1,66 @@
+<!-- Internal LockLogin messages -->
+<messages>
+    <command>
+        <processing argument="cmd">§dProcessing command§7 cmd§d, please wait</processing>
+        <usages>
+            <usage command="locklogin">
+                <line line="0">§0§m----------------------</line>
+                <line line="1" blank="true"/>
+                <line line="2">§dLockLogin command usage</line>
+                <line line="3">§5/locklogin help§7 -§d Shows this</line>
+                <line line="4">§5/locklogin reload§7 -§d Reloads the plugin</line>
+                <line line="5">§5/locklogin version [current|latest|changelog|history|check] [version]§7 -§d Shows information about versions</line>
+                <line line="6">§5/locklogin modules [info|list|load|unload|reload] [module]§7 -§d Manages plugin modules</line>
+                <line line="7" blank="true"/>
+                <line line="8">§0§m----------------------</line>
+            </usage>
+        </usages>
+
+        <!-- Command responses -->
+        <responses>
+            <response command="locklogin" argument="reload lang">
+                <success>§dDetected language update, transforming...</success>
+                <fail/>
+            </response>
+
+            <response command="locklogin" argument="reload configuration">
+                <success>§dSuccessfully reloaded configuration</success>
+                <fail>§5Failed to reload configuration</fail>
+            </response>
+            <response command="locklogin" argument="reload messages">
+                <success>§dSuccessfully reloaded messages</success>
+                <fail>§5Failed to reload messages</fail>
+            </response>
+            <response command="locklogin" argument="reload mailer">
+                <success>§dSuccessfully reloaded mailer setting</success>
+                <fail>§5Failed to reload mailer settings</fail>
+            </response>
+
+            <response command="locklogin" argument="modules info">
+                <success/>
+                <fail argument="$module">§5Unknown module: §7$module</fail>
+            </response>
+            <response command="locklogin" argument="modules load">
+                <success argument="$module">§dSuccessfully loaded module: §7$module</success>
+                <fail argument="$module">§5Failed to load module: §7$module</fail>
+            </response>
+            <response command="locklogin" argument="modules unload">
+                <success argument="$module">§dSuccessfully unloaded module: §7$module</success>
+                <fail argument="$module">§5Failed to unload module: §7$module</fail>
+            </response>
+            <response command="locklogin" argument="modules reload">
+                <success argument="$module">§dSuccessfully reloaded module: §7$module</success>
+                <fail argument="$module">§5Failed to reload module: §7$module</fail>
+            </response>
+
+            <response command="locklogin" argument="version current">
+                <success argument="$current">§dCurrent version is:§e $current</success>
+                <fail/>
+            </response>
+            <response command="locklogin" argument="version latest">
+                <success argument="$latest">§dLatest version is:§e $latest</success>
+                <fail/>
+            </response>
+        </responses>
+    </command>
+</messages>
