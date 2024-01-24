@@ -14,6 +14,7 @@ import me.lucko.jarrelocator.JarRelocator;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;

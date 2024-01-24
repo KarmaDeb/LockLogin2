@@ -157,9 +157,6 @@ public class CSessionChecker implements SessionChecker {
             AtomicInteger nextLoginMessage = new AtomicInteger(-1);
             AtomicInteger nextRegisterMessage = new AtomicInteger(-1);
 
-            AtomicInteger nextLoginMessage = new AtomicInteger(-1);
-            AtomicInteger nextRegisterMessage = new AtomicInteger(-1);
-
             runner = new AsyncTaskExecutor(authTime, TimeUnit.SECONDS);
             runner.on(TaskEvent.TICK, (time) -> {
                 long timeLeft = runner.timeLeft(TimeUnit.SECONDS);

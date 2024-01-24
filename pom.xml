@@ -359,33 +359,6 @@
         </repository>
     </repositories>
 
-    <!--
-    <pluginRepositories>
-        <pluginRepository>
-            <id>karmadev_releases</id>
-            <name>KarmaDev Releases</name>
-            <url>https://nexus.karmadev.es/repository/maven-releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-        <pluginRepository>
-            <id>karmadev_snapshots</id>
-            <name>KarmaDev Snapshots</name>
-            <url>https://nexus.karmadev.es/repository/maven-snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-    -->
-
     <dependencies>
         <dependency>
             <groupId>org.jetbrains</groupId>
@@ -599,12 +572,6 @@
                 <groupId>me.vagdedes</groupId>
                 <artifactId>SpartanAPI</artifactId>
                 <version>${spartan.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.MilkBowl</groupId>
-                <artifactId>VaultAPI</artifactId>
-                <version>1.7</version>
                 <scope>provided</scope>
             </dependency>
 

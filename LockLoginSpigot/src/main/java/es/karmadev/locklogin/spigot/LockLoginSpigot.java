@@ -1124,11 +1124,6 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         return network.getPlayers().stream().filter((account) -> !account.online()).collect(Collectors.toList());
     }
 
-    @Override
-    public Collection<NetworkClient> onlineClients() {
-        return null;
-    }
-
     /**
      * Send a message to the client
      *

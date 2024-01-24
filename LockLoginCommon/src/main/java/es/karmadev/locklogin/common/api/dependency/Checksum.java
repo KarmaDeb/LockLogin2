@@ -106,34 +106,4 @@ class Checksum implements DependencyChecksum {
 
         return other.hash().equals(hash());
     }
-
-    /**
-     * Verify the existing file with the
-     * provided hash
-     *
-     * @param hash the hash
-     * @return if the hash matches
-     */
-    public boolean verify(final String hash) {
-        Path file = dependency.file();
-        byte[] data = PathUtilities.readBytes(file);
-
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("md5");
-            md5.update(data);
-            byte[] result = md5.digest();
-
-            StringBuilder hexBuilder = new StringBuilder();
-            for (byte b : result) {
-                int rawInt = Byte.toUnsignedInt(b);
-                hexBuilder.append(Integer.toString(rawInt, 16));
-            }
-
-            String currentHash = hexBuilder.toString();
-            return currentHash.equals(hash);
-        } catch (NoSuchAlgorithmException ex) {
-            CurrentPlugin.getPlugin().log(ex, "Failed to verify integrity of {0}", dependency.name());
-            return false;
-        }
-    }
 }

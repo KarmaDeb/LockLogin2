@@ -20,10 +20,6 @@ public enum AccountField {
      */
     EMAIL(Table.USER, Row.EMAIL, String.class),
     /**
-     * A field containing the user email address
-     */
-    EMAIL,
-    /**
      * A field containing the user unique id
      */
     UNIQUEID(Table.USER, Row.UUID, String.class),

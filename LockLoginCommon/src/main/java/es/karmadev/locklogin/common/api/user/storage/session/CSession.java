@@ -26,8 +26,6 @@ public class CSession implements UserSession {
 
     private boolean valid = false;
 
-    private boolean valid = false;
-
     private final Map<String, SessionField<?>> fields = new ConcurrentHashMap<>();
 
     private final CacheElement<String> captcha = new CacheElement<>();
