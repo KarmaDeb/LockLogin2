@@ -8,13 +8,13 @@ variables:
 before_script:
   - mkdir -p $MAVEN_SETTINGS_PATH
   - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
-#  - apt-get update -qy
-#  - apt-get install -y maven openjdk-17-jdk
-#  - ls /usr/bin/java
-#  - export JAVA_HOME=/usr/bin/java/bin
 
 maven-build:
   image: maven:3.8-openjdk-8
   stage: build
   script:
     - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
+  artifacts:
+    name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
+    paths:
+      - "**/target"
