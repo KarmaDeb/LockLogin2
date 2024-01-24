@@ -8,7 +8,7 @@ variables:
 before_script:
   - mkdir -p $MAVEN_SETTINGS_PATH
   - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
-  - sudo add-apt-repository ppa:openjdk/ppa
+  - add-apt-repository ppa:openjdk/ppa
   - apt-get update -qy
   - apt-get install -y maven openjdk-8-jdk
 
