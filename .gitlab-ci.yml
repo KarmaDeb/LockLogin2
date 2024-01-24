@@ -12,4 +12,5 @@ before_script:
 maven-build:
   stage: build
   script:
+    - export PATH=$PATH:/usr/bin/mvn
     - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
