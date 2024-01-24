@@ -17,4 +17,5 @@ maven-build:
   artifacts:
     name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
     paths:
-      - "**/target"
+      - "LockLoginBungee/target/LockLogin.jar"
+      - "LockLoginSpigot/target/LockLogin.jar"
