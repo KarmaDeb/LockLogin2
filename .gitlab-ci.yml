@@ -17,7 +17,7 @@ variables:
     --show-version
     -DinstallAtEnd=true
     -DdeployAtEnd=true
-#  MAVEN_SETTINGS_PATH: "$CI_PROJECT_DIR/.m2"
+  MAVEN_SETTINGS_PATH: "$CI_PROJECT_DIR/.m2"
 
 before_script:
   - mkdir -p $MAVEN_SETTINGS_PATH
