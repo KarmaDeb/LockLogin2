@@ -1,4 +1,5 @@
-[![pipeline status](https://gitlab.com/karmadev/locklogin/badges/main/pipeline.svg)](https://gitlab.com/karmadev/locklogin/commits/main)
+[![pipeline status](https://gitlab.com/karmadev/locklogin/badges/main/pipeline.svg)](https://gitlab.com/karmadev/locklogin/-/commits/main)
+[![Latest Release](https://gitlab.com/karmadev/locklogin/-/badges/release.svg)](https://gitlab.com/karmadev/locklogin/-/releases)
 
 # LockLogin2
 LockLogin2 is the new version of LockLogin. With a better API and more stability
