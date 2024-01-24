@@ -1,0 +1,15 @@
+stages:
+  - build
+
+variables:
+  MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
+  MAVEN_SETTINGS_PATH: "$CI_PROJECT_DIR/.m2"
+
+before_script:
+  - mkdir -p $MAVEN_SETTINGS_PATH
+  - echo "<settings><servers><server><id>karmadev_snapshot</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
+
+maven-build:
+  stage: build
+  script:
+    - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
