@@ -1,9 +1,10 @@
 name: Maven Build
 
 on:
+  workflow_dispatch: {}
   push:
     branches:
-      - main  # ajusta el nombre de tu rama principal si es diferente
+      - master  # ajusta el nombre de tu rama principal si es diferente
 
 jobs:
   build:
