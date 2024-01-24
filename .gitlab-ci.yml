@@ -1,5 +1,6 @@
 stages:
   - build
+  - release
 
 variables:
   MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
@@ -14,8 +15,15 @@ maven-build:
   stage: build
   script:
     - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
+    - export VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout)
+    - echo $VERSION
   artifacts:
     name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
     paths:
       - "LockLoginBungee/target/LockLogin.jar"
       - "LockLoginSpigot/target/LockLogin.jar"
+
+release:
+  stage: release
+  script:
+    - echo $VERSION > latest_release.txt
