@@ -10,7 +10,7 @@ before_script:
   - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
   - apt-get update -qy
   - apt-get install -y maven
-  - apt -y install opendjk-8-jdk
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre/lib
 
 maven-build:
   stage: build
