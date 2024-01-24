@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
-      MAVEN_SETTINGS_PATH: "$GITHUB_WORKSPACE/.m2"
+      TARGET_RELEASES: "https://nexus.karmadev.es/repository/internal/"
+      TARGET_SNAPSHOTS: "https://nexus.karmadev.es/repository/snapshots/"
 
     steps:
     - name: Checkout Repository
@@ -26,11 +26,10 @@ jobs:
 
     - name: Create Maven Settings
       run: |
-        mkdir -p $MAVEN_SETTINGS_PATH
-        echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
+        echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > /home/runner/.m2/settings.xml
 
     - name: Build with Maven
-      run: mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
+      run: mvn clean deploy
 
     - name: Archive Maven Artifacts
       uses: actions/upload-artifact@v2
