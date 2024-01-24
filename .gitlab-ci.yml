@@ -16,8 +16,8 @@ maven-build:
   script:
     - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
     - export VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-/--/g')
-    - version_badge_id=$(curl --header "PRIVATE-TOKEN:${API_TOKEN}" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/badges | jq -c 'map(select(.name | contains("version")))[0].id')
-    - curl --request PUT --header "PRIVATE-TOKEN:${API_TOKEN}" --data "image_url=https://img.shields.io/badge/version-${VERSION}-blue" https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/badges/${version_badge_id}
+    - version_badge_id=$(curl --header "PRIVATE-TOKEN:$API_TOKEN" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges | jq -c 'map(select(.name | contains("version")))[0].id')
+    - curl --request PUT --header "PRIVATE-TOKEN:$API_TOKEN" --data "image_url=https://img.shields.io/badge/version-$VERSION-blue" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges/$version_badge_id
   artifacts:
     name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
     paths:
