@@ -17,11 +17,9 @@ variables:
     --show-version
     -DinstallAtEnd=true
     -DdeployAtEnd=true
-  MAVEN_SETTINGS_PATH: "$CI_PROJECT_DIR/.m2"
 
 before_script:
-  - mkdir -p $MAVEN_SETTINGS_PATH
-  - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
+  - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > .m2/settings.xml
 
 java-build:
   image: maven:3.8-openjdk-8
