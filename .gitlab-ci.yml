@@ -1,43 +1,58 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-  - build
-  - release
-
+- build
+- release
+- test
 variables:
   MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
   MAVEN_SETTINGS_PATH: "$CI_PROJECT_DIR/.m2"
-
 before_script:
-  - mkdir -p $MAVEN_SETTINGS_PATH
-  - echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>" > $MAVEN_SETTINGS_PATH/settings.xml
-  - apt-get update -y
-  - apt-get install -y jq curl
-
+- mkdir -p $MAVEN_SETTINGS_PATH
+- echo "<settings><servers><server><id>karmadev_releases</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server><server><id>karmadev_snapshots</id><username>$MAVEN_USERNAME</username><password>$MAVEN_PASSWORD</password></server></servers></settings>"
+  > $MAVEN_SETTINGS_PATH/settings.xml
+- apt-get update -y
+- apt-get install -y jq curl
 maven-build:
   image: maven:3.8-openjdk-8
   stage: build
   script:
-    - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/ -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
-    - export VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-/--/g')
-    - version_badge_id=$(curl --header "PRIVATE-TOKEN:$API_TOKEN" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges | jq -c 'map(select(.name | contains("version")))[0].id')
-    - curl --request PUT --header "PRIVATE-TOKEN:$API_TOKEN" --data "image_url=https://img.shields.io/badge/version-$VERSION-blue" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges/$version_badge_id
+  - mvn $MAVEN_CLI_OPTS clean deploy -DTARGET_RELEASES=https://nexus.karmadev.es/repository/internal/
+    -DTARGET_SNAPSHOTS=https://nexus.karmadev.es/repository/snapshots/
+  - export VERSION=$(mvn --non-recursive help:evaluate -Dexpression=project.version
+    -q -DforceStdout | sed 's/-/--/g')
+  - version_badge_id=$(curl --header "PRIVATE-TOKEN:$API_TOKEN" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges
+    | jq -c 'map(select(.name | contains("version")))[0].id')
+  - curl --request PUT --header "PRIVATE-TOKEN:$API_TOKEN" --data "image_url=https://img.shields.io/badge/version-$VERSION-blue"
+    https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/badges/$version_badge_id
   artifacts:
-    name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
+    name: Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG
     paths:
-      - "LockLoginBungee/target/LockLogin.jar"
-      - "LockLoginSpigot/target/LockLogin.jar"
-
+    - LockLoginBungee/target/LockLogin.jar
+    - LockLoginSpigot/target/LockLogin.jar
 release:
   stage: release
   script:
-    - COMMIT_HASH=$(echo $CI_COMMIT_SHA | cut -c1-8)
-    - RELEASE_TAG="$VERSION-$COMMIT_HASH"
-    - echo "Creating release $RELEASE_TAG"
-    - curl --request POST --header "PRIVATE-TOKEN:$API_TOKEN" --data "tag_name=$RELEASE_TAG" --data "name=$RELEASE_TAG" --data "ref=$CI_COMMIT_SHA" --data "description=Release $RELEASE_TAG" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases
+  - COMMIT_HASH=$(echo $CI_COMMIT_SHA | cut -c1-8)
+  - RELEASE_TAG="$VERSION-$COMMIT_HASH"
+  - echo "Creating release $RELEASE_TAG"
+  - curl --request POST --header "PRIVATE-TOKEN:$API_TOKEN" --data "tag_name=$RELEASE_TAG"
+    --data "name=$RELEASE_TAG" --data "ref=$CI_COMMIT_SHA" --data "description=Release
+    $RELEASE_TAG" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases
   artifacts:
-    name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
+    name: Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG
     paths:
-      - "LockLoginBungee/target/LockLogin.jar"
-      - "LockLoginSpigot/target/LockLogin.jar"
+    - LockLoginBungee/target/LockLogin.jar
+    - LockLoginSpigot/target/LockLogin.jar
   only:
     variables:
-      - $VERSION !~ /-SNAPSHOT/
+    - "$VERSION !~ /-SNAPSHOT/"
+sast:
+  stage: build
+include:
+- template: Security/SAST.gitlab-ci.yml
