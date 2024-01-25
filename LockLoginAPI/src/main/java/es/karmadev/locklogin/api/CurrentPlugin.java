@@ -2,8 +2,10 @@ package es.karmadev.locklogin.api;
 
 import lombok.Getter;
 
-import java.util.Collections;
-import java.util.Set;
+import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -94,5 +96,47 @@ public final class CurrentPlugin {
      */
     public static int languageVersion() {
         return 1;
+    }
+
+    /**
+     * Get the classes inside the specified
+     * environment
+     *
+     * @param packageName the environment name
+     * @return the API class loader
+     */
+    public static URL[] getClasses(final String packageName, final boolean fully) throws NullPointerException {
+        ClassLoader classLoader = CurrentPlugin.class.getClassLoader();
+        String packagePath = packageName.replace('.', '/');
+        URL packageURL = classLoader.getResource(packagePath);
+
+        if (packageURL != null) {
+            File packageFile = new File(packageURL.getFile());
+            if (fully) {
+                try {
+                    return new URL[]{packageFile.toURI().toURL()};
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            File[] files = packageFile.listFiles();
+            if (files != null) {
+                ArrayList<URL> urlList = new ArrayList<>();
+
+                for (File file : files) {
+                    try {
+                        URL url = file.toURI().toURL();
+                        urlList.add(url);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                return urlList.toArray(new URL[0]);
+            }
+        }
+
+        return new URL[0];
     }
 }

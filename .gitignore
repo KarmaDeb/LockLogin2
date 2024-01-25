@@ -64,3 +64,4 @@ deprecated.txt
 /LockLoginCommon/src/test/
 /LockLoginBungee/src/test/
 /LockLoginAPI/src/test/
+/.jython_cache/
