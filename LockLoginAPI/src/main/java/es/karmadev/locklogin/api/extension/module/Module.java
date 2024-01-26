@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
  * Represents a LockLogin module
@@ -60,7 +61,7 @@ public interface Module {
      *
      * @return the module logger
      */
-    ModuleLogger getLogger();
+    Logger getLogger();
 
     /**
      * Get the module description

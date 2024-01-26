@@ -1,9 +1,6 @@
 package es.karmadev.locklogin.spigot.util.converter;
 
-import es.karmadev.locklogin.api.extension.module.Module;
-import es.karmadev.locklogin.api.extension.module.ModuleDescription;
-import es.karmadev.locklogin.api.extension.module.ModuleManager;
-import es.karmadev.locklogin.api.extension.module.PluginModule;
+import es.karmadev.locklogin.api.extension.module.*;
 import es.karmadev.locklogin.api.extension.module.resource.ResourceHandle;
 import es.karmadev.locklogin.api.network.PluginNetwork;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,6 +12,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SpigotModule implements PluginModule<JavaPlugin> {
 
@@ -86,6 +84,16 @@ public class SpigotModule implements PluginModule<JavaPlugin> {
     @Override
     public @NotNull Path getDataFolder() {
         return plugin.getDataFolder().toPath();
+    }
+
+    /**
+     * Get the module logger
+     *
+     * @return the module logger
+     */
+    @Override
+    public Logger getLogger() {
+        return plugin.getLogger();
     }
 
     /**
