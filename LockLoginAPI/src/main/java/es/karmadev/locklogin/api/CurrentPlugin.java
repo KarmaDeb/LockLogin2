@@ -1,13 +1,20 @@
 package es.karmadev.locklogin.api;
 
+import es.karmadev.api.file.util.PathUtilities;
+import es.karmadev.api.object.ObjectUtils;
 import lombok.Getter;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Current LockLogin plugin
@@ -96,47 +103,5 @@ public final class CurrentPlugin {
      */
     public static int languageVersion() {
         return 1;
-    }
-
-    /**
-     * Get the classes inside the specified
-     * environment
-     *
-     * @param packageName the environment name
-     * @return the API class loader
-     */
-    public static URL[] getClasses(final String packageName, final boolean fully) throws NullPointerException {
-        ClassLoader classLoader = CurrentPlugin.class.getClassLoader();
-        String packagePath = packageName.replace('.', '/');
-        URL packageURL = classLoader.getResource(packagePath);
-
-        if (packageURL != null) {
-            File packageFile = new File(packageURL.getFile());
-            if (fully) {
-                try {
-                    return new URL[]{packageFile.toURI().toURL()};
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            File[] files = packageFile.listFiles();
-            if (files != null) {
-                ArrayList<URL> urlList = new ArrayList<>();
-
-                for (File file : files) {
-                    try {
-                        URL url = file.toURI().toURL();
-                        urlList.add(url);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                return urlList.toArray(new URL[0]);
-            }
-        }
-
-        return new URL[0];
     }
 }

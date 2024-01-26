@@ -55,8 +55,8 @@
     <properties>
         <jar.name>LockLoginPOM</jar.name>
 
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <locklogin.lang>2</locklogin.lang>
@@ -110,15 +110,7 @@
         <slf.api.version>2.0.7</slf.api.version>
         <slf.api.test>org.slf4j.LoggerFactory</slf.api.test>
 
-        <!--
-        <google.auth.version>1.5.0</google.auth.version>
-        <google.auth.test>com.warrenstrange.googleauth.GoogleAuthenticator</google.auth.test>
-
-        <topt.auth.version>1.0</topt.auth.version>
-        <topt.auth.test>de.taimos.topt.TOPT</topt.auth.test>
-        -->
-
-        <google.guava.version>31.1-jre</google.guava.version>
+        <google.guava.version>33.0.0-jre</google.guava.version>
         <google.guava.test>com.google.common.hash.Hashing</google.guava.test>
 
         <apache.commons.version>1.15</apache.commons.version>

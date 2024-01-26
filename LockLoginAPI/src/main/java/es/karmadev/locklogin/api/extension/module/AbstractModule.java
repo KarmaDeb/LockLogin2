@@ -24,6 +24,7 @@ public abstract class AbstractModule implements Module {
     private Path file = null;
     private Path dataFolder = null;
     private ClassLoader classLoader;
+    private ModuleLogger logger;
     private final PluginNetwork network = CurrentPlugin.getPlugin().network();
 
     /**
@@ -62,6 +63,7 @@ public abstract class AbstractModule implements Module {
         this.file = file;
         this.dataFolder = dataFolder;
         this.classLoader = classLoader;
+        this.logger = new ModuleLogger(this);
     }
 
     /**
@@ -100,6 +102,16 @@ public abstract class AbstractModule implements Module {
         String marketStr = PathUtilities.pathString(marketplace);
 
         return directoryStr.startsWith(marketStr);
+    }
+
+    /**
+     * Get the module logger
+     *
+     * @return the module logger
+     */
+    @Override
+    public final ModuleLogger getLogger() {
+        return this.logger;
     }
 
     /**

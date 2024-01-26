@@ -56,6 +56,13 @@ public interface Module {
     Path getDataFolder();
 
     /**
+     * Get the module logger
+     *
+     * @return the module logger
+     */
+    ModuleLogger getLogger();
+
+    /**
      * Get the module description
      *
      * @return the module description
