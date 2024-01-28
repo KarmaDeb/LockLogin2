@@ -39,7 +39,6 @@ import es.karmadev.locklogin.spigot.process.SpigotLoginProcess;
 import es.karmadev.locklogin.spigot.process.SpigotPinProcess;
 import es.karmadev.locklogin.spigot.process.SpigotRegisterProcess;
 import es.karmadev.locklogin.spigot.protocol.ProtocolAssistant;
-import es.karmadev.locklogin.spigot.protocol.injector.ClientInjector;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.storage.SpawnLocationStorage;
 import org.bukkit.Bukkit;

@@ -10,37 +10,35 @@ import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
 public interface LockLoginProtocol {
 
     /**
-     * Get the protocol channel
-     *
-     * @return the channel
-     */
-    String getChannel();
-
-    /**
-     * Set the protocol channel if
-     * it's not defined
-     *
-     * @param newChannel the new channel
-     */
-    void setChannel(final String newChannel);
-
-    /**
      * Receive data to the protocol handler
      *
+     * @param channel the channel in where the
+     *                data has been received
+     * @param tag the message tag
      * @param frame the received frame
      * @throws InvalidPacketDataException if the packet full data
      * results on an invalid packet. This might be caused by a MitM
      * attack, or a malformed packet (possibly caused by an outdated
      * plugin)
      */
-    void receive(final String tag, final PacketFrame frame) throws InvalidPacketDataException;
+    void receive(final String channel, final String tag, final PacketFrame frame) throws InvalidPacketDataException;
 
     /**
      * Write data into the protocol
      *
+     * @param channel the channel name
+     * @param tag the message tag
      * @param data the data to write
      */
-    void write(final String tag, final OutgoingPacket data);
+    void write(final String channel, final String tag, final OutgoingPacket data);
+
+    /**
+     * Forget all the data from a channel. This does the
+     * same effect as if the other part sent us a {@link es.karmadev.locklogin.api.network.communication.data.DataType#CHANNEL_CLOSE}
+     *
+     * @param channel the channel to forget
+     */
+    void forget(final String channel);
 
     /**
      * Get the protocol encoded secret

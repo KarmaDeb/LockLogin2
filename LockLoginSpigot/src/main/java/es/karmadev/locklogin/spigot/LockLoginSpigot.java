@@ -10,6 +10,7 @@ import es.karmadev.api.file.yaml.YamlFileHandler;
 import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.kson.JsonInstance;
 import es.karmadev.api.kson.JsonObject;
+import es.karmadev.api.kson.KsonException;
 import es.karmadev.api.kson.io.JsonReader;
 import es.karmadev.api.logger.log.console.LogLevel;
 import es.karmadev.api.minecraft.text.Colorize;
@@ -99,7 +100,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -214,15 +218,11 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                                 plugin.logger().log(LogLevel.SEVERE, "Plugin dependency {0} was found but is out of date ({1} > {2}). LockLogin will still try to hook into its API, but there may be some errors", name, version, pluginVersion);
                             } else {
                                 plugin.logger().log(LogLevel.INFO, "Plugin dependency {0} has been successfully hooked", name);
-                                /*if (name.equalsIgnoreCase("Spartan")) {
-                                    registerService("spartan", new SpartanService());
-                                }*/
                             }
                         }
                     }
                 }
             } else {
-                //console().send("Injecting dependency {0}", Level.INFO, dependency.name());
                 runtime.dependencyManager().append(dependency);
             }
         }
@@ -230,21 +230,40 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         configuration = new CPluginConfiguration(this);
 
         KeyPair pair = null;
+        SecretKey secret = null;
         try {
             Path keyStore = workingDirectory().resolve("cache").resolve("keys.json");
             IvParameterSpec spec = new IvParameterSpec(configuration.secretKey().iv());
 
             FileEncryptor encryptor = new FileEncryptor(keyStore, configuration.secretKey().token());
-            if (Files.exists(keyStore)) {
-                encryptor.decrypt(spec);
+            if (!Files.exists(keyStore)) {
+                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+                KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 
+                generator.initialize(2048);
+                keyGen.init(256);
+
+                pair = generator.generateKeyPair();
+                secret = keyGen.generateKey();
+
+                PathUtilities.createPath(keyStore);
+                JsonObject object = JsonObject.newObject("", "");
+                object.put("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
+                object.put("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
+                object.put("secret", Base64.getEncoder().encodeToString(secret.getEncoded()));
+
+                String raw = object.toString(false);
+                PathUtilities.write(keyStore, raw);
+
+                encryptor.encrypt(spec);
+            } else {
+                encryptor.decrypt(spec);
                 JsonObject data = JsonReader.read(PathUtilities.read(keyStore)).asObject();
 
-                if (data.hasChild("public") && data.hasChild("private")) {
-                    byte[] publicBytes = Base64.getDecoder().decode(data.getChild("public")
-                            .asNative().getString());
-                    byte[] privateBytes = Base64.getDecoder().decode(data.getChild("private")
-                            .asNative().getString());
+                if (data.hasChild("public") && data.hasChild("private") && data.hasChild("secret")) {
+                    byte[] publicBytes = Base64.getDecoder().decode(data.getChild("public").asString());
+                    byte[] privateBytes = Base64.getDecoder().decode(data.getChild("private").asString());
+                    byte[] secretBytes = Base64.getDecoder().decode(data.getChild("secret").asString());
 
                     KeyFactory factory = KeyFactory.getInstance("RSA");
 
@@ -255,25 +274,11 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
                     PrivateKey pri = factory.generatePrivate(privateKey);
 
                     pair = new KeyPair(pub, pri);
+                    secret = new SecretKeySpec(secretBytes, "AES");
                 } else {
                     logErr("Cannot initialize LockLogin because the key storage is invalid");
                     boot = false;
                 }
-
-                encryptor.encrypt(spec);
-            } else {
-                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-                generator.initialize(2048);
-
-                pair = generator.generateKeyPair();
-
-                PathUtilities.createPath(keyStore);
-                JsonObject object = JsonObject.newObject("", "");
-                object.put("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
-                object.put("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
-
-                String raw = object.toString(false);
-                PathUtilities.write(keyStore, raw);
 
                 encryptor.encrypt(spec);
             }
@@ -281,7 +286,7 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
             boot = false;
         }
 
-        this.protocolHandler = new SpigotProtocol(pair, "RSA");
+        this.protocolHandler = new SpigotProtocol(pair, "RSA", secret, "AES");
         if (!boot) {
             driver = null;
             messages = null;
@@ -479,6 +484,35 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
         }
     }
 
+    public void assignNetworkName(final String name) {
+        Path data = plugin.workingDirectory().resolve("cache").resolve("cache.json");
+        JsonObject object = JsonObject.newObject("", '.');
+        try {
+            JsonInstance element = JsonReader.read(PathUtilities.read(data));
+            if (element.isObjectType()) object = element.asObject();
+        } catch (KsonException ignored) {}
+
+        object.put("name", name);
+        String raw = object.toString(false);
+
+        PathUtilities.write(data, raw);
+    }
+
+    public String getNetworkName() {
+        Path data = plugin.workingDirectory().resolve("cache").resolve("cache.json");
+        JsonObject object = JsonObject.newObject("", '.');
+        try {
+            JsonInstance element = JsonReader.read(PathUtilities.read(data));
+            if (element.isObjectType()) object = element.asObject();
+        } catch (KsonException ignored) {}
+
+        if (object.hasChild("name")) {
+            return object.getChild("name").asString();
+        }
+
+        return "";
+    }
+
     /**
      * Get the plugin data driver
      *
@@ -502,12 +536,10 @@ public class LockLoginSpigot implements LockLogin, NetworkServer {
     /**
      * Get a LockLogin protocol instance
      *
-     * @param server the server to get protocol
-     *               for
      * @return the LockLogin protocol
      */
     @Override
-    public LockLoginProtocol getProtocol(final NetworkServer server) {
+    public LockLoginProtocol getProtocol() {
         return this.protocolHandler;
     }
 

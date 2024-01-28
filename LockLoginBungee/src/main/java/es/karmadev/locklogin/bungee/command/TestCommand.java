@@ -5,7 +5,6 @@ import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
-import es.karmadev.locklogin.api.network.server.NetworkServer;
 import es.karmadev.locklogin.api.protocol.LockLoginProtocol;
 import es.karmadev.locklogin.bungee.LockLoginBungee;
 import es.karmadev.locklogin.common.api.packet.COutPacket;
@@ -39,11 +38,10 @@ public class TestCommand extends Command {
         ServerInfo info = server.getInfo();
         String name = info.getName();
 
-        NetworkServer netServer = plugin.network().getServer(name);
-        LockLoginProtocol protocol = plugin.getProtocol(netServer);
+        LockLoginProtocol protocol = plugin.getProtocol();
 
         OutgoingPacket packet = new COutPacket(DataType.HELLO);
-        protocol.write(String.format("%s:%s",
+        protocol.write(name, String.format("%s_%s",
                 StringUtils.generateString(4, StringOptions.LOWERCASE),
                 StringUtils.generateString(6, StringOptions.LOWERCASE)),
                 packet);

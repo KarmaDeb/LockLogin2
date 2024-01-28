@@ -81,11 +81,13 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.PluginManager;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -140,13 +142,9 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     private Instant postStartup;
     public boolean boot = true;
 
-    private KeyPair pair;
+    private BungeeProtocol protocol;
 
-    private final Map<NetworkServer, BungeeProtocol> protocolMap = new HashMap<>();
-    @Getter
-    private final Map<String, Server> connectedServers = new HashMap<>();
-
-    public LockLoginBungee(final BungeePlugin plugin) throws RuntimeException {
+    public LockLoginBungee(final BungeePlugin plugin) throws RuntimeException, NoSuchAlgorithmException {
         this.plugin = plugin;
 
         Class<CurrentPlugin> instance = CurrentPlugin.class;
@@ -210,21 +208,41 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
 
         configuration = new CPluginConfiguration(this);
 
+        KeyPair pair = null;
+        SecretKey secret = null;
         try {
             Path keyStore = workingDirectory().resolve("cache").resolve("keys.json");
             IvParameterSpec spec = new IvParameterSpec(configuration.secretKey().iv());
 
             FileEncryptor encryptor = new FileEncryptor(keyStore, configuration.secretKey().token());
-            if (Files.exists(keyStore)) {
-                encryptor.decrypt(spec);
+            if (!Files.exists(keyStore)) {
+                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+                KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 
+                generator.initialize(2048);
+                keyGen.init(256);
+
+                pair = generator.generateKeyPair();
+                secret = keyGen.generateKey();
+
+                PathUtilities.createPath(keyStore);
+                JsonObject object = JsonObject.newObject("", "");
+                object.put("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
+                object.put("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
+                object.put("secret", Base64.getEncoder().encodeToString(secret.getEncoded()));
+
+                String raw = object.toString(false);
+                PathUtilities.write(keyStore, raw);
+
+                encryptor.encrypt(spec);
+            } else {
+                encryptor.decrypt(spec);
                 JsonObject data = JsonReader.read(PathUtilities.read(keyStore)).asObject();
 
-                if (data.hasChild("public") && data.hasChild("private")) {
-                    byte[] publicBytes = Base64.getDecoder().decode(data.getChild("public")
-                            .asNative().getString());
-                    byte[] privateBytes = Base64.getDecoder().decode(data.getChild("private")
-                            .asNative().getString());
+                if (data.hasChild("public") && data.hasChild("private") && data.hasChild("secret")) {
+                    byte[] publicBytes = Base64.getDecoder().decode(data.getChild("public").asString());
+                    byte[] privateBytes = Base64.getDecoder().decode(data.getChild("private").asString());
+                    byte[] secretBytes = Base64.getDecoder().decode(data.getChild("secret").asString());
 
                     KeyFactory factory = KeyFactory.getInstance("RSA");
 
@@ -235,25 +253,11 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
                     PrivateKey pri = factory.generatePrivate(privateKey);
 
                     pair = new KeyPair(pub, pri);
+                    secret = new SecretKeySpec(secretBytes, "AES");
                 } else {
-                    err("Cannot initialize LockLogin because the key storage is invalid");
+                    logErr("Cannot initialize LockLogin because the key storage is invalid");
                     boot = false;
                 }
-
-                encryptor.encrypt(spec);
-            } else {
-                KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-                generator.initialize(2048);
-
-                pair = generator.generateKeyPair();
-
-                PathUtilities.createPath(keyStore);
-                JsonObject object = JsonObject.newObject("", "");
-                object.put("public", Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
-                object.put("private", Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded()));
-
-                String raw = object.toString(false);
-                PathUtilities.write(keyStore, raw);
 
                 encryptor.encrypt(spec);
             }
@@ -261,6 +265,7 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
             boot = false;
         }
 
+        this.protocol = new BungeeProtocol(pair, "RSA", secret, "AES");
         if (!boot) {
             driver = null;
             messages = null;
@@ -457,18 +462,11 @@ public class LockLoginBungee implements LockLogin, NetworkServer {
     /**
      * Get a LockLogin protocol instance
      *
-     * @param server the server to get protocol for
      * @return the LockLogin protocol
      */
     @Override
-    public LockLoginProtocol getProtocol(final NetworkServer server) {
-        return protocolMap.computeIfAbsent(server, (d) -> {
-            try {
-                return new BungeeProtocol(this.pair, "RSA", server);
-            } catch (NoSuchAlgorithmException ex) {
-                throw new IllegalStateException(ex);
-            }
-        });
+    public LockLoginProtocol getProtocol() {
+        return this.protocol;
     }
 
     /**

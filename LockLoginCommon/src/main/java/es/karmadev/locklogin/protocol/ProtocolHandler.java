@@ -17,8 +17,6 @@ import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
 import es.karmadev.locklogin.api.protocol.LockLoginProtocol;
 import es.karmadev.locklogin.common.api.packet.CInPacket;
 import es.karmadev.locklogin.common.api.packet.COutPacket;
-import lombok.Getter;
-import lombok.Setter;
 
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
@@ -44,13 +42,11 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
             DataType.CONNECTION_INIT
     };
     private final static LockLogin plugin = CurrentPlugin.getPlugin();
-    private final static String SECRET_ALGORITHM = "AES";
 
     private final KeyPair pair;
-    private final String algorithm;
-    @Getter @Setter
-    protected String channel;
+    private final String pairAlgorithm;
     private final SecretKey secret;
+    private final String secretAlgorithm;
 
     private final ConcurrentHashMap<String, PacketData> packets = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, PeerKeyData> sharedKeys = new ConcurrentHashMap<>();
@@ -64,20 +60,18 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      *             key pair. The key pair is used
      *             when communicating, to encrypt
      *             and decrypt the data
-     * @param algorithm the key pair algorithm
+     * @param pairAlgorithm the key pair algorithm
+     * @param secret the protocol handler secret key
+     * @param secretAlgorithm the secret key algorithm
      * @throws NoSuchAlgorithmException if the secret key generation fails. The
      * secret key is strictly required to encrypt data sent by
      * the protocol
      */
-    public ProtocolHandler(final KeyPair pair, final String algorithm, final String channel) throws NoSuchAlgorithmException {
+    public ProtocolHandler(final KeyPair pair, final String pairAlgorithm, final SecretKey secret, final String secretAlgorithm) throws NoSuchAlgorithmException {
         this.pair = pair;
-        this.algorithm = algorithm;
-        this.channel = channel;
-
-        KeyGenerator generator = KeyGenerator.getInstance(SECRET_ALGORITHM);
-        generator.init(256); //No need to be too big
-
-        this.secret = generator.generateKey();
+        this.pairAlgorithm = pairAlgorithm;
+        this.secret = secret;
+        this.secretAlgorithm = secretAlgorithm;
     }
 
     /**
@@ -90,12 +84,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * plugin)
      */
     @Override
-    public final void receive(final String tag, final PacketFrame frame) throws InvalidPacketDataException {
-        if (this.channel == null) {
-            plugin.warn("Received packet while not ready to process packets (missing channel)");
-            return;
-        }
-
+    public final void receive(final String channel, final String tag, final PacketFrame frame) throws InvalidPacketDataException {
         PacketData pData = this.packets.computeIfAbsent(channel, (d) -> new PacketData());
         FrameBuilder builder = pData.getFrameBuilder(tag);
         if (builder == null) return;
@@ -118,23 +107,16 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * @param data the data to write
      */
     @Override
-    public final void write(final String tag, final OutgoingPacket data) {
-        if (this.channel == null) {
-            plugin.warn("Received packet while not ready to process packets (missing channel)");
-            return;
-        }
-
+    public final void write(final String channel, final String tag, final OutgoingPacket data) {
         DataType type = data.getType();
-        if (!ArrayUtils.containsAny(PRE_TYPES, type)) {
+
+        if (!ArrayUtils.containsAny(PRE_TYPES, type) && !this.sharedKeys.containsKey(channel)) {
             List<QueuedPacket> que = this.packetQue.computeIfAbsent(channel, (q) -> new ArrayList<>());
             que.add(new QueuedPacket(tag, data));
             return;
         }
 
-        if (data.getType().equals(DataType.HELLO)) {
-            data.addProperty("channel", channel);
-        }
-
+        data.addProperty("channel", channel);
         PacketData pData = this.packets.computeIfAbsent(channel, (d) -> new PacketData());
         pData.assign(tag, data);
 
@@ -147,7 +129,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
             if (dataToWrite == null) return;
         }
 
-        emit(data.id(), tag, Base64.getEncoder().encode(dataToWrite));
+        emit(channel, data.id(), tag, Base64.getEncoder().encode(dataToWrite));
     }
 
     /**
@@ -158,15 +140,16 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      */
     @Override
     public final byte[] getEncodedSecret() {
-        return getEncodedSecret(this.pair.getPublic(), this.algorithm);
+        return getEncodedSecret(this.pair.getPublic(), this.pairAlgorithm);
     }
 
     /**
      * Handle a packet
      *
+     * @param channel the channel
      * @param packet the packet
      */
-    protected abstract void handle(final IncomingPacket packet);
+    protected abstract void handle(final String channel, final IncomingPacket packet);
 
     /**
      * Write a packet. The packet parsed in this method should be
@@ -177,11 +160,23 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * we want to let implementations choose how and how big the frames
      * are.
      *
+     * @param channel the channel
      * @param packetId the packet id that is being write
      * @param tag the tag
      * @param data the packet to write
      */
-    protected abstract void emit(final long packetId, final String tag, final byte[] data);
+    protected abstract void emit(final String channel, final long packetId, final String tag, final byte[] data);
+
+    /**
+     * Forget all the data from a channel. This does the
+     * same effect as if the other part sent us a {@link DataType#CHANNEL_CLOSE}
+     *
+     * @param channel the channel to forget
+     */
+    @Override
+    public void forget(final String channel) {
+        this.sharedKeys.remove(channel);
+    }
 
     /**
      * Get the encoded secret using the
@@ -229,11 +224,11 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * plugin)
      */
     private void readPacket(final byte[] completePacket, final String channel) throws InvalidPacketDataException {
-        byte[] resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.secret, ProtocolHandler.SECRET_ALGORITHM, false);
+        byte[] resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.secret, this.secretAlgorithm, false);
         boolean notSecure = false;
 
         if (resolved == null) {
-            resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.pair.getPrivate(), this.algorithm, false);
+            resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.pair.getPrivate(), this.pairAlgorithm, false);
             if (resolved == null) {
                 resolved = completePacket;
                 notSecure = true;
@@ -243,7 +238,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
         IncomingPacket incoming = validatePacket(resolved, notSecure, channel);
         DataType type = incoming.getType();
 
-        String responseTag = String.format("%s:%s",
+        String responseTag = String.format("%s_%s",
                 StringUtils.generateString(4, StringOptions.LOWERCASE),
                 StringUtils.generateString(6, StringOptions.LOWERCASE));
 
@@ -252,9 +247,9 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
                 OutgoingPacket response = new COutPacket(DataType.CHANNEL_INIT);
                 response.addProperty("key", Base64.getEncoder()
                         .encodeToString(pair.getPublic().getEncoded()));
-                response.addProperty("algorithm", this.algorithm);
+                response.addProperty("algorithm", this.pairAlgorithm);
 
-                write(responseTag, response);
+                write(channel, responseTag, response);
             }
                 return;
             case CHANNEL_INIT: {
@@ -264,13 +259,13 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
 
                 byte[] rawPeerPKeyBytes = Base64.getDecoder().decode(rawPeerPKey);
                 PublicKey key = loadPublic(rawPeerPKeyBytes, rawPeerPKeyAlgorithm);
-                if (key == null) throw new IllegalStateException("Invalid key received from peer " + algorithm);
+                if (key == null) throw new IllegalStateException("Invalid key received from peer " + pairAlgorithm);
 
                 OutgoingPacket response = new COutPacket(DataType.CONNECTION_INIT);
                 response.addProperty("secret", Base64.getEncoder().encodeToString(getEncodedSecret(key, rawPeerPKeyAlgorithm)));
-                response.addProperty("algorithm", ProtocolHandler.SECRET_ALGORITHM);
+                response.addProperty("algorithm", this.secretAlgorithm);
 
-                write(responseTag, response);
+                write(channel, responseTag, response);
             }
                 return;
             case CHANNEL_CLOSE:
@@ -282,6 +277,8 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
                 if (ObjectUtils.areNullOrEmpty(false, rawPeerSKey, rawPeerSKeyAlgorithm)) throw new IllegalStateException("Received invalid key or algorithm from peer" + channel);
 
                 byte[] rawPeerSKeyBytes = Base64.getDecoder().decode(rawPeerSKey);
+                rawPeerSKeyBytes = doCipherWithKey(rawPeerSKeyBytes, Cipher.DECRYPT_MODE, pair.getPrivate(), this.pairAlgorithm, true);
+
                 SecretKey key = loadSecret(rawPeerSKeyBytes, rawPeerSKeyAlgorithm);
 
                 PeerKeyData data = new PeerKeyData(key, rawPeerSKeyAlgorithm);
@@ -292,7 +289,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
                     Iterator<QueuedPacket> iterator = queue.iterator();
                     while (iterator.hasNext()) {
                         QueuedPacket packet = iterator.next();
-                        this.write(packet.getTag(), packet.getPacket());
+                        this.write(channel, packet.getTag(), packet.getPacket());
                         iterator.remove();
                     }
                 }
@@ -301,12 +298,15 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
                 object.removeChild("secret");
                 object.removeChild("algorithm");
 
-                IncomingPacket in = new CInPacket(object.toString());
-                handle(in);
-                return;
+                JsonObject obj = new JsonObject("", "", '.');
+                obj.put("id", incoming.id());
+                obj.put("packetType", incoming.getType().name());
+                obj.put("stamp", incoming.timestamp().toEpochMilli());
+
+                incoming = new CInPacket(obj.toString());
         }
 
-        handle(incoming);
+        handle(channel, incoming);
     }
 
     /**
@@ -376,6 +376,6 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * @return the secret
      */
     private SecretKey loadSecret(final byte[] keyBytes, final String keyAlgorithm) {
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, keyAlgorithm);
+        return new SecretKeySpec(keyBytes, keyAlgorithm);
     }
 }

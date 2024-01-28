@@ -27,12 +27,13 @@ import java.util.function.Function;
 public final class COnlineClient extends CLocalClient implements NetworkClient {
 
     private final CSessionChecker checker;
-    private Consumer<String> sendMessage;
-    private Consumer<String> sendActionbar;
-    private Consumer<ClientTitle> sendTitle;
-    private Consumer<String[]> kick;
-    private Consumer<String> performCommand;
-    private Function<String, Boolean> hasPermission;
+    private Consumer<String> sendMessage = (a) -> {};
+    private Consumer<String> sendActionbar = (a) -> {};
+    private Consumer<ClientTitle> sendTitle = (a) -> {};
+    private Consumer<String[]> kick = (a) -> {};
+    private Consumer<String> performCommand = (a) -> {};
+    private Function<String, Boolean> hasPermission = (a) -> false;
+    private Consumer<String> onServerSwitch = (a) -> {};
 
     private NetworkServer server;
     private NetworkServer previous = null;
@@ -44,32 +45,37 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
     }
 
     public COnlineClient onMessageRequest(final Consumer<String> function) {
-        sendMessage = function;
+        this.sendMessage = function;
         return this;
     }
 
     public COnlineClient onActionBarRequest(final Consumer<String> function) {
-        sendActionbar = function;
+        this.sendActionbar = function;
         return this;
     }
 
     public COnlineClient onTitleRequest(final Consumer<ClientTitle> function) {
-        sendTitle = function;
+        this.sendTitle = function;
         return this;
     }
 
     public COnlineClient onKickRequest(final Consumer<String[]> function) {
-        kick = function;
+        this.kick = function;
         return this;
     }
 
     public COnlineClient onCommandRequest(final Consumer<String> function) {
-        performCommand = function;
+        this.performCommand = function;
         return this;
     }
 
     public COnlineClient onPermissionRequest(final Function<String, Boolean> function) {
-        hasPermission = function;
+        this.hasPermission = function;
+        return this;
+    }
+
+    public COnlineClient onServerSwitchRequest(final Consumer<String> function) {
+        this.onServerSwitch = function;
         return this;
     }
 
@@ -269,6 +275,7 @@ public final class COnlineClient extends CLocalClient implements NetworkClient {
             engine.close(connection ,statement);
         }
 
+        onServerSwitch.accept(server.name());
         this.server = server;
     }
 

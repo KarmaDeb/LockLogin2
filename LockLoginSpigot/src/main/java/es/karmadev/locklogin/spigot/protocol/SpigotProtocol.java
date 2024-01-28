@@ -3,6 +3,7 @@ package es.karmadev.locklogin.spigot.protocol;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
+import es.karmadev.locklogin.api.network.communication.data.DataType;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
 import es.karmadev.locklogin.api.network.communication.packet.listener.event.NetworkEvent;
@@ -15,6 +16,7 @@ import es.karmadev.locklogin.spigot.protocol.injector.NMSHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import javax.crypto.SecretKey;
 import java.lang.reflect.InvocationTargetException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -29,34 +31,38 @@ public class SpigotProtocol extends ProtocolHandler {
     /**
      * Initialize a new protocol handler
      *
-     * @param pair      the protocol handler
-     *                  key pair. The key pair is used
-     *                  when communicating, to encrypt
-     *                  and decrypt the data
-     * @param algorithm the key pair algorithm
+     * @param pair the protocol handler
+     *             key pair. The key pair is used
+     *             when communicating, to encrypt
+     *             and decrypt the data
+     * @param pairAlgorithm the key pair algorithm
+     * @param secret the protocol handler secret key
+     * @param secretAlgorithm the secret key algorithm
      * @throws NoSuchAlgorithmException if the secret key generation fails. The
-     *                                  secret key is strictly required to encrypt data sent by
-     *                                  the protocol
+     * secret key is strictly required to encrypt data sent by
+     * the protocol
      */
-    public SpigotProtocol(final KeyPair pair, final String algorithm) throws NoSuchAlgorithmException {
-        super(pair, algorithm, null);
-    }
-
-    @Override
-    public void setChannel(final String channel) {
-        if (this.channel == null) {
-            super.setChannel(channel);
-        }
+    public SpigotProtocol(final KeyPair pair, final String pairAlgorithm, final SecretKey secret, final String secretAlgorithm) throws NoSuchAlgorithmException {
+        super(pair, pairAlgorithm, secret, secretAlgorithm);
     }
 
     /**
      * Handle a packet
      *
+     * @param channel the channel
      * @param packet the packet
      */
     @Override
-    protected void handle(final IncomingPacket packet) {
-        plugin.info("[SERVER] Successfully established a secure connection with proxy");
+    protected void handle(final String channel, final IncomingPacket packet) {
+        DataType type = packet.getType();
+        switch (type) {
+            case CONNECTION_INIT:
+                plugin.logInfo("Successfully established a secure connection with proxy as ", channel);
+                return;
+            case SHARED_MESSAGES:
+                System.out.println(packet.getSequence("messages"));
+                break;
+        }
 
         String virtualTag = packet.getSequence("v_tag");
         if (virtualTag == null) return;
@@ -88,12 +94,13 @@ public class SpigotProtocol extends ProtocolHandler {
      * we want to let implementations choose how and how big the frames
      * are.
      *
+     * @param channel the channel
      * @param packetId the packet id that is being write
      * @param tag      the tag
      * @param data     the packet to write
      */
     @Override
-    protected void emit(final long packetId, final String tag, final byte[] data) {
+    protected void emit(final String channel, final long packetId, final String tag, final byte[] data) {
         Player player = targetPlayer();
         if (player == null) return;
 

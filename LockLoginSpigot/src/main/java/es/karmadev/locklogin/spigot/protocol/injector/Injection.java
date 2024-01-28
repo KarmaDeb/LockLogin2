@@ -5,6 +5,7 @@ import es.karmadev.api.strings.StringOptions;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.communication.data.DataType;
+import es.karmadev.locklogin.api.network.communication.exception.InvalidPacketDataException;
 import es.karmadev.locklogin.api.network.communication.packet.IncomingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.OutgoingPacket;
 import es.karmadev.locklogin.api.network.communication.packet.frame.PacketFrame;
@@ -40,6 +41,8 @@ public class Injection extends ChannelDuplexHandler {
     private boolean injected = false;
     private Object playerConnection;
     private Channel channel = null;
+
+    private static String whoAmI;
 
     /**
      * Calls {@link ChannelHandlerContext#fireChannelRead(Object)} to forward
@@ -106,7 +109,6 @@ public class Injection extends ChannelDuplexHandler {
 
             String rawData = new String(data, StandardCharsets.UTF_8);
             Object object = StringUtils.load(rawData).orElse(null);
-
             if (object instanceof PacketFrame) {
                 PacketFrame frame = (PacketFrame) object;
                 if (frame.frames() == 1) {
@@ -114,24 +116,31 @@ public class Injection extends ChannelDuplexHandler {
                     frame.read(output, 0);
 
                     String raw = new String(Base64.getDecoder().decode(output));
-                    IncomingPacket incoming = new CInPacket(raw);
+                    try {
+                        IncomingPacket incoming = new CInPacket(raw);
 
-                    if (incoming.getType().equals(DataType.HELLO)) {
-                        String whoAmI = incoming.getSequence("channel");
+                        if (incoming.getType().equals(DataType.HELLO)) {
+                            whoAmI = incoming.getSequence("channel");
+                            plugin.assignNetworkName(whoAmI);
 
-                        if (whoAmI != null) {
-                            plugin.getProtocol(null)
-                                    .setChannel(whoAmI);
-
-                            OutgoingPacket out = new COutPacket(DataType.HELLO);
-                            plugin.getProtocol(null).write(String.format("%s:%s",
-                                    StringUtils.generateString(4, StringOptions.LOWERCASE),
-                                    StringUtils.generateString(6, StringOptions.LOWERCASE)), out);
+                            if (whoAmI != null) {
+                                OutgoingPacket out = new COutPacket(DataType.HELLO);
+                                plugin.getProtocol().write(whoAmI, String.format("%s_%s",
+                                        StringUtils.generateString(4, StringOptions.LOWERCASE),
+                                        StringUtils.generateString(6, StringOptions.LOWERCASE)), out);
+                            }
                         }
-                    }
+                    } catch (InvalidPacketDataException ignored) {}
                 }
 
-                plugin.getProtocol(null).receive(identifier, frame);
+                if (whoAmI == null) {
+                    whoAmI = plugin.getNetworkName();
+                    plugin.warn("Received message without initial connection");
+                }
+
+                try {
+                    plugin.getProtocol().receive(whoAmI, identifier, frame);
+                } catch (InvalidPacketDataException ignored) {}
                 return;
             }
         }

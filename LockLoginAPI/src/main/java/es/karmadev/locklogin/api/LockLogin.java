@@ -46,11 +46,9 @@ public interface LockLogin extends ResourceLoader {
     /**
      * Get a LockLogin protocol instance
      *
-     * @param server the server to get protocol
-     *               for
      * @return the LockLogin protocol
      */
-    LockLoginProtocol getProtocol(final NetworkServer server);
+    LockLoginProtocol getProtocol();
 
     /**
      * Get the plugin marketplace

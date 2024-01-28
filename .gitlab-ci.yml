@@ -1,6 +1,5 @@
 stages:
   - build
-  - release
 
 variables:
   MAVEN_CLI_OPTS: "-s .m2/settings.xml --batch-mode"
@@ -25,19 +24,3 @@ maven-build:
     paths:
       - "LockLoginBungee/target/LockLogin.jar"
       - "LockLoginSpigot/target/LockLogin.jar"
-
-release:
-  stage: release
-  script:
-    - COMMIT_HASH=$(echo $CI_COMMIT_SHA | cut -c1-8)
-    - RELEASE_TAG="$VERSION-$COMMIT_HASH"
-    - echo "Creating release $RELEASE_TAG"
-    - curl --request POST --header "PRIVATE-TOKEN:$API_TOKEN" --data "tag_name=$RELEASE_TAG" --data "name=$RELEASE_TAG" --data "ref=$CI_COMMIT_SHA" --data "description=Release $RELEASE_TAG" https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/releases
-  artifacts:
-    name: "Maven artifacts from $CI_PROJECT_NAME on $CI_COMMIT_REF_SLUG"
-    paths:
-      - "LockLoginBungee/target/LockLogin.jar"
-      - "LockLoginSpigot/target/LockLogin.jar"
-  only:
-    variables:
-      - $VERSION !~ /-SNAPSHOT/
