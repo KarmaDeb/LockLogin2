@@ -8,6 +8,5 @@ public enum DataType {
     CHANNEL_INIT,
     CHANNEL_CLOSE,
     CONNECTION_INIT,
-    SHARED_CONFIG,
-    SHARED_MESSAGES;
+    SHARED_FILES;
 }

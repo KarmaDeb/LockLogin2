@@ -25,9 +25,11 @@ import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class BungeeProtocol extends ProtocolHandler {
 
@@ -61,14 +63,18 @@ public class BungeeProtocol extends ProtocolHandler {
     protected void handle(final String channel, final IncomingPacket packet) {
         DataType type = packet.getType();
         if (type.equals(DataType.CONNECTION_INIT)) {
-            plugin.logInfo("Successfully established a secure connection with ", channel);
+            plugin.logInfo("Successfully established a secure connection with {0}", channel);
 
-            OutgoingPacket config = new COutPacket(DataType.SHARED_MESSAGES);
-            config.addProperty("messages", Base64.getEncoder().encodeToString(plugin.configuration().serialize().getBytes()));
+            OutgoingPacket files = new COutPacket(DataType.SHARED_FILES);
+            files.addProperty("configuration", Base64.getEncoder().encodeToString(
+                    plugin.configuration().serialize().getBytes()));
+            files.addProperty("messages", Base64.getEncoder().encodeToString(
+                    plugin.messages().serialize().getBytes()
+            ));
 
             String tag = String.format("%s_%s",
                     StringUtils.generateString(4), StringUtils.generateString(6));
-            write(channel, tag, config);
+            write(channel, tag, files);
             return;
         }
 
@@ -121,27 +127,14 @@ public class BungeeProtocol extends ProtocolHandler {
             return;
         }
 
-        List<byte[]> splitData = new ArrayList<>();
-        int blocks = data.length / ProtocolHandler.BLOCK_SIZE;
-        int remainingBytes = data.length % ProtocolHandler.BLOCK_SIZE;
-
-        for (int i = 0; i < blocks; i++) {
-            byte[] block = new byte[ProtocolHandler.BLOCK_SIZE];
-            System.arraycopy(data, i * ProtocolHandler.BLOCK_SIZE, block, 0, ProtocolHandler.BLOCK_SIZE);
-
-            splitData.add(block);
-        }
-
-        if (remainingBytes > 0) {
-            byte[] finalBlock = new byte[remainingBytes];
-            System.arraycopy(data, blocks * ProtocolHandler.BLOCK_SIZE, finalBlock, 0, remainingBytes);
-
-            splitData.add(finalBlock);
-        }
+        final int chunkSize = ProtocolHandler.BLOCK_SIZE;
+        List<byte[]> chunked = IntStream.range(0, (data.length + chunkSize - 1) / chunkSize)
+                .mapToObj(i -> Arrays.copyOfRange(data, i * chunkSize, Math.min((i + 1) * chunkSize, data.length)))
+                .collect(Collectors.toList());
 
         int position = 1;
-        for (byte[] target : splitData) {
-            CFramePacket frame = new CFramePacket(packetId, position++, data.length, target, Instant.now());
+        for (byte[] target : chunked) {
+            CFramePacket frame = new CFramePacket(packetId, position++, chunked.size(), target, Instant.now());
             String serial = StringUtils.serialize(frame);
             byte[] serialData = serial.getBytes();
 

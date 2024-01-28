@@ -115,7 +115,7 @@ public class Injection extends ChannelDuplexHandler {
                     byte[] output = new byte[frame.length()];
                     frame.read(output, 0);
 
-                    String raw = new String(Base64.getDecoder().decode(output));
+                    String raw = new String(output);
                     try {
                         IncomingPacket incoming = new CInPacket(raw);
 

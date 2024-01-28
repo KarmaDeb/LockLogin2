@@ -9,20 +9,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
 
 public class CFrameBuilder implements FrameBuilder, Comparator<PacketFrame> {
 
     private final List<PacketFrame> frames = new CopyOnWriteArrayList<>();
-    private Function<byte[], byte[]> onDecryptRequest = (b) -> b;
 
     private int length = 0;
 
     public CFrameBuilder() {}
-
-    public CFrameBuilder(final Function<byte[], byte[]> onDecryptRequest) {
-        this.onDecryptRequest = onDecryptRequest;
-    }
 
     /**
      * Append a frame to the builder
@@ -48,7 +42,6 @@ public class CFrameBuilder implements FrameBuilder, Comparator<PacketFrame> {
         for (PacketFrame frame : frames) {
             byte[] tData = new byte[frame.length()];
             frame.read(tData, 0);
-            tData = onDecryptRequest.apply(tData);
 
             System.arraycopy(tData, 0, completeData, startPos, tData.length);
             startPos += tData.length;

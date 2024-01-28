@@ -98,7 +98,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
         }
 
         byte[] completePacket = builder.build();
-        readPacket(Base64.getDecoder().decode(completePacket), channel);
+        readPacket(completePacket, channel);
     }
 
     /**
@@ -109,7 +109,6 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
     @Override
     public final void write(final String channel, final String tag, final OutgoingPacket data) {
         DataType type = data.getType();
-
         if (!ArrayUtils.containsAny(PRE_TYPES, type) && !this.sharedKeys.containsKey(channel)) {
             List<QueuedPacket> que = this.packetQue.computeIfAbsent(channel, (q) -> new ArrayList<>());
             que.add(new QueuedPacket(tag, data));
@@ -122,6 +121,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
 
         PeerKeyData shared = this.sharedKeys.get(channel);
         byte[] dataToWrite = data.build().toString(false).getBytes();
+
         if (shared != null) {
             SecretKey secret = shared.getKey();
             dataToWrite = doCipherWithKey(dataToWrite, Cipher.ENCRYPT_MODE, secret, shared.getAlgorithm(), true);
@@ -129,7 +129,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
             if (dataToWrite == null) return;
         }
 
-        emit(channel, data.id(), tag, Base64.getEncoder().encode(dataToWrite));
+        emit(channel, data.id(), tag, dataToWrite);
     }
 
     /**
@@ -224,7 +224,7 @@ public abstract class ProtocolHandler implements LockLoginProtocol {
      * plugin)
      */
     private void readPacket(final byte[] completePacket, final String channel) throws InvalidPacketDataException {
-        byte[] resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.secret, this.secretAlgorithm, false);
+        byte[] resolved = doCipherWithKey(completePacket, Cipher.DECRYPT_MODE, this.secret, this.secretAlgorithm, true);
         boolean notSecure = false;
 
         if (resolved == null) {

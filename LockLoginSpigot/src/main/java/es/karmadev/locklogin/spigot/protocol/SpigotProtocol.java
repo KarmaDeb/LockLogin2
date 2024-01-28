@@ -1,5 +1,7 @@
 package es.karmadev.locklogin.spigot.protocol;
 
+import es.karmadev.api.file.yaml.YamlFileHandler;
+import es.karmadev.api.file.yaml.handler.YamlHandler;
 import es.karmadev.api.strings.StringUtils;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.LockLogin;
@@ -17,16 +19,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class SpigotProtocol extends ProtocolHandler {
 
     private final static LockLogin plugin = CurrentPlugin.getPlugin();
+    private final static List<String> IGNORED_CONFIG = Arrays.asList("ServerName", "SecretKey");
 
     /**
      * Initialize a new protocol handler
@@ -57,11 +62,17 @@ public class SpigotProtocol extends ProtocolHandler {
         DataType type = packet.getType();
         switch (type) {
             case CONNECTION_INIT:
-                plugin.logInfo("Successfully established a secure connection with proxy as ", channel);
+                plugin.logInfo("Successfully established a secure connection with proxy as {0}", channel);
                 return;
-            case SHARED_MESSAGES:
-                System.out.println(packet.getSequence("messages"));
-                break;
+            case SHARED_FILES:
+                String configuration = new String(Base64.getDecoder()
+                        .decode(packet.getSequence("configuration")));
+
+                String messages = new String(Base64.getDecoder()
+                        .decode(packet.getSequence("messages")));
+
+                //TODO: Load configuration and messages
+                return;
         }
 
         String virtualTag = packet.getSequence("v_tag");
