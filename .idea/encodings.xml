@@ -9,6 +9,11 @@
     <file url="file://$PROJECT_DIR$/LockLoginChannels/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LockLoginCommon/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LockLoginCommon/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/LockLoginNMS/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/LockLoginNMS/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/LockLoginNMS/v1_13/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/LockLoginNMS/v1_13/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/LockLoginNMS/v1_17/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LockLoginRedis/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LockLoginRedis/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LockLoginSpigot/src/main/java" charset="UTF-8" />
