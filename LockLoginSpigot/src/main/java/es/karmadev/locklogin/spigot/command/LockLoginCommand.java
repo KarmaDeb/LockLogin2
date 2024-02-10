@@ -34,6 +34,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import es.karmadev.locklogin.api.extension.module.Module;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;

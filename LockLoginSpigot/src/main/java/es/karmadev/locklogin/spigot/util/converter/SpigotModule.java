@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import es.karmadev.locklogin.api.extension.module.Module;
+
 public class SpigotModule implements PluginModule<JavaPlugin> {
 
     private final JavaPlugin plugin;

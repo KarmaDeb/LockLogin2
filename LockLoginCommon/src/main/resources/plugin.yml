@@ -6,7 +6,7 @@ website: "https://karmadev.es/"
 #main: ${spigot.main}
 main: es.karmadev.locklogin.spigot.SpigotPlugin
 #database: false
-api-version: 1.17
+api-version: 1.13
 depend:
   - KarmaAPI
 

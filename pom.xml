@@ -16,7 +16,6 @@
         <module>LockLoginRedis</module>
         <module>LockLoginChannels</module>
         <module>LockLoginNMS</module>
-        <module>LockLoginNMS/v1_13</module>
     </modules>
 
     <name>LockLogin</name>
@@ -57,8 +56,8 @@
     <properties>
         <jar.name>LockLoginPOM</jar.name>
 
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <locklogin.lang>2</locklogin.lang>
@@ -332,7 +331,7 @@
         </repository>
         <repository>
             <id>codemc-nms-repo</id>
-            <url>https://repo.codemc.org/repository/nms/</url>
+            <url>https://repo.codemc.org/repository/nms-local/</url>
         </repository>
 
         <!--
@@ -666,6 +665,13 @@
                 <artifactId>ChannelsAPI</artifactId>
                 <version>${channeling.api}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>es.karmadev.lockloginnms</groupId>
+                <artifactId>SpigotNMS</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

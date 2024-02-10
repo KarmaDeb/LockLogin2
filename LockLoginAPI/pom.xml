@@ -25,24 +25,6 @@
     </build>
 
     <dependencies>
-        <!--
-        API interfaces shouldn't need to use those
-
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.md-5</groupId>
-            <artifactId>bungeecord-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>es.karmadev</groupId>
-            <artifactId>KarmaAPI-Spigot</artifactId>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>me.lucko</groupId>
             <artifactId>jar-relocator</artifactId>

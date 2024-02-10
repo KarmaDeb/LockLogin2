@@ -1,7 +1,6 @@
 package es.karmadev.locklogin.spigot.command;
 
 import es.karmadev.api.minecraft.text.Colorize;
-import es.karmadev.api.spigot.inventory.helper.func.Action;
 import es.karmadev.api.spigot.inventory.helper.option.OptionsInventory;
 import es.karmadev.locklogin.api.CurrentPlugin;
 import es.karmadev.locklogin.api.network.client.NetworkClient;
@@ -11,13 +10,9 @@ import es.karmadev.locklogin.spigot.LockLoginSpigot;
 import es.karmadev.locklogin.spigot.command.helper.PluginCommand;
 import es.karmadev.locklogin.spigot.util.UserDataHandler;
 import es.karmadev.locklogin.spigot.util.window.settings.SettingsButton;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 @PluginCommand(command = "account") @SuppressWarnings("unused")

@@ -94,6 +94,11 @@
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>es.karmadev.lockloginnms</groupId>
+            <artifactId>SpigotNMS</artifactId>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

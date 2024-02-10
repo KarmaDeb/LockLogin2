@@ -2,10 +2,12 @@ package es.karmadev.locklogin.spigot;
 
 import es.karmadev.api.file.util.PathUtilities;
 import es.karmadev.api.logger.log.console.LogLevel;
+import es.karmadev.api.minecraft.MinecraftVersion;
 import es.karmadev.api.schedule.runner.TaskRunner;
 import es.karmadev.api.schedule.runner.async.AsyncTaskExecutor;
 import es.karmadev.api.schedule.runner.event.TaskEvent;
 import es.karmadev.api.spigot.core.KarmaPlugin;
+import es.karmadev.api.spigot.server.SpigotServer;
 import es.karmadev.api.version.BuildStatus;
 import es.karmadev.api.version.Version;
 import es.karmadev.api.version.checker.VersionChecker;
@@ -23,6 +25,7 @@ import es.karmadev.locklogin.common.plugin.secure.logger.Log4Logger;
 import es.karmadev.locklogin.common.plugin.web.CMarketPlace;
 import es.karmadev.locklogin.common.plugin.web.License;
 import es.karmadev.locklogin.common.util.LockLoginJson;
+import es.karmadev.locklogin.spigot.api.NMSPayload;
 import es.karmadev.locklogin.spigot.command.helper.CommandHelper;
 import es.karmadev.locklogin.spigot.event.*;
 import es.karmadev.locklogin.spigot.event.helper.EventHelper;
@@ -105,6 +108,27 @@ public class SpigotPlugin extends KarmaPlugin {
     public void enable() {
         long start = System.currentTimeMillis();
         if (spigot.boot) {
+            try {
+                NMSPayload.autoDetect();
+                if (NMSPayload.isNotSupported()) {
+                    logger().send(LogLevel.SEVERE, "Failed to boot LockLogin. Not supported version: {0}", SpigotServer.getVersion());
+                    spigot.boot = false;
+
+                    getServer().getPluginManager().disablePlugin(this);
+                    return;
+                }
+            } catch (RuntimeException ex) {
+                logger().log(ex, "Failed to start LockLogin");
+                MinecraftVersion version = SpigotServer.getVersion();
+
+                logger().send(LogLevel.SEVERE, "Incompatible server version {0}. Minimum version is {1}",
+                        version, MinecraftVersion.v1_13_X, MinecraftVersion.v1_20_X);
+                spigot.boot = false;
+
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+
             chatHandler = new ChatHandler(spigot);
             joinHandler = new JoinHandler(spigot);
             movementHandler = new MovementHandler(spigot);
@@ -288,6 +312,11 @@ public class SpigotPlugin extends KarmaPlugin {
                 if (filter.getClass().equals(Log4Logger.class))
                     filter.stop();
             }
+        }
+
+        if (!spigot.boot) {
+            logger().send(LogLevel.SEVERE,
+                    "LockLogin stopped because of an internal error. Check logs for more information");
         }
     }
 

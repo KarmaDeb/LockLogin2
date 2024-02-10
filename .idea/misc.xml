@@ -15,11 +15,24 @@
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
         <option value="$PROJECT_DIR$/LockLoginBungee/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_17_R1/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_13/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_13_1/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_13_2/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_14_4_R1/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_17_1_R1/pom.xml" />
+        <option value="$PROJECT_DIR$/LockLoginNMS/v1_19_1_R1/pom.xml" />
+        <option value="$PROJECT_DIR$/v1_13_1/pom.xml" />
+        <option value="$PROJECT_DIR$/v1_14_1/pom.xml" />
+      </set>
     </option>
     <option name="workspaceImportForciblyTurnedOn" value="true" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="openjdk-21" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
