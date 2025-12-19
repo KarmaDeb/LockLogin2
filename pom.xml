@@ -103,7 +103,7 @@
         <jar.relocator.version>1.7</jar.relocator.version>
         <jar.relocator.test>me.lucko.jarrelocator.JarRelocator</jar.relocator.test>
 
-        <log4j.core.version>2.17.1</log4j.core.version>
+        <log4j.core.version>2.25.3</log4j.core.version>
         <log4j.core.test>org.apache.logging.log4j.core.Logger</log4j.core.test>
         <log4j.web.version>2.17.1</log4j.web.version>
         <log4j.web.test>org.apache.logging.log4j.web.WebLookup</log4j.web.test>
